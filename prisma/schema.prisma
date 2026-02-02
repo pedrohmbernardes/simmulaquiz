@@ -1,0 +1,912 @@
+// prisma/schema.prisma
+// ============================================
+// SIMMULAQUIZ SCHEMA 2.0
+// ============================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+
+enum TipoUsuario {
+  ALUNO
+  PROFESSOR
+  SUPER_ADMIN
+}
+
+enum NivelDificuldade {
+  MUITO_FACIL
+  FACIL
+  MEDIO
+  DIFICIL
+  MUITO_DIFICIL
+}
+
+enum NivelCognitivo {
+  LEMBRAR
+  ENTENDER
+  APLICAR
+  ANALISAR
+  AVALIAR
+  CRIAR
+}
+
+enum StatusSimulado {
+  EM_ANDAMENTO
+  CONCLUIDO
+  ABANDONADO
+  ANULADO
+}
+
+enum CategoriaOrigem {
+  INSTITUCIONAL_INTERNA
+  CONCURSO_PUBLICO
+  CONCURSO_MILITAR
+  VESTIBULAR
+  CERTIFICACAO
+  OUTRO
+}
+
+enum RaridadeConquista {
+  COMUM
+  INCOMUM
+  RARO
+  EPICO
+  LENDARIO
+  MITICO
+}
+
+enum CategoriaConquista {
+  INICIO_ENGAJAMENTO
+  PERFORMANCE_VELOCIDADE
+  MAESTRIA_UC
+  OBJETO_CONHECIMENTO
+  DESEMPENHO_AVANCADO
+  OCULTA
+  IMPOSSIVEL
+}
+
+enum TipoRequisitoConquista {
+  SIMULADOS_TOTAL
+  QUESTOES_TOTAL
+  ACERTOS_TOTAL
+  STREAK_DIAS
+  NIVEL_ALCANCADO
+  NOTA_PERCENTUAL_MINIMA
+  SIMULADO_TIPO_ESPECIFICO
+  CONQUISTAS_TOTAL
+  TEMPO_ESTUDO_HORAS
+  REVISOES_ERRO_TOTAL
+  HORARIO_ESPECIFICO
+  QUESTOES_NO_SIMULADO_MIN
+  TEMPO_GASTO_SEGUNDOS_MAX
+  ACERTOS_NO_SIMULADO_MIN
+  ERROS_NO_SIMULADO_MAX
+}
+
+enum TipoEventoGamificacao {
+  LOGIN
+  SIMULADO_FINALIZADO
+  SIMULADO_ANULADO
+  SIMULADO_ABANDONADO
+  QUESTAO_RESPONDIDA
+  CADERNO_ERROS_REVISADA
+  PERFIL_ATUALIZADO
+  RANKING_ATUALIZADO
+  MANUAL
+}
+
+enum EventoConquista {
+  LOGIN
+  SIMULADO_FINALIZADO
+  CADERNO_ERROS
+  PERFIL
+  RANKING
+  MANUAL
+}
+
+enum StatusAuditoriaConquista {
+  APROVADA
+  PENDENTE
+  REJEITADA
+}
+
+enum TipoMovimentoPontos {
+  LOGIN_DIARIO
+  SIMULADO_COMPLETO
+  META_QUESTOES
+  ACERTO_QUESTAO
+  CONQUISTA
+  STREAK_BONUS
+  AJUSTE_ADMIN
+}
+
+enum TipoStreak {
+  LOGIN
+  SIMULADO
+  CADERNO_ERROS
+}
+
+enum TipoJanela {
+  EM_DIAS
+  EM_SEMANAS
+  EM_MESES
+}
+
+enum OperadorComparacao {
+  GTE
+  LTE
+  EQ
+  BETWEEN
+}
+
+enum LogicaGrupo {
+  AND
+  OR
+}
+
+enum RankingPeriodo {
+  SEMANAL
+  MENSAL
+  ROLLING_90D
+  ROLLING_180D
+  ROLLING_12M
+  GERAL
+}
+
+enum RankingTipo {
+  XP_GANHO // por período (derivado de HistoricoPontos / MetricDiaria)
+  XP_TOTAL // total (UsuarioGamificacao.pontos)
+  STREAK
+}
+
+enum MetricaConquista {
+  SIMULADOS_TOTAL
+  QUESTOES_TOTAL
+  ACERTOS_TOTAL
+  ERROS_TOTAL
+  STREAK_DIAS
+  NIVEL_ALCANCADO
+  NOTA_PERCENTUAL
+  QUESTOES_NO_SIMULADO
+  ACERTOS_NO_SIMULADO
+  ERROS_NO_SIMULADO
+  TEMPO_ESTUDO_MINUTOS
+  TEMPO_GASTO_SEGUNDOS
+
+  // ranking
+  RANK_POSICAO
+  RANK_PERCENTIL
+  RANK_VALOR
+}
+
+// --- MODELS DE DOMÍNIO ---
+
+model Instituicao {
+  id       Int       @id @default(autoincrement())
+  codigo   String?   @unique
+  nome     String    @unique
+  sigla    String?   @unique
+  ativo    Boolean   @default(true)
+  questoes Questao[]
+}
+
+model Banca {
+  id       Int       @id @default(autoincrement())
+  codigo   String    @unique
+  nome     String    @unique
+  sigla    String?   @unique
+  ativo    Boolean   @default(true)
+  questoes Questao[]
+}
+
+model Conquista {
+  id        Int    @id @default(autoincrement())
+  key       String @unique
+  nome      String
+  descricao String
+
+  // legado (opcional, pra compatibilidade até migrar tudo)
+  requisitoTipo  TipoRequisitoConquista?
+  requisitoValor Int?
+
+  raridade        RaridadeConquista  @default(COMUM)
+  categoria       CategoriaConquista @default(INICIO_ENGAJAMENTO)
+  pontos          Int                @default(10)
+  bonusMultiplier Float              @default(1.0)
+
+  oculta              Boolean @default(false)
+  impossivel          Boolean @default(false)
+  adminOnly           Boolean @default(false)
+  requiresManualAudit Boolean @default(false)
+
+  icone     String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cooldownDias     Int?
+  maximoPorPeriodo Int?
+  // Sugestão: se você for usar maximoPorPeriodo de verdade:
+  // maximoPorPeriodoJanela TipoJanela?
+
+  evento EventoConquista @default(SIMULADO_FINALIZADO)
+  versao Int             @default(1)
+
+  unidadeCurricularId Int?
+  unidadeCurricular   UnidadeCurricular? @relation(fields: [unidadeCurricularId], references: [id])
+  conhecimentoId      Int?
+  conhecimento        Conhecimento?      @relation(fields: [conhecimentoId], references: [id])
+
+  usuarios        UsuarioConquista[]
+  regras          ConquistaRegra[]
+  HistoricoPontos HistoricoPontos[]
+}
+
+model Titulo {
+  id        Int                  @id @default(autoincrement())
+  nivel     Int                  @unique
+  nome      String
+  minPontos Int                  @unique
+  urlImagem String?
+  corHex    String?
+  usuarios  UsuarioGamificacao[]
+}
+
+// ============================================
+// USUÁRIOS & GAMIFICAÇÃO & SEGURANÇA
+// ============================================
+
+model Usuario {
+  id             Int         @id @default(autoincrement())
+  nome           String
+  email          String      @unique
+  senhaHash      String
+  dataNascimento DateTime
+  tipo           TipoUsuario @default(ALUNO)
+  fotoUrl        String?
+  ativo          Boolean     @default(true)
+
+  // Segurança de Autenticação
+  mudancaSenhaObrigatoria Boolean @default(false)
+  tokenVersion            Int     @default(0) // Invalidação em massa de sessões
+
+  // Verificação e Recuperação
+  emailVerificado    Boolean   @default(false)
+  tokenVerificacao   String?
+  tokenExpiraEm      DateTime?
+  resetToken         String?
+  resetTokenExpiraEm DateTime?
+
+  ultimoLogin DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relacionamentos
+  simulados           Simulado[]
+  questoesFavoritas   QuestaoFavorita[]
+  gamificacao         UsuarioGamificacao?
+  cadernoErros        QuestaoErro[]
+  historicoTentativas QuestaoTentativa[]
+  auditLogs           LogAuditoria[]           @relation("Usuario_LogAuditoria")
+  historicoPontos     HistoricoPontos[]
+  badgesRel           UsuarioBadge[]
+  eventosGamificacao  GamificacaoEvento[]
+  metricasDiarias     UsuarioMetricasDiarias[]
+  rankingEntries      RankingEntry[]
+  conquistas          UsuarioConquista[]       @relation("Usuario_Conquistas")
+  conquistasAuditadas UsuarioConquista[]       @relation("Usuario_ConquistasAuditadas")
+  UsuarioStreak       UsuarioStreak[]
+  SessaoEstudo        SessaoEstudo[]
+}
+
+model UsuarioGamificacao {
+  id                      Int       @id @default(autoincrement())
+  usuarioId               Int       @unique
+  usuario                 Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  ultimoEmailConquistasEm DateTime?
+
+  acertosTotal Int @default(0)
+  errosTotal   Int @default(0)
+
+  pontos Int      @default(0)
+  nivel  Int      @default(1)
+  badges String[]
+
+  tempoTotalEstudo     Int @default(0)
+  simuladosConcluidos  Int @default(0)
+  questoesRespondidas  Int @default(0)
+  simuladosAnulados    Int @default(0)
+  simuladosAbandonados Int @default(0)
+
+  preferencias Json? @default("{}")
+
+  tituloId Int?
+  titulo   Titulo? @relation(fields: [tituloId], references: [id])
+
+  streakAtual       Int       @default(0)
+  maiorStreak       Int       @default(0)
+  ultimoLoginStreak DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  @@index([pontos, nivel])
+  @@index([streakAtual])
+}
+
+model UsuarioStreak {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  tipo      TipoStreak
+  atual     Int        @default(0)
+  recorde   Int        @default(0)
+  ultimoDia DateTime?
+
+  @@unique([usuarioId, tipo])
+  @@index([usuarioId, tipo])
+}
+
+model UsuarioConquista {
+  id Int @id @default(autoincrement())
+
+  usuarioId Int
+  usuario   Usuario @relation("Usuario_Conquistas", fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  conquistaId Int
+  conquista   Conquista @relation(fields: [conquistaId], references: [id], onDelete: Cascade)
+
+  dataConquista DateTime @default(now())
+
+  statusAuditoria StatusAuditoriaConquista @default(APROVADA)
+
+  auditadaPorId Int?
+  auditadaPor   Usuario? @relation("Usuario_ConquistasAuditadas", fields: [auditadaPorId], references: [id], onDelete: SetNull)
+
+  eventoId Int?
+  evento   GamificacaoEvento? @relation(fields: [eventoId], references: [id], onDelete: SetNull)
+
+  pontosConcedidos   Int?
+  multiplierAplicado Float?
+
+  notificadoEm DateTime?
+  contexto     Json?
+
+  @@unique([usuarioId, conquistaId])
+  @@index([usuarioId])
+  @@index([conquistaId])
+}
+
+model UsuarioMetricasDiarias {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  dia                 DateTime @db.Date
+  xpGanho             Int      @default(0)
+  simuladosConcluidos Int      @default(0)
+  questoesRespondidas Int      @default(0)
+  acertos             Int      @default(0)
+  tempoEstudoMin      Int      @default(0)
+
+  @@unique([usuarioId, dia])
+  @@index([dia])
+  @@index([usuarioId, dia])
+}
+
+model HistoricoPontos {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  quantidade Int
+  tipo       TipoMovimentoPontos
+  motivo     String?
+  metadata   Json?
+  data       DateTime            @default(now())
+
+  simuladoId Int?
+  simulado   Simulado? @relation("Simulado_HistoricoPontos", fields: [simuladoId], references: [id], onDelete: SetNull)
+
+  conquistaId Int?
+  conquista   Conquista? @relation(fields: [conquistaId], references: [id], onDelete: SetNull)
+
+  dedupKey  String? @unique
+  saldoApos Int?
+
+  @@index([usuarioId, data])
+  @@index([usuarioId, tipo, data])
+}
+
+model GamificacaoEvento {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  tipo      TipoEventoGamificacao
+  createdAt DateTime              @default(now())
+
+  // referência opcional
+  simuladoId Int?
+  simulado   Simulado? @relation(fields: [simuladoId], references: [id], onDelete: SetNull)
+
+  // payload leve: nota, qtdeQuestoes, tempo, ucId, etc.
+  metadata         Json?
+  UsuarioConquista UsuarioConquista[]
+
+  @@index([usuarioId, tipo, createdAt])
+  @@index([tipo, createdAt])
+}
+
+model ConquistaRegra {
+  id          Int       @id @default(autoincrement())
+  conquistaId Int
+  conquista   Conquista @relation(fields: [conquistaId], references: [id], onDelete: Cascade)
+
+  metrica     MetricaConquista
+  operador    OperadorComparacao @default(GTE)
+  valorInt    Int?
+  valorFloat  Float?
+  // janela opcional (ex: "em 7 dias", "em 4 semanas")
+  janelaTipo  TipoJanela?
+  janelaValor Int?
+
+  // agrupamento para regras compostas (AND/OR)
+  grupo       Int         @default(0)
+  logicaGrupo LogicaGrupo @default(AND)
+
+  unidadeCurricularId Int?
+  unidadeCurricular   UnidadeCurricular? @relation(fields: [unidadeCurricularId], references: [id], onDelete: SetNull)
+
+  conhecimentoId Int?
+  conhecimento   Conhecimento? @relation(fields: [conhecimentoId], references: [id], onDelete: SetNull)
+
+  tipoSimulado String?
+
+  @@index([conquistaId])
+}
+
+model RankingSnapshot {
+  id      Int            @id @default(autoincrement())
+  periodo RankingPeriodo
+  tipo    RankingTipo
+
+  inicio DateTime
+  fim    DateTime
+
+  totalUsuarios Int
+  createdAt     DateTime @default(now())
+
+  entries RankingEntry[]
+
+  @@unique([periodo, tipo, inicio, fim])
+  @@index([periodo, tipo, fim])
+}
+
+model RankingEntry {
+  id         Int             @id @default(autoincrement())
+  snapshotId Int
+  snapshot   RankingSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  posicao   Int
+  valorInt  Int // xp ou streak
+  percentil Float // 0..100 (ou 0..1, você escolhe)
+
+  @@unique([snapshotId, usuarioId])
+  @@index([snapshotId, posicao])
+  @@index([usuarioId])
+}
+
+model UsuarioBadge {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  badgeKey String
+  obtidoEm DateTime @default(now())
+
+  @@unique([usuarioId, badgeKey])
+  @@index([usuarioId])
+}
+
+// --- QUESTÕES E CURRÍCULO ---
+
+model QuestaoFavorita {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  questaoId Int
+  questao   Questao  @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, questaoId])
+  @@index([usuarioId])
+}
+
+model CursoTecnico {
+  id                   Int                 @id @default(autoincrement())
+  codigo               String              @unique
+  nome                 String              @unique
+  descricao            String?
+  ativo                Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  unidadesCurriculares UnidadeCurricular[]
+  funcoes              CursoFuncao[]
+  questoes             Questao[]
+}
+
+model UnidadeCurricular {
+  id                   Int                             @id @default(autoincrement())
+  codigo               String                          @unique
+  nome                 String                          @unique
+  cargaHoraria         Int?
+  descricao            String?
+  createdAt            DateTime                        @default(now())
+  updatedAt            DateTime                        @updatedAt
+  cursoTecnicoId       Int
+  cursoTecnico         CursoTecnico                    @relation(fields: [cursoTecnicoId], references: [id])
+  conhecimentos        UnidadeCurricularConhecimento[]
+  questoes             Questao[]
+  conquistasVinculadas Conquista[]
+  ConquistaRegra       ConquistaRegra[]
+}
+
+model Funcao {
+  id         Int           @id @default(autoincrement())
+  codigo     String        @unique
+  nome       String        @unique
+  descricao  String?
+  ativo      Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  cursos     CursoFuncao[]
+  subfuncoes Subfuncao[]
+  questoes   Questao[]
+}
+
+model Subfuncao {
+  id          Int                   @id @default(autoincrement())
+  codigo      String                @unique
+  nome        String                @unique
+  descricao   String?
+  ativo       Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  funcaoId    Int
+  funcao      Funcao                @relation(fields: [funcaoId], references: [id])
+  capacidades SubfuncaoCapacidade[]
+  questoes    Questao[]
+}
+
+model Capacidade {
+  id            Int                      @id @default(autoincrement())
+  sigla         String                   @unique
+  descricao     String
+  ativo         Boolean                  @default(true)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  conhecimentos CapacidadeConhecimento[]
+  subfuncoes    SubfuncaoCapacidade[]
+  questoes      Questao[]
+}
+
+model Conhecimento {
+  id                   Int                             @id @default(autoincrement())
+  codigo               String                          @unique
+  nome                 String                          @unique
+  descricao            String?
+  ativo                Boolean                         @default(true)
+  createdAt            DateTime                        @default(now())
+  updatedAt            DateTime                        @updatedAt
+  subConhecimentos     SubConhecimento[]
+  unidadesCurriculares UnidadeCurricularConhecimento[]
+  capacidades          CapacidadeConhecimento[]
+  questoes             Questao[]
+  conquistasVinculadas Conquista[]
+  ConquistaRegra       ConquistaRegra[]
+
+  @@map("ObjetoConhecimento")
+}
+
+model SubConhecimento {
+  id             Int          @id @default(autoincrement())
+  codigo         String       @unique
+  nome           String
+  descricao      String?
+  ordem          Int?
+  ativo          Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  conhecimentoId Int
+  conhecimento   Conhecimento @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
+  questoes       Questao[]
+}
+
+model CursoFuncao {
+  id             Int          @id @default(autoincrement())
+  cursoTecnicoId Int
+  funcaoId       Int
+  cursoTecnico   CursoTecnico @relation(fields: [cursoTecnicoId], references: [id], onDelete: Cascade)
+  funcao         Funcao       @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
+
+  @@unique([cursoTecnicoId, funcaoId])
+  @@index([cursoTecnicoId])
+  @@index([funcaoId])
+}
+
+model UnidadeCurricularConhecimento {
+  id                  Int               @id @default(autoincrement())
+  ordem               Int?
+  cargaHorariaParcial Int?
+  unidadeCurricularId Int
+  conhecimentoId      Int
+  unidadeCurricular   UnidadeCurricular @relation(fields: [unidadeCurricularId], references: [id], onDelete: Cascade)
+  conhecimento        Conhecimento      @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
+
+  @@unique([unidadeCurricularId, conhecimentoId])
+  @@index([unidadeCurricularId])
+  @@index([conhecimentoId])
+}
+
+model CapacidadeConhecimento {
+  id             Int          @id @default(autoincrement())
+  capacidadeId   Int
+  conhecimentoId Int
+  capacidade     Capacidade   @relation(fields: [capacidadeId], references: [id], onDelete: Cascade)
+  conhecimento   Conhecimento @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
+
+  @@unique([capacidadeId, conhecimentoId])
+  @@index([capacidadeId])
+  @@index([conhecimentoId])
+}
+
+model SubfuncaoCapacidade {
+  id           Int        @id @default(autoincrement())
+  subfuncaoId  Int
+  capacidadeId Int
+  subfuncao    Subfuncao  @relation(fields: [subfuncaoId], references: [id], onDelete: Cascade)
+  capacidade   Capacidade @relation(fields: [capacidadeId], references: [id], onDelete: Cascade)
+
+  @@unique([subfuncaoId, capacidadeId])
+  @@index([subfuncaoId])
+  @@index([capacidadeId])
+}
+
+model SessaoEstudo {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  inicio     DateTime
+  fim        DateTime?
+  duracaoSeg Int?
+
+  origem String? // web/mobile
+
+  @@index([usuarioId, inicio])
+}
+
+model Questao {
+  id                 Int               @id @default(autoincrement())
+  codigo             String?           @unique
+  enunciado          String
+  alternativaA       String
+  alternativaB       String
+  alternativaC       String
+  alternativaD       String
+  alternativaE       String
+  alternativaCorreta String
+  ativa              Boolean           @default(true)
+  dificuldade        NivelDificuldade? @default(MEDIO)
+  nivelCognitivo     NivelCognitivo?   @default(APLICAR)
+  categoriaOrigem    CategoriaOrigem?  @default(INSTITUCIONAL_INTERNA)
+
+  instituicaoId Int?
+  instituicao   Instituicao? @relation(fields: [instituicaoId], references: [id])
+  bancaId       Int?
+  banca         Banca?       @relation(fields: [bancaId], references: [id])
+
+  ano           Int?
+  prova         String?
+  observacoes   String?
+  palavrasChave String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cursoTecnicoId      Int?
+  cursoTecnico        CursoTecnico?      @relation(fields: [cursoTecnicoId], references: [id])
+  unidadeCurricularId Int?
+  unidadeCurricular   UnidadeCurricular? @relation(fields: [unidadeCurricularId], references: [id])
+  funcaoId            Int?
+  funcao              Funcao?            @relation(fields: [funcaoId], references: [id])
+  subfuncaoId         Int?
+  subfuncao           Subfuncao?         @relation(fields: [subfuncaoId], references: [id])
+  conhecimentoId      Int?
+  conhecimento        Conhecimento?      @relation(fields: [conhecimentoId], references: [id])
+  subConhecimentoId   Int?
+  subConhecimento     SubConhecimento?   @relation(fields: [subConhecimentoId], references: [id])
+  capacidadeId        Int?
+  capacidade          Capacidade?        @relation(fields: [capacidadeId], references: [id])
+
+  simuladosQuestoes   SimuladosQuestao[]
+  favoritadaPor       QuestaoFavorita[]
+  registrosErro       QuestaoErro[]
+  historicoTentativas QuestaoTentativa[]
+  imagens             ImagemQuestao[]
+
+  @@index([ativa])
+  @@index([instituicaoId])
+  @@index([cursoTecnicoId])
+  @@index([unidadeCurricularId])
+  @@index([dificuldade])
+  @@index([nivelCognitivo])
+}
+
+model ImagemQuestao {
+  id        Int      @id @default(autoincrement())
+  url       String?
+  filename  String
+  mimeType  String
+  size      Int
+  width     Int?
+  height    Int?
+  dados     Bytes?
+  createdAt DateTime @default(now())
+  questaoId Int
+  questao   Questao  @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+
+  @@index([questaoId])
+}
+
+model Simulado {
+  id                 Int            @id @default(autoincrement())
+  codigo             String?        @unique
+  tipo               String
+  qtdeQuestoes       Int
+  tempoLimiteMinutos Int
+  tempoGastoSegundos Int?
+  tempoGastoMinutos  Int?
+  alertasTempo       Int[]          @default([30, 10, 5])
+  dataInicio         DateTime?
+  dataConclusao      DateTime?
+  notaAcertos        Int?
+  notaPercentual     Float?
+  status             StatusSimulado @default(EM_ANDAMENTO)
+
+  questoesRespondidas     Int?
+  acertos                 Int?
+  erros                   Int?
+  mediaTempoPorQuestaoSeg Float?
+  gamificacaoProcessadaEm DateTime?
+  xpConcedido             Int?
+
+  strikesUsados Int     @default(0)
+  strikesMax    Int     @default(3)
+  anuladoMotivo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarioId Int?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  simuladosQuestoes SimuladosQuestao[]
+  avaliacaoIA       AvaliacaoSimulado?
+
+  historicoPontos   HistoricoPontos[]   @relation("Simulado_HistoricoPontos")
+  GamificacaoEvento GamificacaoEvento[]
+
+  @@index([usuarioId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([tipo, status])
+}
+
+model AvaliacaoSimulado {
+  id            Int      @id @default(autoincrement())
+  simuladoId    Int      @unique
+  simulado      Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
+  feedbackGeral String   @db.Text
+  pontosFortes  String?  @db.Text
+  pontosFracos  String?  @db.Text
+  recomendacoes String?  @db.Text
+  modeloIA      String?
+  versaoPrompt  Int      @default(1)
+  tokensTotal   Int?
+  tempoGeracaoMs Int?
+  metricasResumo Json?   @default("{}")
+  hashEntrada    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+
+model SimuladosQuestao {
+  id                 Int      @id @default(autoincrement())
+  alternativaMarcada String?
+  correta            Boolean?
+  tempoResposta      Int?
+  simuladoId         Int
+  simulado           Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
+  questaoId          Int
+  questao            Questao  @relation(fields: [questaoId], references: [id])
+
+  @@unique([simuladoId, questaoId])
+  @@index([simuladoId])
+  @@index([questaoId])
+}
+
+model QuestaoErro {
+  id             Int       @id @default(autoincrement())
+  usuarioId      Int
+  usuario        Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  questaoId      Int
+  questao        Questao   @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  vezesErrada    Int       @default(1)
+  ultimoErro     DateTime  @default(now())
+  revisada       Boolean   @default(false)
+  proximaRevisao DateTime?
+
+  @@unique([usuarioId, questaoId])
+  @@index([usuarioId, revisada])
+  @@index([questaoId])
+}
+
+model QuestaoTentativa {
+  id                 Int      @id @default(autoincrement())
+  createdAt          DateTime @default(now())
+  usuarioId          Int
+  usuario            Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  questaoId          Int
+  questao            Questao  @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  alternativaMarcada String
+  correta            Boolean
+  tempoResposta      Int?
+  origem             String?
+
+  @@index([usuarioId])
+  @@index([questaoId])
+  @@index([createdAt])
+}
+
+// ✅ LOGS DE AUDITORIA OTIMIZADOS
+model LogAuditoria {
+  id        Int      @id @default(autoincrement())
+  // Renomeado para 'createdAt' para padronização. Antes era 'data'.
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  usuarioId   Int?
+  usuarioNome String?
+  ip          String?
+  userAgent   String?
+  acao        String
+  recurso     String?
+  detalhes    Json?
+
+  usuarioRel Usuario? @relation("Usuario_LogAuditoria", fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([usuarioId, acao]) // 🔍 Filtro rápido por atividade de usuário
+  @@index([createdAt]) // 🧹 Limpeza automática (Cron Job)
+  @@index([acao])
+}
+
+// ✅ SEGURANÇA: BLACKLIST JWT
+model TokenBlacklist {
+  id        Int      @id @default(autoincrement())
+  jti       String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([jti])
+  @@index([expiresAt]) // Para limpeza automática
+}

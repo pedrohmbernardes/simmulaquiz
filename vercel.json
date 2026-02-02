@@ -1,0 +1,16 @@
+{
+  "buildCommand": "prisma generate && next build",
+  "framework": "nextjs",
+  "regions": ["gru1"],
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-blacklist",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/ranking-snapshot",
+      "schedule": "10 6 * * *"
+    }
+  ]
+}

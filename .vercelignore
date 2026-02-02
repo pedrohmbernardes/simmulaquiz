@@ -1,0 +1,55 @@
+# --- DEPENDÊNCIAS E LOGS ---
+node_modules
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- AMBIENTE ---
+.env
+.env.local
+.env.*
+
+# --- EDITOR ---
+.vscode
+.idea
+*.swp
+*.swo
+
+# --- GIT ---
+.git
+.gitignore
+
+# --- DOCUMENTAÇÃO ---
+README.md
+AUDITORIA.md
+LICENSE
+docs/
+PARA-CONSERTAR-MOBILE-FIRST
+
+# --- TESTES (Baseado na sua File Tree) ---
+__tests__/
+coverage/
+cypress/
+cypress.config.ts
+jest.config.js
+*.test.ts
+*.spec.ts
+
+# --- SCRIPTS E SEEDS ---
+# Não precisamos disso no build de produção da Vercel
+# (Você rodará o seed da sua máquina local)
+scripts/
+prisma/seed.ts
+prisma/*.ts
+prisma/*.json
+!prisma/schema.prisma
+!prisma/migrations
+
+# --- ARQUIVOS DE CONFIGURAÇÃO DE DESENVOLVIMENTO ---
+eslint.config.mjs
+postcss.config.mjs
+tailwind.config.ts
+tsconfig.json
+# Nota: next.config.ts e vercel.json DEVEM subir.

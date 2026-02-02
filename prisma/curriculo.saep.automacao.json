@@ -1,0 +1,3295 @@
+{
+  "cursoTecnico": {
+    "codigo": "CT-AUT-001",
+    "nome": "Técnico em Automação Industrial",
+    "descricao": "Eixo Tecnológico: Controle e Processos Industriais | Nível de Educação Profissional: Técnico de Nível Médio | Ano da matriz: 2024 | Versão do itinerário: 2023"
+  },
+  "unidadesCurriculares": [
+    {
+      "codigo": "UC-0001",
+      "nome": "Acionamentos Eletroeletrônicos",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0002",
+      "nome": "Comissionamento de Sistemas Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0003",
+      "nome": "Comunicação e Informática Aplicada",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0004",
+      "nome": "Desenho Técnico Aplicado à Sistemas Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0005",
+      "nome": "Desenvolvimento de Projetos",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0006",
+      "nome": "Fundamentos de Eletroeletrônica",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0007",
+      "nome": "Gestão dos Processos de Implementação de Sistemas Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0008",
+      "nome": "Instrumentação e Controle de Processos Industriais",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0009",
+      "nome": "Integração de Dispositivos Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0010",
+      "nome": "Lógica de Programação",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0011",
+      "nome": "Manutenção de Sistemas Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0012",
+      "nome": "Projetos de Acionamentos Eletroeletrônicos",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0013",
+      "nome": "Projetos de Controle e Sistemas Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0014",
+      "nome": "Projetos de Intertravamento de Segurança de Processos Industriais",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0015",
+      "nome": "Sistemas de Supervisão e Controle",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0016",
+      "nome": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0017",
+      "nome": "Sistemas Eletrônicos e Microcontrolados",
+      "descricao": null
+    },
+    {
+      "codigo": "UC-0018",
+      "nome": "Sistemas Lógicos Programáveis",
+      "descricao": null
+    }
+  ],
+  "funcoes": [
+    {
+      "codigo": "FUNC-0001",
+      "nome": "1 - Implementar dispositivos de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "descricao": null
+    },
+    {
+      "codigo": "FUNC-0002",
+      "nome": "2 - Implementar sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "descricao": null
+    },
+    {
+      "codigo": "FUNC-0003",
+      "nome": "3 - Desenvolver projetos de sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "descricao": null
+    }
+  ],
+  "subfuncoes": [
+    {
+      "codigo": "SUB-FUN-1.1",
+      "nome": "1.1 - Instalar dispositivos eletrônicos e microcontrolados",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.2",
+      "nome": "1.2 - Instalar dispositivos de acionamentos eletroeletrônicos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.3",
+      "nome": "1.3 - Instalar dispositivos de sistemas eletrohidráulicos e eletropneumáticos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.4",
+      "nome": "1.4 - Instalar dispositivos de sistemas de automação e controle de processos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.5",
+      "nome": "1.5 - Instalar Sistemas Lógicos Programáveis",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.6",
+      "nome": "1.6 - Programar Sistemas Lógicos Programáveis",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.7",
+      "nome": "1.7 - Elaborar a proposta de valor da solução inovadora",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-1.8",
+      "nome": "1.8 - Realizar os estudos de viabilidade técnica e financeira da solução inovadora",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "codigo": "SUB-FUN-2.1",
+      "nome": "2.1 - Instalar redes de comunicação industrial em sistemas de automação e controle de processos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-2.2",
+      "nome": "2.2 - Integrar dispositivos e sistemas para controle e automação de processos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-2.3",
+      "nome": "2.3 - Desenvolver interfaces de sistemas de supervisão e controle",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-2.4",
+      "nome": "2.4 - Realizar o comissionamento de dispositivos e sistemas de automação e controle de processos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-2.5",
+      "nome": "2.5 - Manter sistemas de automação e controle de processos",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-2.6",
+      "nome": "2.6 - Realizar a gestão operacional dos processos para implementação de sistemas de automação e controle",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-2.7",
+      "nome": "2.7 - Elaborar os protótipos da solução inovadora",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "codigo": "SUB-FUN-3.1",
+      "nome": "3.1 - Elaborar projetos de acionamentos elétricos para sistemas de automação e controle de processos industriais",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    },
+    {
+      "codigo": "SUB-FUN-3.2",
+      "nome": "3.2 - Elaborar projetos eletrohidráulicos e eletropneumáticos para sistemas de automação e controle de processos industriais",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    },
+    {
+      "codigo": "SUB-FUN-3.3",
+      "nome": "3.3 - Elaborar projetos de sistemas de controle de variáveis de processos industriais",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    },
+    {
+      "codigo": "SUB-FUN-3.4",
+      "nome": "3.4 - Elaborar projeto de sistemas automatizados",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    },
+    {
+      "codigo": "SUB-FUN-3.5",
+      "nome": "3.5 - Elaborar projetos de sistemas de intertravamento automatizado para segurança de processos industriais",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    },
+    {
+      "codigo": "SUB-FUN-3.6",
+      "nome": "3.6 - Elaborar estratégia de implementação para a solução inovadora",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    },
+    {
+      "codigo": "SUB-FUN-3.7",
+      "nome": "3.7 - Elaborar a estratégia de venda do produto/serviço",
+      "descricao": null,
+      "funcaoCodigo": "FUNC-03"
+    }
+  ],
+  "capacidades": [
+    {
+      "codigo": "CAP-TEC-0001",
+      "sigla": "C1",
+      "descricao": "Aplicar fundamentos da matemática na eletroeletrônica com seus símbolos, desenhos técnicos em sistemas automatizados"
+    },
+    {
+      "codigo": "CAP-TEC-0002",
+      "sigla": "C2",
+      "descricao": "Interpretar circuitos de acionamentos, instalação e manutenção de sistemas automatizados"
+    },
+    {
+      "codigo": "CAP-TEC-0003",
+      "sigla": "C3",
+      "descricao": "Interpretar procedimentos de parametrização e configuração em equipamentos automatizados industriais"
+    },
+    {
+      "codigo": "CAP-TEC-0004",
+      "sigla": "C4",
+      "descricao": "Empregar técnicas de programação e configuração em sistemas lógicos de controle"
+    },
+    {
+      "codigo": "CAP-TEC-0005",
+      "sigla": "C5",
+      "descricao": "Analisar procedimentos de manutenção e comissionamento em sistemas automatizados"
+    },
+    {
+      "codigo": "CAP-TEC-0006",
+      "sigla": "C6",
+      "descricao": "Estruturar tratamento de dados, supervisão e configuração de dispositivos em sistemas automatizados"
+    },
+    {
+      "codigo": "CAP-TEC-0007", 
+      "sigla": "C7",
+      "descricao": "Analisar informações técnicas de processos automatizados industriais"
+    },
+    {
+      "codigo": "CAP-TEC-0008",
+      "sigla": "C8",
+      "descricao": "Avaliar características do ambiente de instalação e aspectos de segurança industrial"
+    },
+    {
+      "codigo": "CAP-TEC-0009", 
+      "sigla": "C9",
+      "descricao": "Executar procedimentos de montagem de acordo com as especificações do projeto, manuais do fabricante e datasheets"
+    },
+    {
+      "codigo": "CAP-TEC-0010",
+      "sigla": "C10",
+      "descricao": "Realizar calibração, manutenção e testes de sistemas automatizados"
+    }
+  ],
+  "conhecimentos": [
+    {
+      "codigo": "OBJ-CONH-00001",
+      "nome": "1 - Instrumentos de Medição Elétrica",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00002",
+      "nome": "2 - Simbologia e Diagramas",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00003",
+      "nome": "3 - Circuitos CA e CC",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00004",
+      "nome": "4 - Equipamentos, Dispositivos e Sistemas",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00005",
+      "nome": "5 - Sensores Digitais e Analógicos",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00006",
+      "nome": "6 - Acionamento Eletrônico de Motores",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00007",
+      "nome": "7 - Parametrização de Instrumentos da Malha de Controle",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00008",
+      "nome": "8 - Instrumentos de Medição e Controle",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00009",
+      "nome": "9 - Controladores Lógicos Programáveis",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00010",
+      "nome": "10 - Controle de Processos",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00011",
+      "nome": "11 - Microcontroladores",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00012",
+      "nome": "12 - Programação de Supervisório e IHM",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00013",
+      "nome": "13 - Fundamentos da Manutenção em Sistemas Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00014",
+      "nome": "14 - Testes de dispositivos",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00015",
+      "nome": "15 - Redes Industriais",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00016",
+      "nome": "16 - Protocolos de Redes Industriais",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00017",
+      "nome": "17 - Bancos de Dados",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00018",
+      "nome": "18 - Desenvolvimento de Supervisório e IHM",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00019",
+      "nome": "19 - Gestão de Processos",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00020",
+      "nome": "20 - Instrumentação Industrial",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00021",
+      "nome": "21 - Dimensionamento de Acionamento",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00022",
+      "nome": "22 - Desenvolvimentos Eletropneumáticos e Eletrohidráulicos",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00023",
+      "nome": "23 - Normas técnicas aplicadas",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00024",
+      "nome": "24 - Fundamentos e Documentações para Projetos Automatizados",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00025",
+      "nome": "25 - Especificação de Sistema de Intertravamento",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00026",
+      "nome": "26 - Lógica de Intertravamento",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00027",
+      "nome": "27 - Detalhamento da Infraestrutura de Automação",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00028",
+      "nome": "28 - Contadores, temporizadores e controladores",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00029",
+      "nome": "29 - Dispositivos elétricos de segurança de máquinas (NR12)",
+      "descricao": null
+    },
+    {
+      "codigo": "OBJ-CONH-00030",
+      "nome": "30 - Acionamentos convencionais de motores",
+      "descricao": null
+    }
+  ],
+  "subConhecimentos": [
+    {
+      "codigo": "SUB-CO-000001",
+      "nome": "Instrumentos de medição",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000002",
+      "nome": "Ohmímetro",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000003",
+      "nome": "Amperímetro",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000004",
+      "nome": "Voltímetro",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000005",
+      "nome": "Multímetros",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000006",
+      "nome": "Wattímetro",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000007",
+      "nome": "Megômetro",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000008",
+      "nome": "Osciloscópio",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "codigo": "SUB-CO-000009",
+      "nome": "Leitura e Interpretação de Desenhos Técnicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000010",
+      "nome": "Instrumentos e utensílios de desenho",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000011",
+      "nome": "Formatos de papel e dobramentos de folhas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000012",
+      "nome": "Aplicação de linhas em desenhos - tipos de linhas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000013",
+      "nome": "Escrita",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000014",
+      "nome": "Simbologia",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000015",
+      "nome": "Cota do desenho",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000016",
+      "nome": "Diagramas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000017",
+      "nome": "Perspectivas, vistas e cortes",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000018",
+      "nome": "Folha de desenho - layout e dimensões",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000019",
+      "nome": "Planta baixa, situação e implantação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "codigo": "SUB-CO-000020",
+      "nome": "Circuitos Elétricos em Corrente Contínua (CC)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000021",
+      "nome": "Associação de resistores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000022",
+      "nome": "Paralelo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000023",
+      "nome": "Série",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000024",
+      "nome": "Misto",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000025",
+      "nome": "Leis e teoremas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000026",
+      "nome": "Kirchhoff",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000027",
+      "nome": "Ohm (1ª e 2ª lei)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000028",
+      "nome": "Tipos de cargas em circuitos e simbologias",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000029",
+      "nome": "Capacitivas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000030",
+      "nome": "Indutivas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000031",
+      "nome": "Resistivas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000032",
+      "nome": "Circuitos Elétricos em Corrente Alternada (CA)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000033",
+      "nome": "Matemática aplicada a Circuitos de Corrente Alternada",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000034",
+      "nome": "Trigonometria",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000035",
+      "nome": "Números complexos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000036",
+      "nome": "Corrente elétrica alternada",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000037",
+      "nome": "Amplitude",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000038",
+      "nome": "Período",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000039",
+      "nome": "Frequência",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000040",
+      "nome": "Potência em circuitos de corrente alternada",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000041",
+      "nome": "Fator de potência",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000042",
+      "nome": "Aparente",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000043",
+      "nome": "Reativa",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000044",
+      "nome": "Ativa",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000045",
+      "nome": "Circuito em corrente alternada",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000046",
+      "nome": "Resistivo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000047",
+      "nome": "Indutivo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000048",
+      "nome": "Capacitivo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000049",
+      "nome": "Impedância (RL, RC e RLC)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "codigo": "SUB-CO-000050",
+      "nome": "Instrumentos de Sistema de Controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000051",
+      "nome": "Sensores e Transmissores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000052",
+      "nome": "Pressão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000053",
+      "nome": "Temperatura",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000054",
+      "nome": "Vazão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000055",
+      "nome": "Nível",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000056",
+      "nome": "Indicadores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000057",
+      "nome": "Analógicos e Digitais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000058",
+      "nome": "Controladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000059",
+      "nome": "Universal, dedicado, multimalha",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000060",
+      "nome": "Elementos Finais de Controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000061",
+      "nome": "Posicionador",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000062",
+      "nome": "Válvulas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000063",
+      "nome": "Calibração e Testes de Funcionamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "codigo": "SUB-CO-000064",
+      "nome": "Sensores Digitais e Analógicos (características e aplicações)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000065",
+      "nome": "Sensores ópticos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000066",
+      "nome": "Sensores de ultrassom",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000067",
+      "nome": "Sensores indutivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000068",
+      "nome": "Sensores capacitivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000069",
+      "nome": "Sensores de pressão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000070",
+      "nome": "Sensores de aceleração",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000071",
+      "nome": "Células de carga",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000072",
+      "nome": "Sensores de temperatura",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000073",
+      "nome": "Sensores de posição linear",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000074",
+      "nome": "Transdutores industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "codigo": "SUB-CO-000075",
+      "nome": "Tipos (chave soft starter, inversor de frequência e servoacionamento)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "codigo": "SUB-CO-000076",
+      "nome": "Especificação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "codigo": "SUB-CO-000077",
+      "nome": "Parametrização",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "codigo": "SUB-CO-000078",
+      "nome": "Comissionamento, diagnóstico e parametrização via aplicativo web",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "codigo": "SUB-CO-000079",
+      "nome": "Configuração de Dispositivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000080",
+      "nome": "Parametrização local e remota",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000081",
+      "nome": "Sinais de Entrada e Saída",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000082",
+      "nome": "Valores de Operação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000083",
+      "nome": "Sintonia de Controle (PID)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000084",
+      "nome": "Alarme",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000085",
+      "nome": "Comunicação via Aplicativo (IoT)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "codigo": "SUB-CO-000086",
+      "nome": "Instrumentos de Sistema de Controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000087",
+      "nome": "Sensores e Transmissores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000088",
+      "nome": "Pressão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000089",
+      "nome": "Temperatura",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000090",
+      "nome": "Vazão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000091",
+      "nome": "Nível",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000092",
+      "nome": "Indicadores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000093",
+      "nome": "Analógicos e Digitais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000094",
+      "nome": "Controladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000095",
+      "nome": "Universal, dedicado, multimalha",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000096",
+      "nome": "Elementos Finais de Controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000097",
+      "nome": "Posicionador",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000098",
+      "nome": "Válvulas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000099",
+      "nome": "Calibração e Testes de Funcionamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "codigo": "SUB-CO-000100",
+      "nome": "Software de Programação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000101",
+      "nome": "Configuração",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000102",
+      "nome": "Comandos Operacionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000103",
+      "nome": "Fluxogramas e listas de tarefas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000104",
+      "nome": "Uso da interface de programação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000105",
+      "nome": "Instalação e testes de funcionalidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000106",
+      "nome": "Simulação de CLP",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000107",
+      "nome": "Simulação de sistemas automatizados e plantas industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000108",
+      "nome": "Programação de Controlador Lógico Programável (CLP)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000109",
+      "nome": "Mapa de entradas e saídas (digitais e analógicas)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000110",
+      "nome": "Varredura (scan) do programa",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000111",
+      "nome": "Linguagens de Programação Normalizadas pela IEC 61131-3",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000112",
+      "nome": "Diagrama Ladder – LD",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000113",
+      "nome": "Lista de Instrução – IL",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000114",
+      "nome": "Texto Estruturado – ST",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000115",
+      "nome": "Diagrama de Blocos Funcionais – FBD",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000116",
+      "nome": "Diagrama de Função Sequencial – SFC (Grafcet)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000117",
+      "nome": "Estruturas básicas de programação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000118",
+      "nome": "Instruções de Programação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000119",
+      "nome": "Temporizadores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000120",
+      "nome": "Contadores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000121",
+      "nome": "Manipuladores de Dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000122",
+      "nome": "Matemática",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000123",
+      "nome": "Registro e deslocamento de dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000124",
+      "nome": "Técnicas estruturadas de programação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000125",
+      "nome": "Tratamento de um sinal analógico",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000126",
+      "nome": "Situações Marginais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000127",
+      "nome": "Lógicas de emergência",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000128",
+      "nome": "Lógicas de segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000129",
+      "nome": "Reset",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000130",
+      "nome": "Ciclo automático, ciclo passo a passo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000131",
+      "nome": "Rendimento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000132",
+      "nome": "Alarmes",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000133",
+      "nome": "Diagrama elétrico",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "codigo": "SUB-CO-000134",
+      "nome": "Programação de Controles de Sistemas Automatizados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000135",
+      "nome": "Controles Malha Aberta e Fechada",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000136",
+      "nome": "Sistemas Discretos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000137",
+      "nome": "Temperatura",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000138",
+      "nome": "Pressão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000139",
+      "nome": "Vazão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000140",
+      "nome": "Nível",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000141",
+      "nome": "Controles de Sistemas Automatizados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000142",
+      "nome": "ON-OFF",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000143",
+      "nome": "Proporcional - P",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000144",
+      "nome": "Proporcional Integral - PI",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000145",
+      "nome": "Proporcional Integral e Derivativo - PID",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000146",
+      "nome": "Sintonia do Controlador",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000147",
+      "nome": "Controle de Dispositivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000148",
+      "nome": "Relé de estado sólido",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000149",
+      "nome": "Válvulas Proporcionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000150",
+      "nome": "Controle de Inversores de Frequência",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000151",
+      "nome": "Controle de Servoconversor",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000152",
+      "nome": "Controles via sistema de supervisão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000153",
+      "nome": "Internet das Coisas Industrial - IoT",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000154",
+      "nome": "Plataforma em Nuvem (Node-Red, TAGOIO, WEGNology)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000155",
+      "nome": "OPC-UA",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "codigo": "SUB-CO-000156",
+      "nome": "Microcontroladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000157",
+      "nome": "Arquitetura de microcontroladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000158",
+      "nome": "Tipos de microcontroladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000159",
+      "nome": "Identificação de terminais e teste de funcionamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000160",
+      "nome": "Algoritmos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000161",
+      "nome": "Programação de microcontroladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000162",
+      "nome": "Tipos de dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000163",
+      "nome": "Expressões aritméticas, relacionais, lógicas, binárias e modeladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000164",
+      "nome": "Estruturas de decisão e repetição",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000165",
+      "nome": "Interrupções internas e externas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000166",
+      "nome": "Entradas e saídas analógicas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000167",
+      "nome": "Entrada e saída de dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000168",
+      "nome": "Protocolos de comunicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000169",
+      "nome": "Simulação do funcionamento através de software",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "codigo": "SUB-CO-000170",
+      "nome": "Softwares de Desenvolvimento de Supervisório e IHM",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000171",
+      "nome": "Configuração",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000172",
+      "nome": "Comandos Operacionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000173",
+      "nome": "Fluxogramas e listas de tarefas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000174",
+      "nome": "Uso da interface de programação e elaboração de telas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000175",
+      "nome": "Instalação e testes de funcionalidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000176",
+      "nome": "Simulação de variáveis em protocolos de redes industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000177",
+      "nome": "Simulação de sistemas automatizados e plantas industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000178",
+      "nome": "Protocolo de comunicação com CLP",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000179",
+      "nome": "Criação de Telas POP-UP’S",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000180",
+      "nome": "Criação de Telas dinâmicas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000181",
+      "nome": "Desenvolvimento de supervisório com Dashboards em API (Node-Red, TAGOIO)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "codigo": "SUB-CO-000182",
+      "nome": "Fundamentos da Manutenção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000183",
+      "nome": "Tipos de manutenção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000184",
+      "nome": "Preventiva",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000185",
+      "nome": "Preditiva",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000186",
+      "nome": "Corretiva",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000187",
+      "nome": "Registros da manutenção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000188",
+      "nome": "Serviços de manutenção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000189",
+      "nome": "Validação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000190",
+      "nome": "Relatórios",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000191",
+      "nome": "Plano de Manutenção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000192",
+      "nome": "Metodologias Aplicadas na Manutenção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000193",
+      "nome": "Manutenção Produtiva Total (TPM)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000194",
+      "nome": "Manutenção de Classe Mundial (WCM)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000195",
+      "nome": "Manutenção Centrada na Confiabilidade (RCM)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000196",
+      "nome": "Causas de Falhas e Defeitos em Sistemas Automatizados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000197",
+      "nome": "Sistemas de alimentação elétrica instáveis",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000198",
+      "nome": "Conexões com mau contato",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000199",
+      "nome": "Descargas atmosféricas e surtos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000200",
+      "nome": "Deterioração dos dispositivos e equipamentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000201",
+      "nome": "Operação inadequada de dispositivos, equipamentos e processos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000202",
+      "nome": "Obstrução por falta de limpeza",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000203",
+      "nome": "Aquecimento excessivo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000204",
+      "nome": "Fuga de corrente",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000205",
+      "nome": "Curto-circuito",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000206",
+      "nome": "Interferência eletromagnética",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000207",
+      "nome": "Interferência eletrostática",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000208",
+      "nome": "Falhas de comunicação durante a troca de dados remota",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000209",
+      "nome": "Ajustes e configurações de dispositivos e equipamentos na rede de comunicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000210",
+      "nome": "Falha na configuração e endereçamento dos dispositivos e equipamentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "codigo": "SUB-CO-000211",
+      "nome": "Procedimentos de Manutenção em Sistemas Automatizados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000212",
+      "nome": "Testes em circuitos de alimentação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000213",
+      "nome": "Medida de tensão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000214",
+      "nome": "Medida de corrente",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000215",
+      "nome": "Testes dos dispositivos e equipamentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000216",
+      "nome": "Teste de verificação via software",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000217",
+      "nome": "Reparos ou substituições",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000218",
+      "nome": "Conexões e interligações",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000219",
+      "nome": "Dispositivos e equipamentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000220",
+      "nome": "Dispositivos de proteção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000221",
+      "nome": "Limpeza e reaperto das conexões",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000222",
+      "nome": "Ferramentas Manuais, Equipamentos e Instrumentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000223",
+      "nome": "Tipos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000224",
+      "nome": "Características",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000225",
+      "nome": "Manuseio, guarda e conservação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000226",
+      "nome": "Ferramentas de Qualidade aplicadas à manutenção de sistemas de automação e controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000227",
+      "nome": "Comissionamento de Dispositivos em Sistemas Automatizados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000228",
+      "nome": "Planejamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000229",
+      "nome": "Lista de tarefas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000230",
+      "nome": "Cronograma",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000231",
+      "nome": "Inspeção de Montagem (mecânica/elétrica)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000232",
+      "nome": "Calibração de instrumentos e válvulas de controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000233",
+      "nome": "Testes e Verificação de funcionamento dos dispositivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000234",
+      "nome": "Teste Controlador Lógico Programável",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000235",
+      "nome": "Testes de Inversores e conversores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000236",
+      "nome": "Testes da Interface Humano Máquina - IHM",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000237",
+      "nome": "Testes de dispositivos eletropneumáticos e eletrohidráulicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000238",
+      "nome": "Testes de dispositivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "codigo": "SUB-CO-000239",
+      "nome": "Redes Industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000240",
+      "nome": "Conceitos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000241",
+      "nome": "Tipos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000242",
+      "nome": "Aplicações",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000243",
+      "nome": "Níveis de uma rede industrial",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000244",
+      "nome": "Modelo OSI/ISO",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000245",
+      "nome": "Características",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000246",
+      "nome": "Funções",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000247",
+      "nome": "Camadas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000248",
+      "nome": "Topologia e Arquitetura de Rede",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000249",
+      "nome": "Anel",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000250",
+      "nome": "Barramento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000251",
+      "nome": "Estrela",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000252",
+      "nome": "Redes locais e de longas distâncias",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000253",
+      "nome": "Mestre/Escravo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000254",
+      "nome": "Cliente/Servidor",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000255",
+      "nome": "Comunicação multimestre",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000256",
+      "nome": "Comunicação ponto-a-ponto",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000257",
+      "nome": "Multitransmissão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000258",
+      "nome": "Configuração de Redes Industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000259",
+      "nome": "Critérios de Seleção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000260",
+      "nome": "Determinismo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000261",
+      "nome": "Velocidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000262",
+      "nome": "Redundância",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000263",
+      "nome": "Sistemas de controle redundante",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000264",
+      "nome": "Redundância de meio físico",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000265",
+      "nome": "Segurança de Redes Industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000266",
+      "nome": "Introdução e conceitos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000267",
+      "nome": "Regras de segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000268",
+      "nome": "Meios Físicos de Comunicação de Dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000269",
+      "nome": "Par trançado",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000270",
+      "nome": "Cabo coaxial",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000271",
+      "nome": "Fibra óptica",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000272",
+      "nome": "Wireless",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "codigo": "SUB-CO-000273",
+      "nome": "Protocolos de Comunicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000274",
+      "nome": "Protocolos Lógicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000275",
+      "nome": "Tipos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000276",
+      "nome": "Características",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000277",
+      "nome": "Protocolos Físicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000278",
+      "nome": "Tipos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000279",
+      "nome": "Características",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000280",
+      "nome": "Protocolos de Redes Industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000281",
+      "nome": "Hart",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000282",
+      "nome": "MODBUS",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000283",
+      "nome": "CanOpen",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000284",
+      "nome": "DeviceNet",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000285",
+      "nome": "Foundation Fieldbus",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000286",
+      "nome": "PROFIBUS",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000287",
+      "nome": "ASi",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000288",
+      "nome": "Ethernet IP",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000289",
+      "nome": "Profinet",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000290",
+      "nome": "MQTT",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000291",
+      "nome": "IOLink",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000292",
+      "nome": "Ethercat",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000293",
+      "nome": "OPC (OLE for Process Control)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000294",
+      "nome": "OPC UA",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "codigo": "SUB-CO-000295",
+      "nome": "Sistema de Armazenamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000296",
+      "nome": "Conexão com SGBD (MySQL)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000297",
+      "nome": "Conexão com arquivos (NoSQL e SQL)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000298",
+      "nome": "Tratamento e Comunicação de Dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000299",
+      "nome": "Protocolos de comunicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000300",
+      "nome": "Requisitos de dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000301",
+      "nome": "Programação de scripts",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000302",
+      "nome": "Manipulação de Dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000303",
+      "nome": "Sistemas Supervisórios",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000304",
+      "nome": "Banco de dados (SQL)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "codigo": "SUB-CO-000305",
+      "nome": "Funcionalidades do sistema de supervisão",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000306",
+      "nome": "Modos de comunicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000307",
+      "nome": "Configuração do driver de comunicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000308",
+      "nome": "Desenvolvimento de interfaces gráficas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000309",
+      "nome": "Mapa de registradores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000310",
+      "nome": "Aquisição de dados do processo (indicadores de produtividade e de manutenção)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000311",
+      "nome": "Visualização de dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000312",
+      "nome": "Gráficos de Tendência e Históricos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000313",
+      "nome": "Processamento de alarmes",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000314",
+      "nome": "Histórico de falhas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000315",
+      "nome": "Gerenciamento de acesso por usuários",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000316",
+      "nome": "Criação de Telas POP-UP’S",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000317",
+      "nome": "Criação de Telas dinâmicas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000318",
+      "nome": "Internet Industrial das Coisas - IIoT",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000319",
+      "nome": "Desenvolvimento de supervisório web na memória CLP",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000320",
+      "nome": "Desenvolvimento de supervisório com Dashboards em API (Node-Red, TAGOIO)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000321",
+      "nome": "Integração dos Sistemas de Supervisão com Banco de Dados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "codigo": "SUB-CO-000322",
+      "nome": "Integração do Sistema SCADA com MES e ERP",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-18"
+    },
+
+    {
+      "codigo": "SUB-CO-000324",
+      "nome": "Gestão dos Processos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000325",
+      "nome": "Ferramentas de Controle: Tipos, Características e Aplicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000326",
+      "nome": "Diagrama de Pareto",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000327",
+      "nome": "Lista de verificação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000328",
+      "nome": "Relatório A3",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000329",
+      "nome": "Sustentabilidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000330",
+      "nome": "Princípios",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000331",
+      "nome": "Indicadores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000332",
+      "nome": "Softwares de controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000333",
+      "nome": "Conceito",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000334",
+      "nome": "Operação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000335",
+      "nome": "Análise",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000336",
+      "nome": "Planejamento Operacional",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000337",
+      "nome": "Conceito e aplicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000338",
+      "nome": "Documentos normativos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000339",
+      "nome": "Legislações e normas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000340",
+      "nome": "Diretrizes internas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000341",
+      "nome": "Procedimentos Operacionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000342",
+      "nome": "Instruções de trabalho",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000343",
+      "nome": "Ferramentas de Planejamento: Tipos, Características e Aplicação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000344",
+      "nome": "Fluxograma",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000345",
+      "nome": "Ciclo PDCA",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000346",
+      "nome": "Cronograma",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000347",
+      "nome": "5W2H",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000348",
+      "nome": "Diagrama de Causa e Efeito",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000349",
+      "nome": "Matriz SWOT",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000350",
+      "nome": "Perfis profissionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "codigo": "SUB-CO-000351",
+      "nome": "Projetos de Sistemas de Controle de Variáveis",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000352",
+      "nome": "Elaboração de Diagrama P&I",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000353",
+      "nome": "Especificação de dispositivos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000354",
+      "nome": "Sensores discretos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000355",
+      "nome": "Válvulas de acionamento elétrico",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000356",
+      "nome": "Válvulas Proporcionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000357",
+      "nome": "Sensores e transmissores de Variáveis",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000358",
+      "nome": "Simulação de sistemas em plataforma para comissionamento virtual",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "codigo": "SUB-CO-000360",
+      "nome": "Dimensionamento e Seleção do Sistema de Acionamentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000361",
+      "nome": "Condutores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000362",
+      "nome": "Capacidade de condução de corrente (IZ)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000363",
+      "nome": "Queda de tensão (ΔV)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000364",
+      "nome": "Seção normalizada",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000365",
+      "nome": "Dispositivos de proteção",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000366",
+      "nome": "Sobrecarga",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000367",
+      "nome": "Curto-circuito",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000368",
+      "nome": "Dispositivos de Proteção Contra Surtos (DPS)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000369",
+      "nome": "Réel de segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000370",
+      "nome": "Relé Contator",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000371",
+      "nome": "Método de partida do motor",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000372",
+      "nome": "Convencional",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000373",
+      "nome": "Partida suave (soft starter)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000374",
+      "nome": "Inversor de frequência",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000375",
+      "nome": "Servoconversor",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000376",
+      "nome": "Método de dimensionamento e seleção via WEB e APP do fabricante",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "codigo": "SUB-CO-000377",
+      "nome": "Projetos Eletropneumáticos e Eletrohidráulicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "codigo": "SUB-CO-000378",
+      "nome": "Elaboração de diagramas de interligações",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "codigo": "SUB-CO-000379",
+      "nome": "Especificação dos componentes do circuito",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "codigo": "SUB-CO-000380",
+      "nome": "Lógica de funcionamento do sistema",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "codigo": "SUB-CO-000381",
+      "nome": "Simulação de sistemas em softwares",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "codigo": "SUB-CO-000382",
+      "nome": "Normas Técnicas (NBR, Normas Internacionais), Normas Regulamentadoras e Documentação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000383",
+      "nome": "Norma IEC 61131-3",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000384",
+      "nome": "Normas ISA 5.1",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000385",
+      "nome": "Normas Regulamentadoras",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000386",
+      "nome": "NR 6",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000387",
+      "nome": "Manual de fabricante",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000388",
+      "nome": "Procedimentos Técnicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000389",
+      "nome": "Ordem de Serviço",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "codigo": "SUB-CO-000390",
+      "nome": "Gestão de Projetos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000391",
+      "nome": "Delimitação de atividades",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000392",
+      "nome": "Ferramentas da Qualidade: PDCA, Matriz SWOT, PARETO",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000393",
+      "nome": "Definição de etapas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000394",
+      "nome": "Previsão de recursos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000395",
+      "nome": "Elaboração de cronogramas",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000396",
+      "nome": "Documentação Técnica do Projeto",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000397",
+      "nome": "Conceitual, Básico e executivo do projeto",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000398",
+      "nome": "Fluxograma de processo e engenharia",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000399",
+      "nome": "Dados de processo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000400",
+      "nome": "Lista de materiais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000401",
+      "nome": "Folha de dados de instrumentos e equipamentos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000402",
+      "nome": "Planta de classificação da área",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000403",
+      "nome": "Leiaute da sala de controle, Painéis e Armários",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000404",
+      "nome": "Lista de cabos/Diagrama de fiação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000405",
+      "nome": "Diagrama de causa e efeito",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000406",
+      "nome": "Diagrama de malha de controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000407",
+      "nome": "Detalhes típicos de instalação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000408",
+      "nome": "Memorial descritivo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000409",
+      "nome": "Memorial de cálculo",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000410",
+      "nome": "Lógica de funcionamento do sistema",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "codigo": "SUB-CO-000411",
+      "nome": "Especificação de Sistema de Intertravamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000412",
+      "nome": "Definição do nível de integridade e segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000413",
+      "nome": "Análise de Risco em indústrias de processos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000414",
+      "nome": "Níveis de segurança (SIL)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000415",
+      "nome": "Dispositivos do Sistema",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000416",
+      "nome": "Transmissores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000417",
+      "nome": "Controladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000418",
+      "nome": "Atuadores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000419",
+      "nome": "Operação remota via App e IIoT",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000420",
+      "nome": "Sistema de votação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000421",
+      "nome": "Parada segura",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000422",
+      "nome": "Confiabilidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000423",
+      "nome": "Disponibilidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000424",
+      "nome": "Redundâncias",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "codigo": "SUB-CO-000426",
+      "nome": "Lógica de Intertravamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "codigo": "SUB-CO-000427",
+      "nome": "Sistema de votação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "codigo": "SUB-CO-000428",
+      "nome": "Parada segura",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "codigo": "SUB-CO-000429",
+      "nome": "Confiabilidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "codigo": "SUB-CO-000430",
+      "nome": "Disponibilidade",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "codigo": "SUB-CO-000431",
+      "nome": "Redundâncias",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "codigo": "SUB-CO-000432",
+      "nome": "Projetos de Sistemas Automatizados",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000433",
+      "nome": "Elaboração de Fluxograma do funcionamento do sistema",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000434",
+      "nome": "Lista de Dispositivos do sistema",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000435",
+      "nome": "Especificação dos módulos de entradas e saídas do CLP",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000436",
+      "nome": "Definição de Hardware dos dispositivos de controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000437",
+      "nome": "Definição do mapeamento de TAG’S para o sistema de supervisão e controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000438",
+      "nome": "Definição do Software e Hardware do supervisor e IHM",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000439",
+      "nome": "Diagrama do CLP, conexões elétricas e de redes industriais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000440",
+      "nome": "Definição do Protocolo de comunicação do sistema",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000441",
+      "nome": "Diagrama da Topologia da Rede Industrial",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000442",
+      "nome": "Mapeamento de I/O’s físicas e de memórias",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000443",
+      "nome": "Definição da plataforma de Nuvem e API para sistema de supervisão e controle",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "codigo": "SUB-CO-000444",
+      "nome": "Instalação de Componentes",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "codigo": "SUB-CO-000445",
+      "nome": "Controladores",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "codigo": "SUB-CO-000446",
+      "nome": "Relés Temporizadores (retardo na energização e desenergização, pulso na energização e cíclicos)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "codigo": "SUB-CO-000447",
+      "nome": "Dispositivos Elétricos de Segurança de máquinas (NR12)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000448",
+      "nome": "Relé de Segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000449",
+      "nome": "Contator de Segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000450",
+      "nome": "Comando Bimanual",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000451",
+      "nome": "Botão de Emergência com Contato Monitorado",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000452",
+      "nome": "Sensor Magnético RFID",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000453",
+      "nome": "Chaves de Intertravamento",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000454",
+      "nome": "Barreira de Luz",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "codigo": "SUB-CO-000455",
+      "nome": "Acionamentos convencionais",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000456",
+      "nome": "Tipos: direta (com e sem reversão), indireta (estrela - triângulo)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000457",
+      "nome": "Características",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000458",
+      "nome": "Especificação",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000459",
+      "nome": "Montagem",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000460",
+      "nome": "Dispositivos de comando, manobra, sinalização e proteção (Características, identificação, simbologia, especificações)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000461",
+      "nome": "Botões de comando",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000462",
+      "nome": "Sinalização: luminosa e sonora",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000463",
+      "nome": "Contatores de potência",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000464",
+      "nome": "Contatores auxiliares",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000465",
+      "nome": "Relés temporizadores (retardo na energização e desenergização, pulso na energização e cíclicos)",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000466",
+      "nome": "Relés de proteção contra sobrecarga",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000467",
+      "nome": "Relés falta de fase",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000468",
+      "nome": "Relés de monitoramento de nível",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000469",
+      "nome": "Disjuntor motor",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000470",
+      "nome": "Fusíveis",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000471",
+      "nome": "Disjuntores com conectividade wireless e controle via aplicativo web",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000472",
+      "nome": "Interruptor Diferencial Residual - IDR",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000473",
+      "nome": "Disjuntor Termomagnético",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000474",
+      "nome": "Ferramentas da Qualidade aplicada a montagem",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000475",
+      "nome": "Relé de Segurança",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "codigo": "SUB-CO-000476",
+      "nome": "Testes de funcionamento de dispositivos de acionamentos eletroeletrônicos",
+      "descricao": null,
+      "conhecimentoCodigo": "CONH-30"
+    }
+  ]
+}

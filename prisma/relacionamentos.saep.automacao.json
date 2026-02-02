@@ -1,0 +1,666 @@
+{
+  "cursoFuncoes": [
+    {
+      "cursoCodigo": "CT-AUT-001",
+      "funcaoCodigo": "FUNC-01"
+    },
+    {
+      "cursoCodigo": "CT-AUT-001",
+      "funcaoCodigo": "FUNC-02"
+    },
+    {
+      "cursoCodigo": "CT-AUT-001",
+      "funcaoCodigo": "FUNC-03"
+    }
+  ],
+  "unidadeCurricularConhecimentos": [
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-01",
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-02",
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-02",
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-03",
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-03",
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-03",
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-04",
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-04",
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-04",
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-04",
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-04",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-04",
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-05",
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-05",
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-05",
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-05",
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-06",
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-06",
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-07",
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-07",
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-08",
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-09",
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-09",
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-09",
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-09",
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-09",
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-10",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-10",
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-10",
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-11",
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-11",
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-12",
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-13",
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-14",
+      "conhecimentoCodigo": "CONH-29"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-15",
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-15",
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-15",
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-15",
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-15",
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-16",
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-16",
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-16",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-16",
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-17",
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-17",
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-17",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-17",
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-17",
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-17",
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "unidadeCurricularCodigo": "UC-18",
+      "conhecimentoCodigo": "CONH-30"
+    }
+  ],
+  "capacidadeConhecimentos": [
+    {
+      "capacidadeSigla": "C1",
+      "conhecimentoCodigo": "CONH-01"
+    },
+    {
+      "capacidadeSigla": "C1",
+      "conhecimentoCodigo": "CONH-03"
+    },
+    {
+      "capacidadeSigla": "C2",
+      "conhecimentoCodigo": "CONH-02"
+    },
+    {
+      "capacidadeSigla": "C2",
+      "conhecimentoCodigo": "CONH-05"
+    },
+    {
+      "capacidadeSigla": "C2",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "capacidadeSigla": "C2",
+      "conhecimentoCodigo": "CONH-30"
+    },
+    {
+      "capacidadeSigla": "C3",
+      "conhecimentoCodigo": "CONH-06"
+    },
+    {
+      "capacidadeSigla": "C3",
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "capacidadeSigla": "C3",
+      "conhecimentoCodigo": "CONH-08"
+    },
+    {
+      "capacidadeSigla": "C3",
+      "conhecimentoCodigo": "CONH-28"
+    },
+    {
+      "capacidadeSigla": "C4",
+      "conhecimentoCodigo": "CONH-04"
+    },
+    {
+      "capacidadeSigla": "C4",
+      "conhecimentoCodigo": "CONH-07"
+    },
+    {
+      "capacidadeSigla": "C4",
+      "conhecimentoCodigo": "CONH-09"
+    },
+    {
+      "capacidadeSigla": "C4",
+      "conhecimentoCodigo": "CONH-10"
+    },
+    {
+      "capacidadeSigla": "C4",
+      "conhecimentoCodigo": "CONH-11"
+    },
+    {
+      "capacidadeSigla": "C4",
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "capacidadeSigla": "C5",
+      "conhecimentoCodigo": "CONH-13"
+    },
+    {
+      "capacidadeSigla": "C5",
+      "conhecimentoCodigo": "CONH-14"
+    },
+    {
+      "capacidadeSigla": "C6",
+      "conhecimentoCodigo": "CONH-12"
+    },
+    {
+      "capacidadeSigla": "C6",
+      "conhecimentoCodigo": "CONH-15"
+    },
+    {
+      "capacidadeSigla": "C6",
+      "conhecimentoCodigo": "CONH-16"
+    },
+    {
+      "capacidadeSigla": "C6",
+      "conhecimentoCodigo": "CONH-17"
+    },
+    {
+      "capacidadeSigla": "C6",
+      "conhecimentoCodigo": "CONH-18"
+    },
+    {
+      "capacidadeSigla": "C7",
+      "conhecimentoCodigo": "CONH-19"
+    },
+    {
+      "capacidadeSigla": "C7",
+      "conhecimentoCodigo": "CONH-20"
+    },
+    {
+      "capacidadeSigla": "C7",
+      "conhecimentoCodigo": "CONH-21"
+    },
+    {
+      "capacidadeSigla": "C7",
+      "conhecimentoCodigo": "CONH-22"
+    },
+    {
+      "capacidadeSigla": "C7",
+      "conhecimentoCodigo": "CONH-27"
+    },
+    {
+      "capacidadeSigla": "C8",
+      "conhecimentoCodigo": "CONH-23"
+    },
+    {
+      "capacidadeSigla": "C8",
+      "conhecimentoCodigo": "CONH-24"
+    },
+    {
+      "capacidadeSigla": "C8",
+      "conhecimentoCodigo": "CONH-25"
+    },
+    {
+      "capacidadeSigla": "C8",
+      "conhecimentoCodigo": "CONH-26"
+    },
+    {
+      "capacidadeSigla": "C8",
+      "conhecimentoCodigo": "CONH-29"
+    }
+  ],
+  "subfuncaoCapacidades": [
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.1",
+      "capacidadeSigla": "C1"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.1",
+      "capacidadeSigla": "C4"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.2",
+      "capacidadeSigla": "C1"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.2",
+      "capacidadeSigla": "C2"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.2",
+      "capacidadeSigla": "C3"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.3",
+      "capacidadeSigla": "C2"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.3",
+      "capacidadeSigla": "C3"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.4",
+      "capacidadeSigla": "C3"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.4",
+      "capacidadeSigla": "C4"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.5",
+      "capacidadeSigla": "C2"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.6",
+      "capacidadeSigla": "C2"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-1.6",
+      "capacidadeSigla": "C4"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.1",
+      "capacidadeSigla": "C6"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.2",
+      "capacidadeSigla": "C4"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.2",
+      "capacidadeSigla": "C6"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.3",
+      "capacidadeSigla": "C4"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.3",
+      "capacidadeSigla": "C6"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.4",
+      "capacidadeSigla": "C3"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.4",
+      "capacidadeSigla": "C5"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.5",
+      "capacidadeSigla": "C3"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.5",
+      "capacidadeSigla": "C5"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-2.6",
+      "capacidadeSigla": "C7"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.1",
+      "capacidadeSigla": "C7"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.1",
+      "capacidadeSigla": "C8"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.2",
+      "capacidadeSigla": "C7"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.3",
+      "capacidadeSigla": "C7"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.4",
+      "capacidadeSigla": "C7"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.4",
+      "capacidadeSigla": "C8"
+    },
+    {
+      "subfuncaoCodigo": "SUB-FUN-3.5",
+      "capacidadeSigla": "C8"
+    }
+  ]
+}
