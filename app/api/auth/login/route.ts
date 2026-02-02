@@ -177,7 +177,7 @@ export async function POST(request: Request) {
         data: { tokenVerificacao: novoToken, tokenExpiraEm: expiraEm },
       });
 
-      enviarCodigoVerificacao(usuario.email, novoToken).catch((e) =>
+      await enviarCodigoVerificacao(usuario.email, novoToken).catch((e) =>
         console.error('Erro ao reenviar token no login:', e)
       );
 
@@ -216,7 +216,7 @@ export async function POST(request: Request) {
         },
       });
 
-      enviarCodigoVerificacao(usuario.email, otp).catch((e) => console.error('Erro envio reativação:', e));
+      await enviarCodigoVerificacao(usuario.email, otp).catch((e) => console.error('Erro envio reativação:', e));
 
       await registrarLog({
         acao: AuditAction.LOGIN_BLOQUEADO,
@@ -254,7 +254,7 @@ export async function POST(request: Request) {
     });
 
     // 12) Alerta de Segurança
-    enviarAlertaSegurancaLogin(usuario.email, usuario.nome, {
+    await enviarAlertaSegurancaLogin(usuario.email, usuario.nome, {
       ip,
       dispositivo: userAgent,
       horario: new Date().toLocaleString('pt-BR'),

@@ -550,7 +550,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
       const tipo = String(result.tipoSimulado ?? '').toUpperCase();
       const tituloEmail = `Simulado de ${tipo === 'SAEP' ? 'SAEP' : 'Treino Geral'}`;
 
-      enviarEmailSimuladoConcluido(
+      await enviarEmailSimuladoConcluido(
         result.usuario.email,
         result.usuario.nome,
         tituloEmail,

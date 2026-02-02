@@ -747,7 +747,7 @@ export async function processarGamificacaoSimulado(simuladoId: number) {
     const data = resultadoTransacao as any;
     if (data.conquistasParaEmail && data.conquistasParaEmail.length > 0) {
       const primeira = data.conquistasParaEmail[0];
-      enviarEmailConquistaDesbloqueada(
+      await enviarEmailConquistaDesbloqueada(
         usuarioLogado.email,
         usuarioLogado.nome,
         primeira.nome,

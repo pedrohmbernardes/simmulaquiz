@@ -21,11 +21,17 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com', // Host explícito
+  port: 465,              // Porta segura (SSL) - Evita bloqueio da porta 25/587
+  secure: true,           // Obrigatório para porta 465
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS, // Use uma "Senha de App" do Google, não sua senha normal
   },
+  // Configurações vitais para evitar o Timeout infinito na Vercel
+  connectionTimeout: 10000, // 10 segundos
+  greetingTimeout: 5000,    // 5 segundos
+  socketTimeout: 10000,     // 10 segundos
 });
 
 // ✅ Definição da URL Base

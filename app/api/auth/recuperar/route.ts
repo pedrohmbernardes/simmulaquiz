@@ -264,7 +264,7 @@ export async function POST(request: Request) {
     const csrfToken = await generateCSRFToken();
 
     // 11) Envia e-mail de boas-vindas (Assíncrono)
-    enviarEmailBoasVindas_Aluno(usuario.email, usuario.nome).catch((err) =>
+    await enviarEmailBoasVindas_Aluno(usuario.email, usuario.nome).catch((err) =>
       console.error('Falha ao enviar boas-vindas:', err)
     );
 

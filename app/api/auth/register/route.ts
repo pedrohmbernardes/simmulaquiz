@@ -213,7 +213,7 @@ export async function POST(request: Request) {
 
     // 12) Envio de E-mail (Assíncrono)
     if (podeEnviarOtp) {
-      enviarCodigoVerificacao(email, tokenVerificacao).catch(async (e) => {
+      await enviarCodigoVerificacao(email, tokenVerificacao).catch(async (e) => {
         console.error('Erro envio email verificação:', e);
         await registrarLog({
           acao: AuditAction.SISTEMA_ERRO,
