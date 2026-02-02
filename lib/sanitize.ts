@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify';
+import xss from 'xss';
 
 /**
  * Sanitiza uma string removendo tags HTML perigosas (XSS)
@@ -8,7 +8,8 @@ import DOMPurify from 'isomorphic-dompurify';
 export function sanitizeString(text: unknown): string {
   if (typeof text !== 'string') return '';
   // .trim() remove espaços em branco extras no início/fim
-  return DOMPurify.sanitize(text.trim());
+  // xss() substitui o DOMPurify.sanitize() mantendo a segurança
+  return xss(text.trim());
 }
 
 /**

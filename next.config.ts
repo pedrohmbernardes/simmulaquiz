@@ -2,8 +2,6 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
 
-  serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
-
   // Headers de segurança para rotas de API e aplicação
   async headers() {
     return [

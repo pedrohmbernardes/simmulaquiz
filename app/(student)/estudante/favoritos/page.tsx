@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { QuestaoCard } from "@/components/questoes/QuestaoCard";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeString } from '@/lib/sanitize';
 import { Star, Sparkles, Heart } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -125,7 +125,7 @@ export default async function FavoritosPage() {
                 >
                   <QuestaoCard
                     id={fav.questao.id}
-                    enunciado={DOMPurify.sanitize(fav.questao.enunciado)}
+                    enunciado={sanitizeString(fav.questao.enunciado)}
                     dificuldade={fav.questao.dificuldade || "MEDIO"}
                     origem={
                       fav.questao.banca?.sigla ||

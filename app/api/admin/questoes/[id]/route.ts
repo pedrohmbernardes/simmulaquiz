@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { z } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeString } from '@/lib/sanitize';
 import { registrarLog, AuditAction } from '@/lib/audit';
 import { csrfRateLimit, adminContentRateLimit } from '@/lib/ratelimit';
 import { verifyCSRFToken } from '@/lib/csrf';
 import { headers } from 'next/headers';
 
+export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
 
 // --- SANITIZAÇÃO ---
-const sanitizeHtml = (val: string) => DOMPurify.sanitize(val.trim());
+const sanitizeHtml = (val: string) => sanitizeString(val.trim());
 
 // --- HELPER DE VALIDAÇÃO ---
 // Transforma "", "0" ou 0 em null para permitir limpar campos opcionais

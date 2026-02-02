@@ -23,7 +23,7 @@ import {
   Target,
   BarChart3
 } from 'lucide-react';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeString } from '@/lib/sanitize';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 import { toast } from 'sonner';
 import Image from 'next/image';
@@ -903,7 +903,7 @@ export default function SimuladoPage() {
              <div className="p-6 md:p-8">
                <div 
                  className="prose prose-indigo prose-lg max-w-none text-gray-700 leading-relaxed font-lato"
-                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(qData.enunciado) }}
+                 dangerouslySetInnerHTML={{ __html: sanitizeString(qData.enunciado) }}
                />
 
               {/* Imagem */}
@@ -957,7 +957,7 @@ export default function SimuladoPage() {
 
                       <div 
                         className={`pt-1 text-sm md:text-base leading-relaxed ${selecionada ? 'font-medium text-indigo-50' : 'font-normal'}`}
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(texto) }} 
+                        dangerouslySetInnerHTML={{ __html: sanitizeString(texto) }} 
                       />
                       
                       {selecionada && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300"><CheckCircle size={20} /></div>}

@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import DOMPurify from 'isomorphic-dompurify';
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useCsrf } from '@/lib/hooks/use-csrf';
+import { sanitizeString } from '@/lib/sanitize';
 
 type Imagem = { url?: string | null };
 
@@ -271,7 +271,7 @@ export default function RevisarQuestaoCadernoErrosPage() {
             <div
               className="text-gray-800 text-base md:text-lg font-medium leading-relaxed mb-6 font-lato"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(questao.enunciado),
+                __html: sanitizeString(questao.enunciado),
               }}
             />
 
@@ -305,7 +305,7 @@ export default function RevisarQuestaoCadernoErrosPage() {
                     <div
                       className="text-gray-800 font-medium leading-relaxed font-lato"
                       dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(alt.texto),
+                        __html: sanitizeString(alt.texto),
                       }}
                     />
                   </button>

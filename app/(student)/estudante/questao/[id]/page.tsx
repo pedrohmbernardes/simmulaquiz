@@ -13,7 +13,7 @@ import {
   Calendar,
   FileText
 } from "lucide-react";
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeString } from '@/lib/sanitize';
 
 interface VisualizarQuestaoPageProps {
   params: Promise<{
@@ -60,7 +60,7 @@ export default async function VisualizarQuestaoPage({ params }: VisualizarQuesta
   if (!questao) return notFound();
 
   // 4. Tratamento de Dados
-  const enunciadoLimpo = DOMPurify.sanitize(questao.enunciado);
+  const enunciadoLimpo = sanitizeString(questao.enunciado);
   
   const listaAlternativas = [
     { letra: 'A', texto: questao.alternativaA },
@@ -135,7 +135,7 @@ export default async function VisualizarQuestaoPage({ params }: VisualizarQuesta
                 
                 {listaAlternativas.map((alt) => {
                   if (!alt.texto) return null;
-                  const textoAlternativa = DOMPurify.sanitize(alt.texto);
+                  const textoAlternativa = sanitizeString(alt.texto);
 
                   return (
                     <div 

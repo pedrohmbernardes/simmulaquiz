@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Filter, AlertCircle, ChevronRight, School, RefreshCw, Layers, ChevronLeft, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeString } from '@/lib/sanitize';
 
 interface Banca {
   id: number;
@@ -43,7 +43,7 @@ interface FiltroUC {
 }
 
 function safeHtml(html: string) {
-  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  return sanitizeString(html);
 }
 
 const ITEMS_POR_PAGINA = 10;
