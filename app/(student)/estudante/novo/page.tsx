@@ -124,7 +124,7 @@ export default function NovoSimuladoPage() {
             // ✅ LOGIC: Filter UCs with >= 50 questions
             // Assuming the API returns 'qtdeQuestoes'. If not, the API needs adjustment.
             // For now, applying the filter on the received list.
-            const ucsValidas = data.filter((uc: any) => (uc.qtdeQuestoes || 0) >= 40);
+            const ucsValidas = data.filter((uc: any) => (uc.qtdeQuestoes || 0) >= 50);
             setUnidades(ucsValidas);
         }
       } catch (e) { console.error(e); } finally { setLoadingUCs(false); }
