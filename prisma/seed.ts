@@ -1,5 +1,5 @@
 import { PrismaClient, TipoRequisitoConquista, CategoriaConquista } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 // 📂 Importação da Fonte da Verdade (JSON)
 // Certifique-se de que o arquivo 'conquistas_meta.json' está na pasta 'prisma/'

@@ -6,7 +6,7 @@ import { enviarCodigoVerificacao, enviarCodigoExclusaoConta } from '@/lib/mail';
 import { z } from 'zod';
 import { registrarLog, AuditAction } from '@/lib/audit';
 import { sanitizeObject } from '@/lib/sanitize';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { csrfRateLimit, authRateLimit, otpRateLimit } from '@/lib/ratelimit'; // ✅ Novos limites importados
 import { headers, cookies } from 'next/headers';
 import { randomInt, timingSafeEqual } from 'crypto';

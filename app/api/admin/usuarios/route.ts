@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { enviarEmailBoasVindas } from '@/lib/mail';
 import { z } from 'zod';
 import { registrarLog, AuditAction } from '@/lib/audit';
