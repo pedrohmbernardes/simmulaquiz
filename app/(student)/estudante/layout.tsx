@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import StudentNavbar from './StudentNavbar'; 
+import StudentNavbar from "@/app/(student)/estudante/StudentNavbar";
 import NextTopLoader from 'nextjs-toploader'; // ✅ UX: Barra de Carregamento
 
 // Força verificação a cada acesso (segurança máxima)
