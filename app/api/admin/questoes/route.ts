@@ -175,7 +175,7 @@ export async function GET(req: NextRequest) {
 
   const where: Prisma.QuestaoWhereInput = {};
 
-  const filtroRaw = sanitizeString(searchParams.get('filtro') || '').slice(0, 160);
+  const filtroRaw = sanitizeString(searchParams.get('busca') || '').slice(0, 160);
   const filtroTexto = filtroRaw.trim();
   const isBuscaIdExata = filtroTexto.startsWith('#');
   const filtroIdBusca = parseId(isBuscaIdExata ? filtroTexto.substring(1) : filtroTexto);
