@@ -173,8 +173,8 @@ export const csrfRateLimit = createLimiter(50, '20 s', 'simmula_csrf_nav');
 export const favoriteRateLimit = createLimiter(30, '15 s', 'simmula_favorite_nav');
 
 // 5) Limite para Operações Caras (Uploads, Geração IA, Ranking)
-// Regra: 30 requisições a cada 10 minutos (Proteção de recursos/custo)
-export const expensiveOpsRateLimit = createLimiter(30, '10 m', 'simmula_ops_expensive');
+// Regra: 45 requisições a cada 10 minutos (Proteção de recursos/custo)
+export const expensiveOpsRateLimit = createLimiter(45, '10 m', 'simmula_ops_expensive');
 
 // 6) Limite para as requisições em api/admin/options
 export const apiRateLimit = createLimiter(15, '2 m', 'simmula_adm_options');

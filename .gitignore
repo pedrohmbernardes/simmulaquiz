@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+backup_dados.sql
+Backups.md
+
 # next.js
 /.next/
 /out/

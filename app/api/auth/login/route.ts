@@ -203,8 +203,8 @@ export async function POST(request: Request) {
         }
       }
 
-      const otp = crypto.randomInt(100000, 1000000).toString();
-      const expiracao = new Date(Date.now() + 15 * 60 * 1000);
+      const otp = crypto.randomInt(10000000, 100000000).toString();
+      const expiracao = new Date(Date.now() + 10 * 60 * 1000);
 
       await prisma.usuario.update({
         where: { id: usuario.id },

@@ -4,6 +4,11 @@ import { getSession } from '@/lib/auth';
 import { calcularProgressoNivel } from '@/lib/gamificacao/nivel';
 import { expensiveOpsRateLimit } from '@/lib/ratelimit';
 import { headers } from 'next/headers';
+// ----------------------------------------------------------------------
+// IMPORTANTE: Ajuste o caminho abaixo se sua função estiver em outro arquivo
+// Baseado na sua árvore, supus que a engine contém a lógica central.
+import { processarLoginDiario } from '@/lib/gamificacao/engine'; 
+// ----------------------------------------------------------------------
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +48,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Sessão inválida' }, { status: 401 });
     }
 
+    // --- RATE LIMIT ---
+    // Mantemos a verificação aqui. Se o usuário der F5 freneticamente,
+    // ele será bloqueado antes de processar o login diário, protegendo o banco.
     if (expensiveOpsRateLimit) {
       const ip = await getClientIp();
       const { success, limit, reset, remaining } =
@@ -63,6 +71,23 @@ export async function GET() {
       }
     }
 
+    // =====================================================================
+    // 🔥 CORREÇÃO DO STREAK / LOGIN DIÁRIO (SLIDING SESSION)
+    // =====================================================================
+    // Executamos a lógica aqui. Se o usuário virou o dia e acessou o painel
+    // (sem fazer login explícito), isso garante o cômputo do streak.
+    try {
+      // A função processarLoginDiario DEVE ser idempotente (verificar se já ganhou hoje).
+      // Se ela já ganhou hoje, a função retorna sem fazer nada.
+      await processarLoginDiario(userId);
+    } catch (error) {
+      // Não queremos que uma falha na gamificação quebre o dashboard inteiro.
+      // Logamos o erro e seguimos carregando os dados.
+      console.error(`[Dashboard] Falha ao processar streak para user ${userId}:`, error);
+    }
+    // =====================================================================
+
+    // Agora buscamos os dados (que já estarão atualizados com o XP do login acima)
     const [usuario, estatisticasGerais, ultimosSimulados, rankingGeral] =
       await Promise.all([
         prisma.usuario.findUnique({
@@ -115,7 +140,7 @@ export async function GET() {
       aproveitamento: Math.round(s.notaPercentual || 0),
     }));
 
-    // Top 3 do ranking: também deriva por XP para não depender de tituloId
+    // Top 3 do ranking
     const topSemana = await Promise.all(
       rankingGeral.map(async (r, index) => {
         const t = await getTituloPorXP(r.pontos);

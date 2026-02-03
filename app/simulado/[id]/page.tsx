@@ -21,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
-  BarChart3
+  BarChart3,
+  ArrowRight
 } from 'lucide-react';
 import { sanitizeString } from '@/lib/sanitize';
 import { useCsrf } from '@/lib/hooks/use-csrf';
@@ -964,6 +965,30 @@ export default function SimuladoPage() {
                     </button>
                   );
                 })}
+
+                {/* --- 1. BOTÃO PRÓXIMA QUESTÃO (INSERIDO AQUI) --- */}
+                <div className="mt-8 pt-6 border-t border-gray-200 flex justify-end">
+                   {questaoAtual < totalQuestoes - 1 ? (
+                     <button
+                       onClick={() => {
+                         setQuestaoAtual((p) => Math.min(totalQuestoes - 1, p + 1));
+                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                       }}
+                       className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold font-oswald uppercase tracking-wide flex items-center gap-2 shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all"
+                     >
+                       Próxima Questão <ArrowRight size={18} />
+                     </button>
+                   ) : (
+                     <button
+                        onClick={() => setShowConfirm(true)}
+                        className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold font-oswald uppercase tracking-wide flex items-center gap-2 shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all"
+                     >
+                        Finalizar Prova <CheckCircle size={18} />
+                     </button>
+                   )}
+                </div>
+                {/* ----------------------------------------------- */}
+
              </div>
           </div>
         </div>
@@ -1018,6 +1043,20 @@ export default function SimuladoPage() {
                 {finalizando ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} className="fill-yellow-400 text-yellow-400" />}
                 {finalizando ? 'Processando...' : 'Finalizar Prova'}
               </button>
+
+              {/* --- 2. BOTÃO DESISTIR (INSERIDO AQUI) --- */}
+              <button
+                onClick={() => {
+                   if (safeConfirm('Tem certeza que deseja abandonar a prova? Todo o progresso será perdido e uma penalidade será aplicada.')) {
+                      handleAbandonar('Desistência');
+                   }
+                }}
+                className="w-full py-3 mt-3 text-red-400 font-bold text-xs uppercase tracking-widest hover:text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <LogOut size={14} /> Desistir / Sair
+              </button>
+              {/* ------------------------------------------ */}
+              
            </div>
         </div>
 
