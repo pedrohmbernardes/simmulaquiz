@@ -11,12 +11,9 @@ import {
   AlertTriangle,
   Play,
   Lock,
-  Filter,
   GraduationCap,
-  Layers,
-  Wrench,
-  Lightbulb,
-  Info
+  Info,
+  X
 } from 'lucide-react';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 
@@ -26,53 +23,107 @@ interface UnidadeCurricular {
     id: number; 
     codigo: string; 
     nome: string; 
-    qtdeQuestoes: number; // ✅ Added to support filtering
+    qtdeQuestoes: number;
 }
 
-// Interfaces for Advanced Filters
-interface FiltroItem { id: number; nome?: string; descricao?: string; } 
+// --- MODAL DE CONFIRMAÇÃO ---
+const ConfirmStartModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  isSubmitting, 
+  config 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  isSubmitting: boolean;
+  config: any;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-full">
+              <Play size={24} fill="currentColor" />
+            </div>
+            <button 
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <h3 className="text-xl font-bold text-gray-900 font-oswald uppercase mb-2">
+            Iniciar Novo Simulado?
+          </h3>
+          
+          <p className="text-sm text-gray-500 font-lato mb-6 leading-relaxed">
+            Você está prestes a gerar uma prova com <strong>{config.qtdeQuestoes} questões</strong> baseadas em <strong>{config.ucsSelecionadas.length} matéria(s)</strong>.
+            <br/><br/>
+            Ao confirmar, o cronômetro será iniciado imediatamente.
+          </p>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition font-oswald uppercase text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isSubmitting}
+              className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition font-oswald uppercase text-sm shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? 'Gerando...' : 'Confirmar e Iniciar'}
+            </button>
+          </div>
+        </div>
+        <div className="bg-gray-50 px-6 py-3 border-t border-gray-100">
+          <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-wide">
+            O abandono após o início pode gerar penalidade de XP.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function NovoSimuladoPage() {
   const router = useRouter();
-  
-  // ✅ 1. SECURITY: CSRF Token
   const csrfToken = useCsrf();
   
   // --- STATES ---
   const [mode, setMode] = useState<'CUSTOM' | 'SAEP'>('CUSTOM');
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // Master Data
   const [cursos, setCursos] = useState<CursoTecnico[]>([]);
   const [unidades, setUnidades] = useState<UnidadeCurricular[]>([]);
   
-  // Advanced Filter Data
-  const [objetosConhecimento, setObjetosConhecimento] = useState<FiltroItem[]>([]);
-  const [funcoes, setFuncoes] = useState<FiltroItem[]>([]);
-  const [capacidades, setCapacidades] = useState<FiltroItem[]>([]);
-
   // Loadings
   const [loadingCursos, setLoadingCursos] = useState(true);
   const [loadingUCs, setLoadingUCs] = useState(false);
-  const [loadingFiltros, setLoadingFiltros] = useState(false);
 
   // --- SIMULATION CONFIGURATION ---
   const [selectedCursoId, setSelectedCursoId] = useState<string>(''); 
   const [config, setConfig] = useState({
     ucsSelecionadas: [] as number[],
-    
-    // Advanced Filters (Ids)
-    objetosSelecionados: [] as number[],
-    funcoesSelecionadas: [] as number[],
-    capacidadesSelecionadas: [] as number[],
-
-    // Pedagogical
+    // REMOVIDO: Filtros específicos (objetos, funções, etc.)
     dificuldade: null as string | null,
     nivelCognitivo: null as string | null,
     qtdeQuestoes: 10
   });
 
-  // 🛡️ 2. SECURITY: Immediate Session Validation
+  // 🛡️ SECURITY: Immediate Session Validation
   useEffect(() => {
     fetch('/api/csrf')
       .then(res => {
@@ -86,13 +137,10 @@ export default function NovoSimuladoPage() {
     async function loadCursos() {
       try {
         const res = await fetch('/api/cursos');
-        
-        // 🛡️ Auth Check
         if (res.status === 401 || res.status === 403) {
             router.push('/auth/login');
             return;
         }
-
         if (res.ok) setCursos(await res.json());
       } catch (e) { console.error(e); } finally { setLoadingCursos(false); }
     }
@@ -103,17 +151,8 @@ export default function NovoSimuladoPage() {
   useEffect(() => {
     if (!selectedCursoId) { setUnidades([]); return; }
     
-    // Full reset when changing course
-    setConfig(prev => ({ 
-      ...prev, 
-      ucsSelecionadas: [], 
-      objetosSelecionados: [],
-      funcoesSelecionadas: [],
-      capacidadesSelecionadas: []
-    }));
-    setObjetosConhecimento([]);
-    setFuncoes([]);
-    setCapacidades([]);
+    // Reset config when changing course
+    setConfig(prev => ({ ...prev, ucsSelecionadas: [] }));
 
     async function loadUCs() {
       setLoadingUCs(true);
@@ -121,9 +160,7 @@ export default function NovoSimuladoPage() {
         const res = await fetch(`/api/unidades?cursoId=${selectedCursoId}`);
         if (res.ok) {
             const data = await res.json();
-            // ✅ LOGIC: Filter UCs with >= 50 questions
-            // Assuming the API returns 'qtdeQuestoes'. If not, the API needs adjustment.
-            // For now, applying the filter on the received list.
+            // Filter UCs with >= 50 questions for quality assurance
             const ucsValidas = data.filter((uc: any) => (uc.qtdeQuestoes || 0) >= 50);
             setUnidades(ucsValidas);
         }
@@ -132,74 +169,40 @@ export default function NovoSimuladoPage() {
     loadUCs();
   }, [selectedCursoId]);
 
-  // 3. Load Advanced Filters when UCs change
-  useEffect(() => {
-    if (config.ucsSelecionadas.length === 0) {
-      setObjetosConhecimento([]);
-      setFuncoes([]);
-      setCapacidades([]);
-      return;
-    }
-
-    async function loadFilters() {
-      setLoadingFiltros(true);
-      try {
-        const ids = config.ucsSelecionadas.join(',');
-        const res = await fetch(`/api/filtros-simulado?ucs=${ids}`);
-        
-        if (res.ok) {
-          const data = await res.json();
-          setObjetosConhecimento(data.objetos);
-          setFuncoes(data.funcoes);
-          setCapacidades(data.capacidades);
-        }
-      } catch (e) { 
-        console.error("Erro ao carregar filtros", e); 
-      } finally { 
-        setLoadingFiltros(false); 
-      }
-    }
-    
-    const timer = setTimeout(loadFilters, 500);
-    return () => clearTimeout(timer);
-
-  }, [config.ucsSelecionadas]);
-
-  // --- SELECTION HANDLERS ---
-  const toggleSelection = (key: 'ucsSelecionadas' | 'objetosSelecionados' | 'funcoesSelecionadas' | 'capacidadesSelecionadas', id: number) => {
+  // --- HANDLERS ---
+  const toggleSelection = (id: number) => {
     setConfig(prev => {
-      const list = prev[key];
+      const list = prev.ucsSelecionadas;
       const exists = list.includes(id);
       if (exists) {
-        return { ...prev, [key]: list.filter(item => item !== id) };
+        return { ...prev, ucsSelecionadas: list.filter(item => item !== id) };
       } else {
-        return { ...prev, [key]: [...list, id] };
+        return { ...prev, ucsSelecionadas: [...list, id] };
       }
     });
   };
 
-  const handleStart = async () => {
-    // Validação básica (Adicionei verificação do modo CUSTOM para não bloquear SAEP se for o caso)
+  const handlePreStart = () => {
+    // Validação básica antes de abrir o modal
     if (config.ucsSelecionadas.length === 0 && mode === 'CUSTOM') {
         alert("Selecione pelo menos uma matéria.");
         return;
     }
-
-    // 🛡️ Prevenção: CSRF
     if (!csrfToken) {
         alert("Aguarde o carregamento da segurança...");
         return;
     }
+    setShowConfirmModal(true);
+  };
 
+  const handleConfirmStart = async () => {
     setSubmitting(true);
     
     try {
-        // ✅ Montando o payload corretamente uma única vez
         const payload = {
             tipo: mode,
             config: {
                 ...config,
-                // Garante que o cursoId vá como número para o Zod não reclamar
                 cursoId: Number(selectedCursoId) 
             }
         };
@@ -208,34 +211,30 @@ export default function NovoSimuladoPage() {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                // ✅ OBRIGATÓRIO: O token que libera o acesso no backend
-                'x-csrf-token': csrfToken 
+                'x-csrf-token': csrfToken || ''
             },
             body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
             if (res.status === 401) {
-                // Sessão expirou
                 router.push('/auth/login');
                 return;
             }
-            // Captura msg de erro do backend (ex: limite atingido)
             const err = await res.json();
             throw new Error(err.error || "Erro ao criar simulado");
         }
 
         const data = await res.json();
-        
         router.push(`/simulado/${data.simuladoId}`);
 
     } catch (e: any) {
         console.error(e);
-        // Mostra o erro real para o usuário (ex: "Limite diário atingido")
         alert(e.message || 'Erro desconhecido ao tentar gerar simulado.');
         setSubmitting(false);
+        setShowConfirmModal(false); // Fecha o modal em caso de erro para tentar de novo
     }
-};
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-24 animate-in fade-in duration-500 font-sans">
@@ -264,7 +263,7 @@ export default function NovoSimuladoPage() {
           </div>
           <h3 className={`font-bold text-lg mb-1 font-oswald uppercase ${mode === 'CUSTOM' ? 'text-blue-900' : 'text-gray-700'}`}>Treino Personalizado</h3>
           <p className="text-sm text-gray-500 leading-relaxed font-lato">
-            Filtre por Matéria, Capacidade Técnica ou Objeto de Conhecimento. Você no controle.
+            Filtre por Matéria e Nível de Dificuldade. Você no controle.
           </p>
         </button>
 
@@ -329,13 +328,13 @@ export default function NovoSimuladoPage() {
                         )}
                     </div>
 
-                    {/* ℹ️ NOVO CARD DE INFORMAÇÃO PEDAGÓGICA */}
+                    {/* ℹ️ INFO CARD */}
                     <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-xl flex items-start gap-3">
                         <Info className="text-yellow-600 shrink-0 mt-0.5" size={18} />
                         <div>
                             <h4 className="text-sm font-bold text-yellow-800 uppercase mb-1">Nota de Qualidade</h4>
                             <p className="text-xs text-yellow-700 font-lato leading-relaxed">
-                                Para garantir uma experiência de estudo eficaz, <strong>exibimos apenas as Unidades Curriculares que possuem pelo menos 50 questões</strong> cadastradas em nosso banco de dados. Isso evita a criação de simulados vazios ou repetitivos.
+                                Para garantir uma experiência de estudo eficaz, <strong>exibimos apenas as Unidades Curriculares que possuem pelo menos 50 questões</strong> cadastradas em nosso banco de dados.
                             </p>
                         </div>
                     </div>
@@ -356,7 +355,7 @@ export default function NovoSimuladoPage() {
                                 return (
                                     <button
                                         key={uc.id}
-                                        onClick={() => toggleSelection('ucsSelecionadas', uc.id)}
+                                        onClick={() => toggleSelection(uc.id)}
                                         className={`flex items-start gap-3 p-4 rounded-xl border text-left transition-all duration-200 group ${
                                             isSelected 
                                             ? 'bg-blue-50 border-blue-500 shadow-sm ring-1 ring-blue-500' 
@@ -387,96 +386,7 @@ export default function NovoSimuladoPage() {
                 </div>
             )}
 
-            {/* 4. ADVANCED FILTERS (OPTIONAL) */}
-            {config.ucsSelecionadas.length > 0 && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 animate-in fade-in">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Filter className="text-blue-600" size={20} />
-                        <h3 className="font-bold text-gray-800 font-oswald text-lg uppercase">3. Filtros Específicos (Opcional)</h3>
-                    </div>
-                    
-                    <div className="bg-blue-50 p-3 rounded-lg flex items-start gap-3 mb-6">
-                        <Info className="text-blue-600 shrink-0 mt-0.5" size={18} />
-                        <p className="text-xs text-blue-800 font-lato leading-relaxed">
-                            <strong>Dica Pedagógica:</strong> Selecione itens aqui apenas se quiser estudar um tópico muito específico. 
-                            Para simulados mais reais e abrangentes, <strong>recomendamos deixar estes filtros em branco</strong> (todos selecionados).
-                        </p>
-                    </div>
-
-                    {loadingFiltros ? (
-                        <div className="text-center py-6 text-gray-400 font-lato text-sm animate-pulse">Buscando tópicos relacionados às matérias selecionadas...</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            
-                            {/* Knowledge Objects */}
-                            <div>
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase mb-3 font-roboto">
-                                    <Layers size={14} /> Objetos de Conhecimento
-                                </label>
-                                <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                                    {objetosConhecimento.length === 0 ? <span className="text-xs text-gray-400 italic">Sem itens disponíveis</span> : 
-                                    objetosConhecimento.map(obj => (
-                                        <label key={obj.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-gray-100">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={config.objetosSelecionados.includes(obj.id)}
-                                                onChange={() => toggleSelection('objetosSelecionados', obj.id)}
-                                                className="mt-1 rounded text-blue-600 focus:ring-blue-500" 
-                                            />
-                                            <span className="text-xs text-gray-700 font-lato">{obj.nome || obj.descricao}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Functions */}
-                            <div>
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase mb-3 font-roboto">
-                                    <Wrench size={14} /> Funções Técnicas
-                                </label>
-                                <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                                    {funcoes.length === 0 ? <span className="text-xs text-gray-400 italic">Sem itens disponíveis</span> :
-                                    funcoes.map(func => (
-                                        <label key={func.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-gray-100">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={config.funcoesSelecionadas.includes(func.id)}
-                                                onChange={() => toggleSelection('funcoesSelecionadas', func.id)}
-                                                className="mt-1 rounded text-blue-600 focus:ring-blue-500" 
-                                            />
-                                            <span className="text-xs text-gray-700 font-lato">{func.nome || func.descricao}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Capacities */}
-                            <div>
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase mb-3 font-roboto">
-                                    <Lightbulb size={14} /> Capacidades Técnicas
-                                </label>
-                                <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                                    {capacidades.length === 0 ? <span className="text-xs text-gray-400 italic">Sem itens disponíveis</span> :
-                                    capacidades.map(cap => (
-                                        <label key={cap.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-gray-100">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={config.capacidadesSelecionadas.includes(cap.id)}
-                                                onChange={() => toggleSelection('capacidadesSelecionadas', cap.id)}
-                                                className="mt-1 rounded text-blue-600 focus:ring-blue-500" 
-                                            />
-                                            <span className="text-xs text-gray-700 font-lato">{cap.descricao || cap.nome}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* 5. DIFFICULTY & SIZE */}
+            {/* 3. PARÂMETROS FINAIS (Sem filtros avançados) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -486,7 +396,7 @@ export default function NovoSimuladoPage() {
                     </div>
                     
                     <div className="space-y-5">
-                        {/* DIFFICULTY (5 Levels) */}
+                        {/* DIFFICULTY */}
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-2 block ml-1 font-roboto">Dificuldade</label>
                             <select 
@@ -503,7 +413,7 @@ export default function NovoSimuladoPage() {
                             </select>
                         </div>
 
-                        {/* BLOOM (6 Levels from Schema) */}
+                        {/* BLOOM */}
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-2 block ml-1 font-roboto">Nível Cognitivo (Taxonomia de Bloom)</label>
                             <select 
@@ -522,7 +432,6 @@ export default function NovoSimuladoPage() {
                         </div>
                     </div>
                     
-                    {/* Realism Notice */}
                     <div className="mt-4 pt-4 border-t border-gray-100">
                         <p className="text-[10px] text-gray-400 text-center uppercase font-bold tracking-wide">
                             Mantenha as opções "Aleatória" e "Todos" para gerar um simulado mais real.
@@ -560,15 +469,10 @@ export default function NovoSimuladoPage() {
                             </div>
                         ) : (
                             <button 
-                                onClick={handleStart}
-                                disabled={submitting}
-                                className="w-full bg-brand-green hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-xl shadow-green-100 hover:shadow-2xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none flex items-center justify-center gap-3 font-roboto uppercase tracking-wide"
+                                onClick={handlePreStart}
+                                className="w-full bg-brand-green hover:bg-green-700 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-xl shadow-green-100 hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3 font-roboto uppercase tracking-wide"
                             >
-                                {submitting ? 'Gerando...' : (
-                                    <>
-                                        Gerar Simulado <Play size={20} fill="currentColor" />
-                                    </>
-                                )}
+                                Gerar Simulado <Play size={20} fill="currentColor" />
                             </button>
                         )}
                     </div>
@@ -577,6 +481,16 @@ export default function NovoSimuladoPage() {
 
         </div>
       )}
+
+      {/* CONFIRMATION MODAL */}
+      <ConfirmStartModal 
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmStart}
+        isSubmitting={submitting}
+        config={config}
+      />
+
     </div>
   );
 }

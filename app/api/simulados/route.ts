@@ -4,7 +4,7 @@ import { getSession } from '@/lib/auth';
 import { expensiveOpsRateLimit } from '@/lib/ratelimit'; 
 import { verifyCSRFToken } from '@/lib/csrf';
 import { sanitizeObject } from '@/lib/sanitize'; 
-import { headers, cookies } from 'next/headers'; // ✅ Adicionado cookies para debug
+import { headers, cookies } from 'next/headers';
 import { z } from 'zod';
 import { AuditAction, registrarLog } from '@/lib/audit';
 import type { Prisma } from '@prisma/client';
@@ -28,7 +28,7 @@ async function getClientIp() {
   );
 }
 
-// --- SCHEMA ---
+// --- SCHEMA SIMPLIFICADO (REMOVIDO FILTROS ESPECÍFICOS) ---
 const simuladoSchema = z.object({
   tipo: z.enum(['CUSTOM', 'SAEP']).default('CUSTOM'),
   config: z.object({
@@ -46,49 +46,31 @@ const simuladoSchema = z.object({
       (v) => (v === '' ? null : v),
       z.enum(['LEMBRAR', 'ENTENDER', 'APLICAR', 'ANALISAR', 'AVALIAR', 'CRIAR']).nullable().optional()
     ),
-    objetosSelecionados: z.array(z.coerce.number().int().positive()).max(50).optional(),
-    funcoesSelecionadas: z.array(z.coerce.number().int().positive()).max(50).optional(),
-    subfuncoesSelecionadas: z.array(z.coerce.number().int().positive()).max(50).optional(),
-    capacidadesSelecionadas: z.array(z.coerce.number().int().positive()).max(50).optional(),
+    // REMOVIDO: objetosSelecionados, funcoesSelecionadas, etc.
   }),
 });
 
 export async function POST(request: Request) {
   const ip = await getClientIp();
 
-  console.log('\n🛑 [DEBUG START] Tentativa de criar simulado');
-  console.log(`📍 IP: ${ip}`);
-
-  // 🕵️ DEBUG CRÍTICO: Ver quais cookies chegaram
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
-  console.log('🍪 [DEBUG] Cookies recebidos:', allCookies.map(c => `${c.name}=${c.value.substring(0, 10)}...`));
-
   // 🛡️ 1) SEGURANÇA: Autenticação
   const session = await getSession();
   
   if (!session?.sub) {
-    console.error('❌ [DEBUG] Falha na Sessão: getSession() retornou nulo ou sem sub.');
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
   const userId = Number(session.sub);
-  console.log(`✅ [DEBUG] Sessão válida para UserID: ${userId}`);
 
   if (!Number.isFinite(userId) || userId <= 0) {
-    console.error(`❌ [DEBUG] UserID inválido após parse: ${session.sub}`);
     return NextResponse.json({ error: 'Sessão inválida' }, { status: 401 });
   }
 
   // 🛡️ 2) SEGURANÇA: CSRF
   const csrfHeader = request.headers.get('x-csrf-token');
-  console.log(`🔑 [DEBUG] Header x-csrf-token recebido: ${csrfHeader ? 'SIM' : 'NÃO'} (${csrfHeader || 'vazio'})`);
-  
   const csrfValid = await verifyCSRFToken(csrfHeader);
-  console.log(`🛡️ [DEBUG] Resultado verifyCSRFToken: ${csrfValid}`);
   
   if (!csrfValid) {
-    console.error('❌ [DEBUG] CSRF Rejeitado.');
     await registrarLog({
       acao: AuditAction.SEGURANCA_CSRF_INVALIDO,
       usuarioId: userId,
@@ -102,7 +84,6 @@ export async function POST(request: Request) {
   if (expensiveOpsRateLimit) {
     const { success } = await expensiveOpsRateLimit.limit(`simulado_gen:${userId}:${ip}`);
     if (!success) {
-      console.warn('⚠️ [DEBUG] Rate Limit atingido');
       return NextResponse.json(
         { error: 'Você está gerando simulados muito rápido. Aguarde alguns minutos.' },
         { status: 429 }
@@ -129,7 +110,6 @@ export async function POST(request: Request) {
     const resultadoValidacao = simuladoSchema.safeParse(body);
     if (!resultadoValidacao.success) {
       const erroMsg = resultadoValidacao.error.issues[0]?.message || 'Dados inválidos';
-      console.error(`❌ [DEBUG] Erro de validação Zod: ${erroMsg}`);
       return NextResponse.json({ error: erroMsg }, { status: 400 });
     }
 
@@ -168,10 +148,9 @@ export async function POST(request: Request) {
     const strikesMax = tipo === 'SAEP' ? 2 : 3;
 
     if (tipo === 'SAEP') {
+      // VALIDAÇÃO SIMPLIFICADA PARA SAEP (Sem checar filtros específicos)
       const temFiltro = Boolean(
-        config.ucsSelecionadas?.length || config.dificuldade || config.nivelCognitivo ||
-        config.objetosSelecionados?.length || config.funcoesSelecionadas?.length ||
-        config.subfuncoesSelecionadas?.length || config.capacidadesSelecionadas?.length
+        config.ucsSelecionadas?.length || config.dificuldade || config.nivelCognitivo
       );
 
       if (temFiltro) {
@@ -218,20 +197,17 @@ export async function POST(request: Request) {
 
     const qtdeDesejada = tipo === 'SAEP' ? QTDE_QUESTOES_SAEP : config.qtdeQuestoes;
 
-    // MOTOR DE BUSCA
+    // MOTOR DE BUSCA (LIMPO: APENAS FILTROS PRINCIPAIS)
     const whereClause: Prisma.QuestaoWhereInput = {
       ativa: true,
-      cursoTecnicoId: config.cursoId,
+      // cursoTecnicoId removido conforme correção anterior
       unidadeCurricularId: { in: ucsEfetivas },
     };
 
     if (tipo === 'CUSTOM') {
       if (config.dificuldade) whereClause.dificuldade = config.dificuldade as any;
       if (config.nivelCognitivo) whereClause.nivelCognitivo = config.nivelCognitivo as any;
-      if (config.objetosSelecionados?.length) whereClause.conhecimentoId = { in: config.objetosSelecionados };
-      if (config.funcoesSelecionadas?.length) whereClause.funcaoId = { in: config.funcoesSelecionadas };
-      if (config.subfuncoesSelecionadas?.length) whereClause.subfuncaoId = { in: config.subfuncoesSelecionadas };
-      if (config.capacidadesSelecionadas?.length) whereClause.capacidadeId = { in: config.capacidadesSelecionadas };
+      // REMOVIDO: Blocos de whereClause para objetos, funções, subfunções e capacidades
     }
 
     const candidatos = await prisma.questao.findMany({
@@ -283,8 +259,6 @@ export async function POST(request: Request) {
       detalhes: { tipo, questoes: qtdeDesejada },
     });
 
-    console.log(`✅ [DEBUG] Simulado criado com sucesso: ID ${novoSimulado.id}`);
-
     return NextResponse.json({
       success: true,
       simuladoId: novoSimulado.id,
@@ -292,7 +266,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('❌ [DEBUG] Erro Exception:', error instanceof Error ? error.message : String(error));
+    console.error('Erro Exception:', error);
     return NextResponse.json({ error: 'Erro interno ao gerar prova.' }, { status: 500 });
   }
 }

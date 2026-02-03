@@ -135,7 +135,7 @@ export async function enviarCodigoVerificacao(emailDestino: string, codigo: stri
   const htmlContent = `
     <!-- Preheader -->
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
-      Seu cadastro está quase pronto. Confirme seu e-mail com o código abaixo (expira em 15 minutos).
+      Seu cadastro está quase pronto. Confirme seu e-mail com o código abaixo (expira em 10 minutos).
     </div>
 
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; color:#0f172a; max-width:560px; margin:0 auto; border:1px solid #e5e7eb; border-radius:18px; overflow:hidden; background:#ffffff;">
@@ -206,7 +206,7 @@ export async function enviarCodigoRecuperacao(emailDestino: string, codigo: stri
   const htmlContent = `
     <!-- Preheader -->
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
-      Recebemos um pedido para redefinir sua senha. Use o código abaixo (expira em 15 minutos).
+      Recebemos um pedido para redefinir sua senha. Use o código abaixo (expira em 10 minutos).
     </div>
 
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; color:#0f172a; max-width:560px; margin:0 auto; border:1px solid #e5e7eb; border-radius:18px; overflow:hidden; background:#ffffff;">
