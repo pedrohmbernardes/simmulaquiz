@@ -1,22 +1,20 @@
-// app/api/auth/verify/route.ts
+// app/api/auth/recuperar/route.ts
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import crypto, { timingSafeEqual } from 'crypto';
+import { headers } from 'next/headers';
+import bcrypt from 'bcryptjs';
 
 import { prisma } from '@/lib/prisma';
-import { verifySchema } from '@/lib/validations/auth';
+import { recuperarSchema } from '@/lib/validations/auth';
 import { authRateLimit, otpRateLimit } from '@/lib/ratelimit';
 import { registrarLog, AuditAction } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/server-utils';
-import { createSession } from '@/lib/auth';
-import { enviarEmailBoasVindas_Aluno } from '@/lib/mail';
-import { generateCSRFToken } from '@/lib/csrf';
-import { headers } from 'next/headers';
+import { safeApiError } from '@/lib/server-utils';
+import { enviarCodigoRecuperacao } from '@/lib/mail';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Helper de IP (Consistência)
+// Helper de IP
 async function getClientIpAsync() {
     const h = await headers();
     const xff = h.get('x-forwarded-for');
@@ -47,26 +45,27 @@ async function jitterDelay(minMs = 120, maxMs = 320) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
-const BONUS_VERIFICACAO_EMAIL = 50; // Pontos/XP ao verificar
+// Gera OTP Numérico de 8 dígitos (compatível com otp6Schema do seu auth.ts)
+function generateOTP(length: number = 8) {
+  let otp = '';
+  for (let i = 0; i < length; i++) {
+    otp += crypto.randomInt(0, 10).toString();
+  }
+  return otp;
+}
 
 export async function POST(request: Request) {
   try {
     const ip = await getClientIpAsync();
     const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 250);
 
-    // 🛡️ (Defesa em profundidade) payload pequeno
-    const contentLength = request.headers.get('content-length');
-    if (contentLength && Number(contentLength) > 20_000) {
-      return noStoreJson({ error: 'Payload muito grande.' }, { status: 413 });
-    }
-
     // 1) Rate limit (coarse) por IP
     if (authRateLimit) {
-      const rl = await authRateLimit.limit(`verify:ip:${ip}`);
+      const rl = await authRateLimit.limit(`recuperar:ip:${ip}`);
       if (!rl.success) {
         await registrarLog({
           acao: AuditAction.SEGURANCA_RATE_LIMIT,
-          detalhes: { erro: 'Rate limit verify (IP)', ip, rota: '/api/auth/verify' },
+          detalhes: { erro: 'Rate limit recuperar (IP)', ip, rota: '/api/auth/recuperar' },
           ip,
           userAgent,
         });
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
     }
 
     // 3) Zod Validation
-    const validacao = verifySchema.safeParse(body);
+    const validacao = recuperarSchema.safeParse(body);
     if (!validacao.success) {
       return noStoreJson(
         { error: 'Dados inválidos', details: validacao.error.flatten().fieldErrors },
@@ -91,188 +90,199 @@ export async function POST(request: Request) {
       );
     }
 
-    const email = normalizeEmail(validacao.data.email);
-    // Remove espaços e garante string
-    const codigo = String(validacao.data.codigo).trim();
+    const { action, email: emailRaw, code, newPassword } = validacao.data;
+    const email = normalizeEmail(emailRaw);
     const emailHash = hashIdentifier(email);
 
-    // 4) Rate limit OTP (IP + email hash) — evita brute-force dirigido
-    if (otpRateLimit) {
-      const rl = await otpRateLimit.limit(`verify:otp:${emailHash}:${ip}`);
-      if (!rl.success) {
+    // ==========================================
+    // FLUXO 1: SOLICITAR RECUPERAÇÃO (REQUEST)
+    // ==========================================
+    if (action === 'request') {
+      
+      // Rate Limit por Conta para evitar bombardeio
+      if (authRateLimit) {
+        const rlConta = await authRateLimit.limit(`recuperar:conta:${emailHash}`);
+        if (!rlConta.success) {
+           await registrarLog({
+            acao: AuditAction.SEGURANCA_RATE_LIMIT,
+            detalhes: { erro: 'Rate limit recuperar (Conta)', ip, rota: '/api/auth/recuperar' },
+            ip,
+            userAgent,
+          });
+          await jitterDelay();
+          // Fail-closed
+          return noStoreJson({ success: true, message: 'Se o e-mail existir, um código foi enviado.' }, { status: 200 });
+        }
+      }
+
+      // Busca usuário
+      const usuario = await prisma.usuario.findUnique({
+        where: { email },
+        select: { id: true, nome: true, email: true, ativo: true }
+      });
+
+      // Anti-enumeração
+      if (!usuario || !usuario.ativo) {
+        await jitterDelay();
+        return noStoreJson({ success: true, message: 'Se o e-mail existir, um código foi enviado.' }, { status: 200 });
+      }
+
+      // Gera Código de Recuperação
+      const otpCode = generateOTP(8);
+      const tokenExpiraEm = new Date(Date.now() + 1000 * 60 * 15); // 15 Minutos de validade
+
+      // Salva no banco (usando resetToken do schema)
+      await prisma.usuario.update({
+        where: { id: usuario.id },
+        data: {
+          resetToken: otpCode, 
+          resetTokenExpiraEm: tokenExpiraEm,
+        }
+      });
+
+      // Dispara E-mail
+      enviarCodigoRecuperacao(usuario.email, otpCode).catch((err: unknown) => {
+          console.error('Falha ao enviar código de recuperação:', err instanceof Error ? err.message : String(err));
+      });
+
+      await registrarLog({
+        acao: AuditAction.USUARIO_RECUPERAR_SENHA,
+        usuarioId: usuario.id,
+        recurso: 'Solicitação de OTP de Recuperação',
+        detalhes: { status: 'Solicitada', ip, rota: '/api/auth/recuperar' },
+        ip,
+        userAgent,
+      });
+
+      return noStoreJson({ success: true, message: 'Se o e-mail existir, um código foi enviado.' }, { status: 200 });
+    }
+
+    // ==========================================
+    // FLUXO 2: REDEFINIR A SENHA (RESET)
+    // ==========================================
+    if (action === 'reset') {
+      
+      // O Zod já garantiu que code e newPassword existem para a action 'reset',
+      // mas fazemos o cast para o TS parar de reclamar.
+      const codigo = String(code).trim();
+      const novaSenha = String(newPassword);
+
+      // Rate limit de tentativas de OTP (Brute-force protection)
+      if (otpRateLimit) {
+        const rl = await otpRateLimit.limit(`recuperar:otp:${emailHash}:${ip}`);
+        if (!rl.success) {
+          await registrarLog({
+            acao: AuditAction.SEGURANCA_RATE_LIMIT,
+            recurso: `emailHash:${emailHash}`,
+            detalhes: { erro: 'Brute force OTP Reset bloqueado', ip, rota: '/api/auth/recuperar' },
+            ip,
+            userAgent,
+          });
+          return noStoreJson({ error: 'Muitas tentativas. Aguarde 10 minutos.' }, { status: 429 });
+        }
+      }
+
+      const usuario = await prisma.usuario.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          nome: true,
+          ativo: true,
+          resetToken: true,
+          resetTokenExpiraEm: true,
+          tokenVersion: true, // Para invalidar sessoes antigas
+        },
+      });
+
+      // Fail-closed
+      if (!usuario || !usuario.ativo) {
+        await jitterDelay();
+        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+      }
+
+      // Verifica expiração
+      const now = new Date();
+      if (!usuario.resetTokenExpiraEm || now > usuario.resetTokenExpiraEm) {
         await registrarLog({
-          acao: AuditAction.SEGURANCA_RATE_LIMIT,
-          recurso: `emailHash:${emailHash}`,
-          detalhes: { erro: 'Brute force OTP bloqueado', ip, rota: '/api/auth/verify' },
+          acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
+          usuarioId: usuario.id,
+          usuarioNome: usuario.nome,
+          detalhes: { motivo: 'Reset OTP expirado', ip, rota: '/api/auth/recuperar' },
           ip,
           userAgent,
         });
-        return noStoreJson({ error: 'Muitas tentativas. Aguarde 15 minutos.' }, { status: 429 });
-      }
-    }
-
-    // 5) Busca usuário (campos mínimos)
-    const usuario = await prisma.usuario.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        tipo: true,
-        ativo: true,
-        emailVerificado: true,
-        tokenVerificacao: true,
-        tokenExpiraEm: true,
-        tokenVersion: true,
-        mudancaSenhaObrigatoria: true,
-      },
-    });
-
-    // Fail-closed e anti-enumeração
-    if (!usuario || !usuario.ativo || usuario.emailVerificado) {
-      await jitterDelay();
-      await registrarLog({
-        acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
-        recurso: `emailHash:${emailHash}`,
-        detalhes: { motivo: 'Verify inválido (inexistente/inativo/ja verificado)', ip, rota: '/api/auth/verify' },
-        ip,
-        userAgent,
-      });
-      return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
-    }
-
-    // 6) Expiração
-    const now = new Date();
-    if (!usuario.tokenExpiraEm || now > usuario.tokenExpiraEm) {
-      await registrarLog({
-        acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
-        usuarioId: usuario.id,
-        usuarioNome: usuario.nome,
-        detalhes: { motivo: 'OTP expirado', ip, rota: '/api/auth/verify' },
-        ip,
-        userAgent,
-      });
-      return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
-    }
-
-    // 🛡️ 7) Comparação em tempo constante (TIMING SAFE)
-    // Impede descobrir o código medindo o tempo de resposta
-    const inputBuffer = Buffer.from(codigo, 'utf8');
-    const dbBuffer = Buffer.from(usuario.tokenVerificacao || '', 'utf8');
-
-    // Verifica tamanho primeiro para evitar erro no timingSafeEqual
-    const tamanhosIguais = inputBuffer.length === dbBuffer.length;
-    const codigoCorreto = tamanhosIguais && timingSafeEqual(inputBuffer, dbBuffer);
-
-    if (!codigoCorreto) {
-      await registrarLog({
-        acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
-        usuarioId: usuario.id,
-        usuarioNome: usuario.nome,
-        detalhes: { motivo: 'OTP incorreto', ip, rota: '/api/auth/verify' },
-        ip,
-        userAgent,
-      });
-
-      await jitterDelay();
-      return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
-    }
-
-    // 8) ✅ Atualização atômica (anti-replay / concorrência)
-    // Só 1 request consegue "consumir" o OTP.
-    const result = await prisma.$transaction(async (tx) => {
-      const upd = await tx.usuario.updateMany({
-        where: {
-          id: usuario.id,
-          emailVerificado: false, // Garante que não foi verificado no meio do processo
-          ativo: true,
-          tokenVerificacao: codigo,
-          tokenExpiraEm: { gt: now },
-        },
-        data: {
-          emailVerificado: true,
-          tokenVerificacao: null, // Queima o token (One-Time)
-          tokenExpiraEm: null,
-        },
-      });
-
-      if (upd.count !== 1) {
-        return { ok: false as const, bonus: 0 };
+        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
       }
 
-      // ✅ Gamificação: bônus por confirmar e-mail
-      let bonus = 0;
-      try {
-        const updated = await tx.usuarioGamificacao.updateMany({
-          where: { usuarioId: usuario.id },
-          data: { pontos: { increment: BONUS_VERIFICACAO_EMAIL } },
+      // Comparação Timing Safe do Código
+      const inputBuffer = Buffer.from(codigo, 'utf8');
+      const dbBuffer = Buffer.from(usuario.resetToken || '', 'utf8');
+      
+      const tamanhosIguais = inputBuffer.length === dbBuffer.length;
+      const codigoCorreto = tamanhosIguais && timingSafeEqual(inputBuffer, dbBuffer);
+
+      if (!codigoCorreto) {
+        await registrarLog({
+          acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
+          usuarioId: usuario.id,
+          usuarioNome: usuario.nome,
+          detalhes: { motivo: 'Reset OTP incorreto', ip, rota: '/api/auth/recuperar' },
+          ip,
+          userAgent,
+        });
+        await jitterDelay();
+        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+      }
+
+      // Sucesso no OTP! Gerar Hash da Nova Senha
+      const saltRounds = process.env.NODE_ENV === 'production' ? 12 : 10;
+      const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
+
+      // Atualização atômica
+      const result = await prisma.$transaction(async (tx) => {
+        const upd = await tx.usuario.updateMany({
+          where: {
+            id: usuario.id,
+            ativo: true,
+            resetToken: codigo,
+            resetTokenExpiraEm: { gt: now },
+          },
+          data: {
+            senhaHash: hashedPassword,
+            resetToken: null, 
+            resetTokenExpiraEm: null,
+            tokenVersion: { increment: 1 }, // Invalida TODAS as sessões ativas (logout global)
+          },
         });
 
-        // Se não existir registro de gamificação, cria agora
-        if (updated.count === 0) {
-          await tx.usuarioGamificacao.create({
-            data: {
-              usuarioId: usuario.id,
-              nivel: 1,
-              pontos: BONUS_VERIFICACAO_EMAIL,
-              streakAtual: 0,
-              tituloId: null,
-            },
-          });
+        if (upd.count !== 1) {
+          return { ok: false };
         }
-        bonus = BONUS_VERIFICACAO_EMAIL;
-      } catch {
-        // Gamificação é secundária, não falha o verify se der erro aqui
+        return { ok: true };
+      });
+
+      if (!result.ok) {
+        await jitterDelay();
+        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
       }
 
-      return { ok: true as const, bonus };
-    });
+      await registrarLog({
+        acao: AuditAction.USUARIO_NOVA_SENHA,
+        usuarioId: usuario.id,
+        usuarioNome: usuario.nome,
+        recurso: 'Redefinição de Senha Concluída',
+        detalhes: { status: 'Sucesso via OTP', ip, rota: '/api/auth/recuperar' },
+        ip,
+        userAgent,
+      });
 
-    if (!result.ok) {
-      await jitterDelay();
-      return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+      return noStoreJson({ success: true, message: 'Senha redefinida com sucesso!' }, { status: 200 });
     }
 
-    // Log de Sucesso
-    await registrarLog({
-      acao: AuditAction.USUARIO_ATUALIZAR,
-      usuarioId: usuario.id,
-      usuarioNome: usuario.nome,
-      recurso: 'Verificação de Conta',
-      detalhes: { status: 'Verificado com sucesso', ip, rota: '/api/auth/verify', bonus: result.bonus },
-      ip,
-      userAgent,
-    });
+    // Se chegar aqui, a action não foi nem request nem reset
+    return noStoreJson({ error: 'Ação inválida.' }, { status: 400 });
 
-    // 9) Cria sessão AUTOMATICAMENTE
-    const cookieStore = await cookies();
-    const oldToken = cookieStore.get('session')?.value;
-
-    await createSession(
-      {
-        sub: usuario.id.toString(),
-        email: usuario.email,
-        name: usuario.nome,
-        role: usuario.tipo,
-        tokenVersion: usuario.tokenVersion,
-        mudancaSenhaObrigatoria: usuario.mudancaSenhaObrigatoria,
-      },
-      oldToken
-    );
-
-    // 10) Gera CSRF token para o frontend usar imediatamente
-    const csrfToken = await generateCSRFToken();
-
-    // 11) Envia e-mail de boas-vindas (Assíncrono)
-    await enviarEmailBoasVindas_Aluno(usuario.email, usuario.nome).catch((err) =>
-      console.error('Falha ao enviar boas-vindas:', err)
-    );
-
-    return noStoreJson(
-      { success: true, csrfToken, expiresIn: 7200, xpGanho: result.bonus },
-      { status: 200 }
-    );
   } catch (error) {
-    return safeApiError(error, 'Erro interno ao verificar conta.');
+    return safeApiError(error, 'Erro interno ao processar a recuperação de senha.');
   }
 }

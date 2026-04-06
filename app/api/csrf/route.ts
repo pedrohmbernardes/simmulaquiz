@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers'; // ✅ Adicionado para ler o cookie atual
+import { cookies } from 'next/headers';
 
 import { generateCSRFToken } from '@/lib/csrf';
 import { getSession } from '@/lib/auth';
@@ -26,21 +26,22 @@ function noStoreJson(data: unknown, init?: ResponseInit) {
 
 export async function GET(request: NextRequest) {
   try {
-    // 1) Autenticação (Mantida: Segurança máxima)
+    // 1) Autenticação Opcional (Permite visitantes pegarem token para formulários públicos)
     const session = await getSession();
-    if (!session?.sub) {
-      return noStoreJson({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    const usuarioId = Number(session.sub);
-    if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
-      return noStoreJson({ error: 'Sessão inválida' }, { status: 401 });
+    const ip = getClientIpFromHeaders(request.headers);
+    
+    // Chave de rate-limit padrão para visitantes (não logados)
+    let rlKey = `csrf:get:public:${ip}`; 
+    
+    // Se estiver logado, usa uma chave de rate-limit atrelada ao ID do usuário
+    if (session?.sub) {
+      const usuarioId = Number(session.sub);
+      if (Number.isInteger(usuarioId) && usuarioId > 0) {
+        rlKey = `csrf:get:${usuarioId}:${ip}`; 
+      }
     }
 
     // 2) Rate-limit (Mantido: Proteção Anti-Scraping/DoS)
-    const ip = getClientIpFromHeaders(request.headers);
-    const rlKey = `csrf:get:${usuarioId}:${ip}`;
-    
     const rl = await csrfRateLimit.limit(rlKey);
 
     if (!rl.success) {
@@ -59,13 +60,11 @@ export async function GET(request: NextRequest) {
 
     // 3) LÓGICA DE CORREÇÃO (Idempotência)
     // Antes de gerar um novo, verificamos se o usuário JÁ TEM um token válido no cookie.
-    // Isso resolve o problema de requisições duplas do React/Browsers que dessincronizam o token.
     const cookieStore = await cookies();
     const existingToken = cookieStore.get('csrf-token')?.value;
 
     if (existingToken) {
       // Se já existe, devolvemos o mesmo token.
-      // O cookie não muda, o JSON recebe o valor correto. Sincronia perfeita.
       return noStoreJson(
         {
           token: existingToken,
