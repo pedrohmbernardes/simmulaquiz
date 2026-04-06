@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validations/auth';
 import { authRateLimit, otpRateLimit } from '@/lib/ratelimit';
 import { registrarLog, AuditAction } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/utils';
+import { getClientIp, safeApiError } from '@/lib/server-utils';
 import { enviarCodigoVerificacao } from '@/lib/mail';
 import { headers } from 'next/headers';
 

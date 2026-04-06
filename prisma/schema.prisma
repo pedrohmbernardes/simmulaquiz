@@ -1,6 +1,6 @@
-// prisma/schema.prisma
 // ============================================
-// SIMMULAQUIZ SCHEMA 2.0
+// SIMMULAQUIZ SCHEMA 2.1 - COM TURMAS (LMS)
+// (ADITIVO + SEGURO PARA PRODUÇÃO: não quebra fluxo atual)
 // ============================================
 
 generator client {
@@ -9,19 +9,23 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// --- ENUMS ---
+// ============================================
+// ENUMS (Originais + Novos para Turmas/LMS)
+// ============================================
 
+/// Tipos de usuário no sistema (RBAC base).
 enum TipoUsuario {
   ALUNO
   PROFESSOR
   SUPER_ADMIN
 }
 
+/// Dificuldade da questão / filtro do simulado.
 enum NivelDificuldade {
   MUITO_FACIL
   FACIL
@@ -30,6 +34,7 @@ enum NivelDificuldade {
   MUITO_DIFICIL
 }
 
+/// Taxonomia de Bloom (nível cognitivo) usada em filtros e questões.
 enum NivelCognitivo {
   LEMBRAR
   ENTENDER
@@ -39,6 +44,7 @@ enum NivelCognitivo {
   CRIAR
 }
 
+/// Status de uma tentativa de simulado (tentativa individual do aluno).
 enum StatusSimulado {
   EM_ANDAMENTO
   CONCLUIDO
@@ -46,6 +52,7 @@ enum StatusSimulado {
   ANULADO
 }
 
+/// Categoria/origem da questão (curadoria/importação).
 enum CategoriaOrigem {
   INSTITUCIONAL_INTERNA
   CONCURSO_PUBLICO
@@ -55,6 +62,56 @@ enum CategoriaOrigem {
   OUTRO
 }
 
+/// Status do vínculo do aluno com a turma (matrícula/inscrição).
+enum StatusTurmaAluno {
+  PENDENTE
+  ATIVO
+  REMOVIDO
+  BLOQUEADO
+}
+
+/// Status do agendamento de simulado (template da turma).
+enum StatusAgendamento {
+  RASCUNHO
+  PUBLICADO
+  ENCERRADO
+  CANCELADO
+}
+
+/// Status de entrega de tarefa (LMS: envio/correção manual).
+enum StatusEntrega {
+  PENDENTE
+  ENTREGUE
+  CORRIGIDO
+  ATRASADO
+}
+
+/// Tipo de material de turma (link/arquivo).
+enum TipoMaterial {
+  PDF_UPLOAD
+  LINK_EXTERNO
+  GOOGLE_DRIVE
+  VIDEO_YOUTUBE
+}
+
+/// Tipo do item dentro de um módulo (ordenação global/polímorfico).
+enum TipoModuloItem {
+  MATERIAL
+  AGENDAMENTO_SIMULADO
+  TAREFA
+}
+
+/// Status da “entrega” do agendamento (controle de quem fez/não fez).
+/// Separado de StatusSimulado para permitir PENDENTE sem Simulado criado.
+enum StatusAgendamentoEntrega {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDO
+  ABANDONADO
+  ANULADO
+}
+
+/// Raridade de conquista (gamificação).
 enum RaridadeConquista {
   COMUM
   INCOMUM
@@ -64,6 +121,7 @@ enum RaridadeConquista {
   MITICO
 }
 
+/// Categoria de conquista (gamificação).
 enum CategoriaConquista {
   INICIO_ENGAJAMENTO
   PERFORMANCE_VELOCIDADE
@@ -74,6 +132,7 @@ enum CategoriaConquista {
   IMPOSSIVEL
 }
 
+/// Tipos “legados” de requisito de conquista (compatibilidade).
 enum TipoRequisitoConquista {
   SIMULADOS_TOTAL
   QUESTOES_TOTAL
@@ -92,6 +151,7 @@ enum TipoRequisitoConquista {
   ERROS_NO_SIMULADO_MAX
 }
 
+/// Eventos de gamificação (inclui eventos LMS/turmas).
 enum TipoEventoGamificacao {
   LOGIN
   SIMULADO_FINALIZADO
@@ -102,8 +162,13 @@ enum TipoEventoGamificacao {
   PERFIL_ATUALIZADO
   RANKING_ATUALIZADO
   MANUAL
+
+  // Turmas/LMS
+  TAREFA_ENTREGUE
+  CHECKIN_REALIZADO
 }
 
+/// Eventos de disparo de conquistas (legado).
 enum EventoConquista {
   LOGIN
   SIMULADO_FINALIZADO
@@ -113,12 +178,14 @@ enum EventoConquista {
   MANUAL
 }
 
+/// Auditoria manual de conquistas.
 enum StatusAuditoriaConquista {
   APROVADA
   PENDENTE
   REJEITADA
 }
 
+/// Tipos de movimento/pontos (ledger).
 enum TipoMovimentoPontos {
   LOGIN_DIARIO
   SIMULADO_COMPLETO
@@ -127,20 +194,27 @@ enum TipoMovimentoPontos {
   CONQUISTA
   STREAK_BONUS
   AJUSTE_ADMIN
+
+  // Turmas/LMS
+  TAREFA_ENTREGUE
+  CHECKIN_AULA
 }
 
+/// Tipos de streak.
 enum TipoStreak {
   LOGIN
   SIMULADO
   CADERNO_ERROS
 }
 
+/// Janela de regra de conquista.
 enum TipoJanela {
   EM_DIAS
   EM_SEMANAS
   EM_MESES
 }
 
+/// Operadores para regras de conquistas.
 enum OperadorComparacao {
   GTE
   LTE
@@ -148,11 +222,13 @@ enum OperadorComparacao {
   BETWEEN
 }
 
+/// Lógica de agrupamento de regras.
 enum LogicaGrupo {
   AND
   OR
 }
 
+/// Período do ranking.
 enum RankingPeriodo {
   SEMANAL
   MENSAL
@@ -162,12 +238,14 @@ enum RankingPeriodo {
   GERAL
 }
 
+/// Tipo do ranking.
 enum RankingTipo {
-  XP_GANHO // por período (derivado de HistoricoPontos / MetricDiaria)
-  XP_TOTAL // total (UsuarioGamificacao.pontos)
+  XP_GANHO
+  XP_TOTAL
   STREAK
 }
 
+/// Métricas de conquistas (engine).
 enum MetricaConquista {
   SIMULADOS_TOTAL
   QUESTOES_TOTAL
@@ -181,116 +259,119 @@ enum MetricaConquista {
   ERROS_NO_SIMULADO
   TEMPO_ESTUDO_MINUTOS
   TEMPO_GASTO_SEGUNDOS
-
-  // ranking
   RANK_POSICAO
   RANK_PERCENTIL
   RANK_VALOR
 }
 
-// --- MODELS DE DOMÍNIO ---
+// ============================================
+// DOMÍNIO ORIGINAL (Instituição, Banca, Conquistas)
+// ============================================
 
+/// Instituição (ex.: órgão/empresa) associável a questões.
 model Instituicao {
-  id       Int       @id @default(autoincrement())
-  codigo   String?   @unique
-  nome     String    @unique
-  sigla    String?   @unique
-  ativo    Boolean   @default(true)
+  id     Int     @id @default(autoincrement())
+  codigo String? @unique
+  nome   String  @unique
+  sigla  String? @unique
+  ativo  Boolean @default(true)
+
+  /// Questões vinculadas (opcional).
   questoes Questao[]
 }
 
+/// Banca organizadora (concursos/provas).
 model Banca {
-  id       Int       @id @default(autoincrement())
-  codigo   String    @unique
-  nome     String    @unique
-  sigla    String?   @unique
-  ativo    Boolean   @default(true)
+  id     Int     @id @default(autoincrement())
+  codigo String  @unique
+  nome   String  @unique
+  sigla  String? @unique
+  ativo  Boolean @default(true)
+
+  /// Questões vinculadas (opcional).
   questoes Questao[]
 }
 
+/// Conquista (badges/achievements) e suas configurações.
 model Conquista {
-  id        Int    @id @default(autoincrement())
-  key       String @unique
-  nome      String
-  descricao String
+  id                  Int                     @id @default(autoincrement())
+  key                 String                  @unique
+  nome                String
+  descricao           String
+  requisitoTipo       TipoRequisitoConquista?
+  requisitoValor      Int?
+  raridade            RaridadeConquista       @default(COMUM)
+  categoria           CategoriaConquista      @default(INICIO_ENGAJAMENTO)
+  pontos              Int                     @default(10)
+  bonusMultiplier     Float                   @default(1.0)
+  oculta              Boolean                 @default(false)
+  impossivel          Boolean                 @default(false)
+  adminOnly           Boolean                 @default(false)
+  requiresManualAudit Boolean                 @default(false)
+  icone               String?
+  ativo               Boolean                 @default(true)
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  cooldownDias        Int?
+  maximoPorPeriodo    Int?
+  evento              EventoConquista         @default(SIMULADO_FINALIZADO)
+  versao              Int                     @default(1)
 
-  // legado (opcional, pra compatibilidade até migrar tudo)
-  requisitoTipo  TipoRequisitoConquista?
-  requisitoValor Int?
-
-  raridade        RaridadeConquista  @default(COMUM)
-  categoria       CategoriaConquista @default(INICIO_ENGAJAMENTO)
-  pontos          Int                @default(10)
-  bonusMultiplier Float              @default(1.0)
-
-  oculta              Boolean @default(false)
-  impossivel          Boolean @default(false)
-  adminOnly           Boolean @default(false)
-  requiresManualAudit Boolean @default(false)
-
-  icone     String?
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cooldownDias     Int?
-  maximoPorPeriodo Int?
-  // Sugestão: se você for usar maximoPorPeriodo de verdade:
-  // maximoPorPeriodoJanela TipoJanela?
-
-  evento EventoConquista @default(SIMULADO_FINALIZADO)
-  versao Int             @default(1)
-
+  /// Vinculações pedagógicas opcionais (para conquistas por UC/Conhecimento).
   unidadeCurricularId Int?
   unidadeCurricular   UnidadeCurricular? @relation(fields: [unidadeCurricularId], references: [id])
   conhecimentoId      Int?
   conhecimento        Conhecimento?      @relation(fields: [conhecimentoId], references: [id])
 
+  /// Relacionamentos.
   usuarios        UsuarioConquista[]
   regras          ConquistaRegra[]
   HistoricoPontos HistoricoPontos[]
 }
 
+/// Título/nome do nível (gamificação).
 model Titulo {
-  id        Int                  @id @default(autoincrement())
-  nivel     Int                  @unique
+  id        Int     @id @default(autoincrement())
+  nivel     Int     @unique
   nome      String
-  minPontos Int                  @unique
+  minPontos Int     @unique
   urlImagem String?
   corHex    String?
-  usuarios  UsuarioGamificacao[]
+
+  /// Usuários neste título.
+  usuarios UsuarioGamificacao[]
 }
 
 // ============================================
 // USUÁRIOS & GAMIFICAÇÃO & SEGURANÇA
 // ============================================
 
+/// Usuário do sistema (aluno/professor/super admin) + auth + relações.
 model Usuario {
-  id             Int         @id @default(autoincrement())
-  nome           String
-  email          String      @unique
-  senhaHash      String
-  dataNascimento DateTime
-  tipo           TipoUsuario @default(ALUNO)
-  fotoUrl        String?
-  ativo          Boolean     @default(true)
+  id                      Int         @id @default(autoincrement())
+  nome                    String
+  email                   String      @unique
+  senhaHash               String
+  dataNascimento          DateTime
+  tipo                    TipoUsuario @default(ALUNO)
+  fotoUrl                 String?
+  ativo                   Boolean     @default(true)
+  mudancaSenhaObrigatoria Boolean     @default(false)
+  tokenVersion            Int         @default(0)
 
-  // Segurança de Autenticação
-  mudancaSenhaObrigatoria Boolean @default(false)
-  tokenVersion            Int     @default(0) // Invalidação em massa de sessões
-
-  // Verificação e Recuperação
+  /// Verificação e recuperação.
   emailVerificado    Boolean   @default(false)
   tokenVerificacao   String?
   tokenExpiraEm      DateTime?
   resetToken         String?
   resetTokenExpiraEm DateTime?
 
+  /// Metadados.
   ultimoLogin DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  // Relacionamentos
+  // ---------- Relacionamentos Originais ----------
   simulados           Simulado[]
   questoesFavoritas   QuestaoFavorita[]
   gamificacao         UsuarioGamificacao?
@@ -306,28 +387,49 @@ model Usuario {
   conquistasAuditadas UsuarioConquista[]       @relation("Usuario_ConquistasAuditadas")
   UsuarioStreak       UsuarioStreak[]
   SessaoEstudo        SessaoEstudo[]
+
+  // ---------- NOVOS RELACIONAMENTOS (TURMAS/LMS) ----------
+  /// Turmas em que o usuário atua como professor (pivot).
+  turmasProfessor TurmaProfessor[] @relation("Professor_Turmas")
+
+  /// Turmas em que o usuário é aluno (pivot).
+  turmasAluno TurmaAluno[] @relation("Aluno_Turmas")
+
+  /// Conteúdos criados (relações diretas para ergonomia de query).
+  agendamentosCriados AgendamentoSimulado[] @relation("Usuario_AgendamentosCriados")
+  avisosCriados       AvisoTurma[]          @relation("Usuario_AvisosCriados")
+  tarefasCriadas      Tarefa[]              @relation("Usuario_TarefasCriadas")
+  modulosCriados      ModuloTurma[]         @relation("Usuario_ModulosCriados")
+  materiaisCriados    MaterialTurma[]       @relation("Usuario_MateriaisCriados")
+  checkinsAbertos     SessaoCheckIn[]       @relation("Usuario_CheckinsAbertos")
+
+  /// Participação (aluno).
+  entregasAgendamentos AgendamentoEntrega[] @relation("Usuario_AgendamentoEntregas")
+  entregasTarefas      EntregaTarefa[]      @relation("Usuario_EntregasTarefas")
+  comentariosAviso     ComentarioAviso[]
+  topicosForum         TopicoForum[]
+  respostasForum       RespostaForum[]
+  checkins             CheckInRegistro[]
 }
 
+/// Tabela agregada de gamificação por usuário.
 model UsuarioGamificacao {
-  id                      Int       @id @default(autoincrement())
-  usuarioId               Int       @unique
-  usuario                 Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
   ultimoEmailConquistasEm DateTime?
-
-  acertosTotal Int @default(0)
-  errosTotal   Int @default(0)
-
-  pontos Int      @default(0)
-  nivel  Int      @default(1)
-  badges String[]
-
-  tempoTotalEstudo     Int @default(0)
-  simuladosConcluidos  Int @default(0)
-  questoesRespondidas  Int @default(0)
-  simuladosAnulados    Int @default(0)
-  simuladosAbandonados Int @default(0)
-
-  preferencias Json? @default("{}")
+  acertosTotal            Int       @default(0)
+  errosTotal              Int       @default(0)
+  pontos                  Int       @default(0)
+  nivel                   Int       @default(1)
+  badges                  String[]
+  tempoTotalEstudo        Int       @default(0)
+  simuladosConcluidos     Int       @default(0)
+  questoesRespondidas     Int       @default(0)
+  simuladosAnulados       Int       @default(0)
+  simuladosAbandonados    Int       @default(0)
+  preferencias            Json?     @default("{}")
 
   tituloId Int?
   titulo   Titulo? @relation(fields: [tituloId], references: [id])
@@ -341,11 +443,11 @@ model UsuarioGamificacao {
   @@index([streakAtual])
 }
 
+/// Streaks por tipo (login, simulado, etc.).
 model UsuarioStreak {
-  id        Int     @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   usuarioId Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   tipo      TipoStreak
   atual     Int        @default(0)
   recorde   Int        @default(0)
@@ -355,17 +457,16 @@ model UsuarioStreak {
   @@index([usuarioId, tipo])
 }
 
+/// Conquistas obtidas por usuário + auditoria.
 model UsuarioConquista {
-  id Int @id @default(autoincrement())
-
+  id        Int     @id @default(autoincrement())
   usuarioId Int
   usuario   Usuario @relation("Usuario_Conquistas", fields: [usuarioId], references: [id], onDelete: Cascade)
 
   conquistaId Int
   conquista   Conquista @relation(fields: [conquistaId], references: [id], onDelete: Cascade)
 
-  dataConquista DateTime @default(now())
-
+  dataConquista   DateTime                 @default(now())
   statusAuditoria StatusAuditoriaConquista @default(APROVADA)
 
   auditadaPorId Int?
@@ -376,32 +477,33 @@ model UsuarioConquista {
 
   pontosConcedidos   Int?
   multiplierAplicado Float?
-
-  notificadoEm DateTime?
-  contexto     Json?
+  notificadoEm       DateTime?
+  contexto           Json?
 
   @@unique([usuarioId, conquistaId])
   @@index([usuarioId])
   @@index([conquistaId])
 }
 
+/// Métricas diárias do usuário (para ranking, streak, metas).
 model UsuarioMetricasDiarias {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   usuarioId Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  dia       DateTime @db.Date
 
-  dia                 DateTime @db.Date
-  xpGanho             Int      @default(0)
-  simuladosConcluidos Int      @default(0)
-  questoesRespondidas Int      @default(0)
-  acertos             Int      @default(0)
-  tempoEstudoMin      Int      @default(0)
+  xpGanho             Int @default(0)
+  simuladosConcluidos Int @default(0)
+  questoesRespondidas Int @default(0)
+  acertos             Int @default(0)
+  tempoEstudoMin      Int @default(0)
 
   @@unique([usuarioId, dia])
   @@index([dia])
   @@index([usuarioId, dia])
 }
 
+/// Ledger de pontos (movimentações com deduplicação).
 model HistoricoPontos {
   id        Int     @id @default(autoincrement())
   usuarioId Int
@@ -419,6 +521,7 @@ model HistoricoPontos {
   conquistaId Int?
   conquista   Conquista? @relation(fields: [conquistaId], references: [id], onDelete: SetNull)
 
+  /// Chave para impedir duplicidade (ex.: checkin:{sessaoId}:{alunoId})
   dedupKey  String? @unique
   saldoApos Int?
 
@@ -426,6 +529,7 @@ model HistoricoPontos {
   @@index([usuarioId, tipo, data])
 }
 
+/// Registro de eventos de gamificação.
 model GamificacaoEvento {
   id        Int     @id @default(autoincrement())
   usuarioId Int
@@ -434,11 +538,9 @@ model GamificacaoEvento {
   tipo      TipoEventoGamificacao
   createdAt DateTime              @default(now())
 
-  // referência opcional
   simuladoId Int?
   simulado   Simulado? @relation(fields: [simuladoId], references: [id], onDelete: SetNull)
 
-  // payload leve: nota, qtdeQuestoes, tempo, ucId, etc.
   metadata         Json?
   UsuarioConquista UsuarioConquista[]
 
@@ -446,20 +548,20 @@ model GamificacaoEvento {
   @@index([tipo, createdAt])
 }
 
+/// Regras (engine) para conquista (métrica/operador/janela).
 model ConquistaRegra {
   id          Int       @id @default(autoincrement())
   conquistaId Int
   conquista   Conquista @relation(fields: [conquistaId], references: [id], onDelete: Cascade)
 
-  metrica     MetricaConquista
-  operador    OperadorComparacao @default(GTE)
+  metrica  MetricaConquista
+  operador OperadorComparacao @default(GTE)
+
   valorInt    Int?
   valorFloat  Float?
-  // janela opcional (ex: "em 7 dias", "em 4 semanas")
   janelaTipo  TipoJanela?
   janelaValor Int?
 
-  // agrupamento para regras compostas (AND/OR)
   grupo       Int         @default(0)
   logicaGrupo LogicaGrupo @default(AND)
 
@@ -474,16 +576,15 @@ model ConquistaRegra {
   @@index([conquistaId])
 }
 
+/// Snapshot de ranking (cron).
 model RankingSnapshot {
-  id      Int            @id @default(autoincrement())
-  periodo RankingPeriodo
-  tipo    RankingTipo
-
-  inicio DateTime
-  fim    DateTime
-
+  id            Int            @id @default(autoincrement())
+  periodo       RankingPeriodo
+  tipo          RankingTipo
+  inicio        DateTime
+  fim           DateTime
   totalUsuarios Int
-  createdAt     DateTime @default(now())
+  createdAt     DateTime       @default(now())
 
   entries RankingEntry[]
 
@@ -491,6 +592,7 @@ model RankingSnapshot {
   @@index([periodo, tipo, fim])
 }
 
+/// Entradas do ranking (posição/valor).
 model RankingEntry {
   id         Int             @id @default(autoincrement())
   snapshotId Int
@@ -500,14 +602,15 @@ model RankingEntry {
   usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   posicao   Int
-  valorInt  Int // xp ou streak
-  percentil Float // 0..100 (ou 0..1, você escolhe)
+  valorInt  Int
+  percentil Float
 
   @@unique([snapshotId, usuarioId])
   @@index([snapshotId, posicao])
   @@index([usuarioId])
 }
 
+/// Badges por usuário (chave + data).
 model UsuarioBadge {
   id        Int     @id @default(autoincrement())
   usuarioId Int
@@ -520,96 +623,115 @@ model UsuarioBadge {
   @@index([usuarioId])
 }
 
-// --- QUESTÕES E CURRÍCULO ---
+// ============================================
+// QUESTÕES E CURRÍCULO (SAEP / Pedagógico)
+// ============================================
 
+/// Favoritos de questões por usuário.
 model QuestaoFavorita {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
+
   usuarioId Int
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
   questaoId Int
-  questao   Questao  @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
 
   @@unique([usuarioId, questaoId])
   @@index([usuarioId])
 }
 
+/// Curso técnico (raiz da taxonomia pedagógica).
 model CursoTecnico {
-  id                   Int                 @id @default(autoincrement())
-  codigo               String              @unique
-  nome                 String              @unique
-  descricao            String?
-  ativo                Boolean             @default(true)
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nome      String   @unique
+  descricao String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   unidadesCurriculares UnidadeCurricular[]
   funcoes              CursoFuncao[]
   questoes             Questao[]
 }
 
+/// Unidade Curricular (UC).
 model UnidadeCurricular {
-  id                   Int                             @id @default(autoincrement())
-  codigo               String                          @unique
-  nome                 String                          @unique
-  cargaHoraria         Int?
-  descricao            String?
-  createdAt            DateTime                        @default(now())
-  updatedAt            DateTime                        @updatedAt
-  cursoTecnicoId       Int
-  cursoTecnico         CursoTecnico                    @relation(fields: [cursoTecnicoId], references: [id])
+  id           Int      @id @default(autoincrement())
+  codigo       String   @unique
+  nome         String   @unique
+  cargaHoraria Int?
+  descricao    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cursoTecnicoId Int
+  cursoTecnico   CursoTecnico @relation(fields: [cursoTecnicoId], references: [id])
+
   conhecimentos        UnidadeCurricularConhecimento[]
   questoes             Questao[]
   conquistasVinculadas Conquista[]
   ConquistaRegra       ConquistaRegra[]
 }
 
+/// Função (macro área funcional do currículo).
 model Funcao {
-  id         Int           @id @default(autoincrement())
-  codigo     String        @unique
-  nome       String        @unique
-  descricao  String?
-  ativo      Boolean       @default(true)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nome      String   @unique
+  descricao String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   cursos     CursoFuncao[]
   subfuncoes Subfuncao[]
   questoes   Questao[]
 }
 
+/// Subfunção (subárea funcional).
 model Subfuncao {
-  id          Int                   @id @default(autoincrement())
-  codigo      String                @unique
-  nome        String                @unique
-  descricao   String?
-  ativo       Boolean               @default(true)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  funcaoId    Int
-  funcao      Funcao                @relation(fields: [funcaoId], references: [id])
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nome      String   @unique
+  descricao String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  funcaoId Int
+  funcao   Funcao @relation(fields: [funcaoId], references: [id])
+
   capacidades SubfuncaoCapacidade[]
   questoes    Questao[]
 }
 
+/// Capacidade (competência/resultado de aprendizagem).
 model Capacidade {
-  id            Int                      @id @default(autoincrement())
-  sigla         String                   @unique
-  descricao     String
-  ativo         Boolean                  @default(true)
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
+  id        Int      @id @default(autoincrement())
+  sigla     String   @unique
+  descricao String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   conhecimentos CapacidadeConhecimento[]
   subfuncoes    SubfuncaoCapacidade[]
   questoes      Questao[]
 }
 
+/// Objeto de conhecimento (mapeado como "ObjetoConhecimento" no banco).
 model Conhecimento {
-  id                   Int                             @id @default(autoincrement())
-  codigo               String                          @unique
-  nome                 String                          @unique
-  descricao            String?
-  ativo                Boolean                         @default(true)
-  createdAt            DateTime                        @default(now())
-  updatedAt            DateTime                        @updatedAt
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nome      String   @unique
+  descricao String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   subConhecimentos     SubConhecimento[]
   unidadesCurriculares UnidadeCurricularConhecimento[]
   capacidades          CapacidadeConhecimento[]
@@ -620,70 +742,83 @@ model Conhecimento {
   @@map("ObjetoConhecimento")
 }
 
+/// Subconhecimento (subtópico de um Conhecimento).
 model SubConhecimento {
-  id             Int          @id @default(autoincrement())
-  codigo         String       @unique
-  nome           String
-  descricao      String?
-  ordem          Int?
-  ativo          Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nome      String
+  descricao String?
+  ordem     Int?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   conhecimentoId Int
   conhecimento   Conhecimento @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
-  questoes       Questao[]
+
+  questoes Questao[]
 }
 
+/// Relação N:N Curso ↔ Função.
 model CursoFuncao {
-  id             Int          @id @default(autoincrement())
+  id             Int @id @default(autoincrement())
   cursoTecnicoId Int
   funcaoId       Int
-  cursoTecnico   CursoTecnico @relation(fields: [cursoTecnicoId], references: [id], onDelete: Cascade)
-  funcao         Funcao       @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
+
+  cursoTecnico CursoTecnico @relation(fields: [cursoTecnicoId], references: [id], onDelete: Cascade)
+  funcao       Funcao       @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
 
   @@unique([cursoTecnicoId, funcaoId])
   @@index([cursoTecnicoId])
   @@index([funcaoId])
 }
 
+/// Relação N:N UC ↔ Conhecimento.
 model UnidadeCurricularConhecimento {
-  id                  Int               @id @default(autoincrement())
+  id                  Int  @id @default(autoincrement())
   ordem               Int?
   cargaHorariaParcial Int?
+
   unidadeCurricularId Int
   conhecimentoId      Int
-  unidadeCurricular   UnidadeCurricular @relation(fields: [unidadeCurricularId], references: [id], onDelete: Cascade)
-  conhecimento        Conhecimento      @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
+
+  unidadeCurricular UnidadeCurricular @relation(fields: [unidadeCurricularId], references: [id], onDelete: Cascade)
+  conhecimento      Conhecimento      @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
 
   @@unique([unidadeCurricularId, conhecimentoId])
   @@index([unidadeCurricularId])
   @@index([conhecimentoId])
 }
 
+/// Relação N:N Capacidade ↔ Conhecimento.
 model CapacidadeConhecimento {
-  id             Int          @id @default(autoincrement())
+  id             Int @id @default(autoincrement())
   capacidadeId   Int
   conhecimentoId Int
-  capacidade     Capacidade   @relation(fields: [capacidadeId], references: [id], onDelete: Cascade)
-  conhecimento   Conhecimento @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
+
+  capacidade   Capacidade   @relation(fields: [capacidadeId], references: [id], onDelete: Cascade)
+  conhecimento Conhecimento @relation(fields: [conhecimentoId], references: [id], onDelete: Cascade)
 
   @@unique([capacidadeId, conhecimentoId])
   @@index([capacidadeId])
   @@index([conhecimentoId])
 }
 
+/// Relação N:N Subfunção ↔ Capacidade.
 model SubfuncaoCapacidade {
-  id           Int        @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
   subfuncaoId  Int
   capacidadeId Int
-  subfuncao    Subfuncao  @relation(fields: [subfuncaoId], references: [id], onDelete: Cascade)
-  capacidade   Capacidade @relation(fields: [capacidadeId], references: [id], onDelete: Cascade)
+
+  subfuncao  Subfuncao  @relation(fields: [subfuncaoId], references: [id], onDelete: Cascade)
+  capacidade Capacidade @relation(fields: [capacidadeId], references: [id], onDelete: Cascade)
 
   @@unique([subfuncaoId, capacidadeId])
   @@index([subfuncaoId])
   @@index([capacidadeId])
 }
 
+/// Sessões de estudo (métricas e tempo).
 model SessaoEstudo {
   id        Int     @id @default(autoincrement())
   usuarioId Int
@@ -692,15 +827,16 @@ model SessaoEstudo {
   inicio     DateTime
   fim        DateTime?
   duracaoSeg Int?
-
-  origem String? // web/mobile
+  origem     String?
 
   @@index([usuarioId, inicio])
 }
 
+/// Questão (item) com vínculos pedagógicos.
 model Questao {
-  id                 Int               @id @default(autoincrement())
-  codigo             String?           @unique
+  id     Int     @id @default(autoincrement())
+  codigo String? @unique
+
   enunciado          String
   alternativaA       String
   alternativaB       String
@@ -708,43 +844,60 @@ model Questao {
   alternativaD       String
   alternativaE       String
   alternativaCorreta String
-  ativa              Boolean           @default(true)
-  dificuldade        NivelDificuldade? @default(MEDIO)
-  nivelCognitivo     NivelCognitivo?   @default(APLICAR)
-  categoriaOrigem    CategoriaOrigem?  @default(INSTITUCIONAL_INTERNA)
+
+  ativa Boolean @default(true)
+
+  dificuldade     NivelDificuldade? @default(MEDIO)
+  nivelCognitivo  NivelCognitivo?   @default(APLICAR)
+  categoriaOrigem CategoriaOrigem?  @default(INSTITUCIONAL_INTERNA)
 
   instituicaoId Int?
   instituicao   Instituicao? @relation(fields: [instituicaoId], references: [id])
-  bancaId       Int?
-  banca         Banca?       @relation(fields: [bancaId], references: [id])
 
-  ano           Int?
-  prova         String?
-  observacoes   String?
+  bancaId Int?
+  banca   Banca? @relation(fields: [bancaId], references: [id])
+
+  ano         Int?
+  prova       String?
+  observacoes String?
+
+  /// Tags/palavras-chave (sem default; sempre setar ao criar).
   palavrasChave String[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  cursoTecnicoId      Int?
-  cursoTecnico        CursoTecnico?      @relation(fields: [cursoTecnicoId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Vínculos pedagógicos (opcionais).
+  cursoTecnicoId Int?
+  cursoTecnico   CursoTecnico? @relation(fields: [cursoTecnicoId], references: [id])
+
   unidadeCurricularId Int?
   unidadeCurricular   UnidadeCurricular? @relation(fields: [unidadeCurricularId], references: [id])
-  funcaoId            Int?
-  funcao              Funcao?            @relation(fields: [funcaoId], references: [id])
-  subfuncaoId         Int?
-  subfuncao           Subfuncao?         @relation(fields: [subfuncaoId], references: [id])
-  conhecimentoId      Int?
-  conhecimento        Conhecimento?      @relation(fields: [conhecimentoId], references: [id])
-  subConhecimentoId   Int?
-  subConhecimento     SubConhecimento?   @relation(fields: [subConhecimentoId], references: [id])
-  capacidadeId        Int?
-  capacidade          Capacidade?        @relation(fields: [capacidadeId], references: [id])
 
+  funcaoId Int?
+  funcao   Funcao? @relation(fields: [funcaoId], references: [id])
+
+  subfuncaoId Int?
+  subfuncao   Subfuncao? @relation(fields: [subfuncaoId], references: [id])
+
+  conhecimentoId Int?
+  conhecimento   Conhecimento? @relation(fields: [conhecimentoId], references: [id])
+
+  subConhecimentoId Int?
+  subConhecimento   SubConhecimento? @relation(fields: [subConhecimentoId], references: [id])
+
+  capacidadeId Int?
+  capacidade   Capacidade? @relation(fields: [capacidadeId], references: [id])
+
+  /// Relações.
   simuladosQuestoes   SimuladosQuestao[]
   favoritadaPor       QuestaoFavorita[]
   registrosErro       QuestaoErro[]
   historicoTentativas QuestaoTentativa[]
   imagens             ImagemQuestao[]
+
+  /// Uso em agendamentos (LMS).
+  usadaEmAgendamentos AgendamentoSimuladoQuestao[]
 
   @@index([ativa])
   @@index([instituicaoId])
@@ -754,6 +907,7 @@ model Questao {
   @@index([nivelCognitivo])
 }
 
+/// Imagens/arquivos vinculados a uma questão.
 model ImagemQuestao {
   id        Int      @id @default(autoincrement())
   url       String?
@@ -764,31 +918,42 @@ model ImagemQuestao {
   height    Int?
   dados     Bytes?
   createdAt DateTime @default(now())
+
   questaoId Int
-  questao   Questao  @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
 
   @@index([questaoId])
 }
 
+/// Simulado (tentativa individual do aluno).
+/// Continua sendo o núcleo do fluxo atual; Turmas apenas apontam para ele.
 model Simulado {
-  id                 Int            @id @default(autoincrement())
-  codigo             String?        @unique
-  tipo               String
+  id     Int     @id @default(autoincrement())
+  codigo String? @unique
+
+  /// Tipo do simulado (ex.: "CUSTOM", "SAEP", "TURMA"...).
+  tipo String
+
   qtdeQuestoes       Int
   tempoLimiteMinutos Int
   tempoGastoSegundos Int?
   tempoGastoMinutos  Int?
-  alertasTempo       Int[]          @default([30, 10, 5])
-  dataInicio         DateTime?
-  dataConclusao      DateTime?
-  notaAcertos        Int?
-  notaPercentual     Float?
-  status             StatusSimulado @default(EM_ANDAMENTO)
+
+  alertasTempo Int[] @default([30, 10, 5])
+
+  dataInicio    DateTime?
+  dataConclusao DateTime?
+
+  notaAcertos    Int?
+  notaPercentual Float?
+
+  status StatusSimulado @default(EM_ANDAMENTO)
 
   questoesRespondidas     Int?
   acertos                 Int?
   erros                   Int?
   mediaTempoPorQuestaoSeg Float?
+
   gamificacaoProcessadaEm DateTime?
   xpConcedido             Int?
 
@@ -804,55 +969,71 @@ model Simulado {
 
   simuladosQuestoes SimuladosQuestao[]
   avaliacaoIA       AvaliacaoSimulado?
-
   historicoPontos   HistoricoPontos[]   @relation("Simulado_HistoricoPontos")
   GamificacaoEvento GamificacaoEvento[]
+
+  // ---------- Turmas/LMS (aditivo e seguro) ----------
+  /// Referência opcional ao agendamento de origem (mantém histórico com SetNull).
+  agendamentoId     Int?
+  agendamentoOrigem AgendamentoSimulado? @relation("Agendamento_Simulados", fields: [agendamentoId], references: [id], onDelete: SetNull)
+
+  /// Link opcional 1:1 com a entrega (quando existir).
+  agendamentoEntrega AgendamentoEntrega? @relation("Entrega_Simulado")
 
   @@index([usuarioId, status, createdAt])
   @@index([status, createdAt])
   @@index([tipo, status])
 }
 
+/// Avaliação/feedback gerada por IA para um simulado.
 model AvaliacaoSimulado {
-  id            Int      @id @default(autoincrement())
-  simuladoId    Int      @unique
-  simulado      Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
-  feedbackGeral String   @db.Text
-  pontosFortes  String?  @db.Text
-  pontosFracos  String?  @db.Text
-  recomendacoes String?  @db.Text
-  modeloIA      String?
-  versaoPrompt  Int      @default(1)
-  tokensTotal   Int?
+  id         Int      @id @default(autoincrement())
+  simuladoId Int      @unique
+  simulado   Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
+
+  feedbackGeral String  @db.Text
+  pontosFortes  String? @db.Text
+  pontosFracos  String? @db.Text
+  recomendacoes String? @db.Text
+
+  modeloIA       String?
+  versaoPrompt   Int     @default(1)
+  tokensTotal    Int?
   tempoGeracaoMs Int?
   metricasResumo Json?   @default("{}")
   hashEntrada    String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-
+/// Relação Simulado ↔ Questão (resposta do aluno, tempo, acerto).
 model SimuladosQuestao {
   id                 Int      @id @default(autoincrement())
   alternativaMarcada String?
   correta            Boolean?
   tempoResposta      Int?
-  simuladoId         Int
-  simulado           Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
-  questaoId          Int
-  questao            Questao  @relation(fields: [questaoId], references: [id])
+
+  simuladoId Int
+  simulado   Simulado @relation(fields: [simuladoId], references: [id], onDelete: Cascade)
+
+  questaoId Int
+  questao   Questao @relation(fields: [questaoId], references: [id])
 
   @@unique([simuladoId, questaoId])
   @@index([simuladoId])
   @@index([questaoId])
 }
 
+/// Caderno de erros (por usuário/questão).
 model QuestaoErro {
-  id             Int       @id @default(autoincrement())
-  usuarioId      Int
-  usuario        Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  questaoId      Int
-  questao        Questao   @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  questaoId Int
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+
   vezesErrada    Int       @default(1)
   ultimoErro     DateTime  @default(now())
   revisada       Boolean   @default(false)
@@ -863,13 +1044,17 @@ model QuestaoErro {
   @@index([questaoId])
 }
 
+/// Histórico de tentativas por questão (telemetria de respostas).
 model QuestaoTentativa {
-  id                 Int      @id @default(autoincrement())
-  createdAt          DateTime @default(now())
-  usuarioId          Int
-  usuario            Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  questaoId          Int
-  questao            Questao  @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  questaoId Int
+  questao   Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+
   alternativaMarcada String
   correta            Boolean
   tempoResposta      Int?
@@ -880,10 +1065,9 @@ model QuestaoTentativa {
   @@index([createdAt])
 }
 
-// ✅ LOGS DE AUDITORIA OTIMIZADOS
+/// Auditoria de ações (segurança/observabilidade).
 model LogAuditoria {
   id        Int      @id @default(autoincrement())
-  // Renomeado para 'createdAt' para padronização. Antes era 'data'.
   createdAt DateTime @default(now()) @db.Timestamptz
 
   usuarioId   Int?
@@ -896,12 +1080,12 @@ model LogAuditoria {
 
   usuarioRel Usuario? @relation("Usuario_LogAuditoria", fields: [usuarioId], references: [id], onDelete: SetNull)
 
-  @@index([usuarioId, acao]) // 🔍 Filtro rápido por atividade de usuário
-  @@index([createdAt]) // 🧹 Limpeza automática (Cron Job)
+  @@index([usuarioId, acao])
+  @@index([createdAt])
   @@index([acao])
 }
 
-// ✅ SEGURANÇA: BLACKLIST JWT
+/// Blacklist de JWT (revogação por jti).
 model TokenBlacklist {
   id        Int      @id @default(autoincrement())
   jti       String   @unique
@@ -909,5 +1093,578 @@ model TokenBlacklist {
   createdAt DateTime @default(now())
 
   @@index([jti])
-  @@index([expiresAt]) // Para limpeza automática
+  @@index([expiresAt])
+}
+
+// ============================================
+// NOVO DOMÍNIO: TURMAS (LMS) — 100% ADITIVO
+// ============================================
+
+/// Turma (grupo) com professores e alunos.
+model Turma {
+  id     Int    @id @default(autoincrement())
+  /// Código de convite único (ex.: "TUR-2026-X9Z").
+  codigo String @unique
+
+  nome      String
+  descricao String? @db.Text
+  imagemUrl String?
+  ativo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Relações.
+  professores TurmaProfessor[]
+  alunos      TurmaAluno[]
+
+  modulos      ModuloTurma[]
+  materiais    MaterialTurma[]
+  avisos       AvisoTurma[]
+  tarefas      Tarefa[]
+  agendamentos AgendamentoSimulado[]
+  forumTopicos TopicoForum[]
+  checkins     SessaoCheckIn[]
+}
+
+/// Pivot Turma ↔ Professor.
+/// PK composta garante unicidade e permite FKs compostas fortes.
+model TurmaProfessor {
+  turmaId     Int
+  professorId Int
+
+  turma     Turma   @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  professor Usuario @relation("Professor_Turmas", fields: [professorId], references: [id], onDelete: Cascade)
+
+  /// Papel interno na turma (futuro: MONITOR/COORDENADOR).
+  role String @default("PROFESSOR")
+
+  createdAt DateTime @default(now())
+
+  // --- RELAÇÕES INVERSAS (FK FORTES) ---
+  // ✅ Back-relations exigidas pelo Prisma (para FKs fortes)
+  modulosCriados      ModuloTurma[]         @relation("TP_ModuloAutor")
+  materiaisCriados    MaterialTurma[]       @relation("TP_MaterialAutor")
+  agendamentosCriados AgendamentoSimulado[] @relation("TP_AgendamentoCriador")
+  tarefasCriadas      Tarefa[]              @relation("TP_TarefaCriador")
+  avisosCriados       AvisoTurma[]          @relation("TP_AvisoAutor")
+  checkinsAbertos     SessaoCheckIn[]       @relation("TP_CheckInAbertoPor")
+
+  @@id([turmaId, professorId])
+  @@index([professorId])
+}
+
+/// Pivot Turma ↔ Aluno.
+/// PK composta (crítico para FKs compostas em entregas/check-ins/tarefas).
+model TurmaAluno {
+  turmaId Int
+  alunoId Int
+
+  turma Turma   @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  aluno Usuario @relation("Aluno_Turmas", fields: [alunoId], references: [id], onDelete: Cascade)
+
+  status    StatusTurmaAluno @default(PENDENTE)
+  entrouEm  DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // --- RELAÇÕES INVERSAS (FK FORTES) ---
+  // ✅ Back-relations exigidas pelo Prisma
+  agendamentoEntregas AgendamentoEntrega[] @relation("TA_AgendamentoEntrega")
+  tarefasEntregas     EntregaTarefa[]      @relation("TA_EntregaTarefa")
+  checkinsRegistros   CheckInRegistro[]    @relation("TA_CheckInRegistro")
+
+  @@id([turmaId, alunoId])
+  @@index([turmaId])
+  @@index([alunoId])
+  @@index([status])
+}
+
+// --------------------------------------------
+// CONTEÚDO: MÓDULOS (trilha) + ITENS (ordem)
+// --------------------------------------------
+
+/// Módulo/contêiner de aprendizagem dentro de uma turma (ordem por "ordem").
+model ModuloTurma {
+  id      Int   @id @default(autoincrement())
+  turmaId Int
+  turma   Turma @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  /// Autor (por ergonomia) + vínculo FK forte (TurmaProfessor).
+  autorId      Int
+  autor        Usuario        @relation("Usuario_ModulosCriados", fields: [autorId], references: [id], onDelete: Cascade)
+  autorVinculo TurmaProfessor @relation("TP_ModuloAutor", fields: [turmaId, autorId], references: [turmaId, professorId], onDelete: Cascade)
+
+  titulo    String
+  descricao String?
+  ordem     Int     @default(0)
+  publicado Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  itens ModuloItem[]
+
+  @@unique([id, turmaId]) // útil para FKs compostas futuras, se necessário
+  @@index([turmaId, ordem])
+}
+
+/// Item dentro de um módulo (ordenação global) com referência polimórfica.
+/// IMPORTANTE: garantir "apenas um FK preenchido" via CHECK CONSTRAINT na migration SQL.
+model ModuloItem {
+  id       Int         @id @default(autoincrement())
+  moduloId Int
+  modulo   ModuloTurma @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+
+  titulo String
+  tipo   TipoModuloItem
+  ordem  Int            @default(0)
+
+  /// Referências (apenas uma deve existir conforme o "tipo").
+  materialId Int?
+  material   MaterialTurma? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
+  agendamentoId Int?
+  agendamento   AgendamentoSimulado? @relation(fields: [agendamentoId], references: [id], onDelete: SetNull)
+
+  tarefaId Int?
+  tarefa   Tarefa? @relation(fields: [tarefaId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@unique([moduloId, ordem])
+  @@index([moduloId, ordem])
+  @@index([materialId])
+  @@index([agendamentoId])
+  @@index([tarefaId])
+}
+
+/// Material de turma (PDF/link/drive/youtube).
+model MaterialTurma {
+  id      Int   @id @default(autoincrement())
+  turmaId Int
+  turma   Turma @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  /// Autor (por ergonomia) + vínculo FK forte (TurmaProfessor).
+  autorId      Int
+  autor        Usuario        @relation("Usuario_MateriaisCriados", fields: [autorId], references: [id], onDelete: Cascade)
+  autorVinculo TurmaProfessor @relation("TP_MaterialAutor", fields: [turmaId, autorId], references: [turmaId, professorId], onDelete: Cascade)
+
+  titulo String
+  tipo   TipoMaterial @default(PDF_UPLOAD)
+
+  /// URL do bucket/drive/external.
+  url String
+
+  /// Opcional: caminho do storage e metadados (se upload).
+  storagePath  String?
+  mimeType     String?
+  tamanhoBytes Int?
+
+  descricao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Itens de módulo que referenciam este material.
+  itensModulo ModuloItem[]
+
+  /// Fórum contextual pode referenciar material.
+  forumTopicos TopicoForum[]
+
+  @@unique([id, turmaId]) // útil para FKs compostas se precisar
+  @@index([turmaId])
+  @@index([autorId])
+}
+
+// --------------------------------------------
+// SIMULADOS DA TURMA: AGENDAMENTO + QUESTÕES + ENTREGA
+// --------------------------------------------
+
+/// Agendamento/template de simulado de turma.
+/// Congela as questões no momento da criação (mesma prova para todos).
+model AgendamentoSimulado {
+  id             Int      @id @default(autoincrement())
+  
+  // Vínculo com a Turma
+  turmaId        Int
+  turma          Turma    @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  // Detalhes da Prova
+  titulo         String
+  descricao      String?
+  config         Json     // Filtros pedagógicos (Bloom, Dificuldade, etc) usados para gerar/validar
+  qtdeQuestoes   Int
+  
+  // Configuração de Tempo
+  // duracaoMinutos = Cronômetro (ex: 60 min para fazer). 
+  // Se for null/0, pode ser tempo livre.
+  duracaoMinutos Int      @default(60)
+
+  // Janela de Disponibilidade (Quando o botão "Iniciar" aparece)
+  dataInicio     DateTime
+  dataFim        DateTime
+  
+  status         StatusAgendamento @default(RASCUNHO)
+
+  // Autoria e Segurança (FK Forte com TurmaProfessor)
+  criadoPorId      Int
+  criadoPor        Usuario        @relation("Usuario_AgendamentosCriados", fields: [criadoPorId], references: [id], onDelete: Cascade)
+  criadoPorVinculo TurmaProfessor @relation("TP_AgendamentoCriador", fields: [turmaId, criadoPorId], references: [turmaId, professorId], onDelete: Cascade)
+
+  // Conteúdo (Questões fixas)
+  questoes         AgendamentoSimuladoQuestao[]
+
+  // Rastreamento (Quem fez)
+  entregas         AgendamentoEntrega[]
+  
+  // Tentativas reais geradas (tabela Simulado existente)
+  simuladosGerados Simulado[]                 @relation("Agendamento_Simulados")
+
+  // Integrações (Módulos da trilha e Fórum de dúvidas)
+  itensModulo      ModuloItem[]
+  forumTopicos     TopicoForum[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Índices e Chaves
+  @@unique([id, turmaId]) // CRÍTICO: Permite a validação composta em AgendamentoEntrega
+  @@index([turmaId, status])
+}
+
+/// Tabela de ligação Agendamento ↔ Questão com ordem fixa.
+model AgendamentoSimuladoQuestao {
+  id            Int                 @id @default(autoincrement())
+  agendamentoId Int
+  agendamento   AgendamentoSimulado @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+
+  questaoId Int
+  questao   Questao @relation(fields: [questaoId], references: [id])
+
+  ordem Int @default(0)
+  pontos        Float               @default(1.0)
+
+  @@unique([agendamentoId, questaoId])
+  @@unique([agendamentoId, ordem])
+  @@index([agendamentoId, ordem])
+  @@index([questaoId])
+}
+
+/// Controle por aluno do agendamento (status PENDENTE antes do aluno iniciar).
+/// Guarda também o simulado (tentativa individual) quando existir.
+model AgendamentoEntrega {
+  id Int @id @default(autoincrement())
+
+  turmaId       Int
+  agendamentoId Int
+
+  /// FK composta garante que agendamento pertence à turma.
+  agendamento AgendamentoSimulado @relation(fields: [agendamentoId, turmaId], references: [id, turmaId], onDelete: Cascade)
+
+  alunoId      Int
+  /// Aluno (ergonomia) + vínculo FK forte com TurmaAluno.
+  aluno        Usuario    @relation("Usuario_AgendamentoEntregas", fields: [alunoId], references: [id], onDelete: Cascade)
+  alunoVinculo TurmaAluno @relation("TA_AgendamentoEntrega", fields: [turmaId, alunoId], references: [turmaId, alunoId], onDelete: Cascade)
+
+  /// A tentativa (Simulado) só existe após o aluno iniciar.
+  simuladoId Int?      @unique
+  simulado   Simulado? @relation("Entrega_Simulado", fields: [simuladoId], references: [id], onDelete: Cascade)
+
+  status StatusAgendamentoEntrega @default(PENDENTE)
+
+  /// Métricas resumo (para relatórios rápidos do professor).
+  notaAcertos    Int?
+  notaPercentual Float?
+
+  iniciadoEm   DateTime?
+  finalizadoEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Uma entrega por aluno por agendamento (padrão).
+  @@unique([agendamentoId, alunoId])
+  @@index([agendamentoId])
+  @@index([turmaId, alunoId])
+}
+
+// --------------------------------------------
+// TAREFAS (UPLOAD/DISCURSIVA) + ENTREGAS + ARQUIVOS
+// --------------------------------------------
+
+/// Tarefa da turma (envio de arquivo/texto) com correção manual.
+model Tarefa {
+  id      Int   @id @default(autoincrement())
+  turmaId Int
+  turma   Turma @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  /// Criador (ergonomia) + vínculo FK forte (TurmaProfessor).
+  criadoPorId      Int
+  criadoPor        Usuario        @relation("Usuario_TarefasCriadas", fields: [criadoPorId], references: [id], onDelete: Cascade)
+  criadoPorVinculo TurmaProfessor @relation("TP_TarefaCriador", fields: [turmaId, criadoPorId], references: [turmaId, professorId], onDelete: Cascade)
+
+  titulo    String
+  descricao String? @db.Text
+
+  /// Deadline (opcional) — regras de atraso são do backend.
+  dataEntrega DateTime?
+
+  /// Nota máxima (padrão 10, mas você pode mudar pra 100).
+  notaMaxima Float @default(10.0)
+
+  entregas    EntregaTarefa[]
+  itensModulo ModuloItem[]
+
+  /// Fórum contextual pode referenciar tarefa.
+  forumTopicos TopicoForum[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([id, turmaId]) // necessário para FK composta em EntregaTarefa
+  @@index([turmaId])
+  @@index([criadoPorId])
+}
+
+/// Entrega do aluno para uma tarefa.
+model EntregaTarefa {
+  id Int @id @default(autoincrement())
+
+  turmaId  Int
+  tarefaId Int
+
+  /// FK composta garante que a tarefa pertence à turma desta entrega.
+  tarefa Tarefa @relation(fields: [tarefaId, turmaId], references: [id, turmaId], onDelete: Cascade)
+
+  alunoId      Int
+  /// Aluno (ergonomia) + vínculo FK forte com TurmaAluno.
+  aluno        Usuario    @relation("Usuario_EntregasTarefas", fields: [alunoId], references: [id], onDelete: Cascade)
+  alunoVinculo TurmaAluno @relation("TA_EntregaTarefa", fields: [turmaId, alunoId], references: [turmaId, alunoId], onDelete: Cascade)
+
+  /// Resposta textual opcional (discursiva).
+  textoResposta String? @db.Text
+
+  /// Arquivos anexados (multi).
+  arquivos EntregaTarefaArquivo[]
+
+  status StatusEntrega @default(PENDENTE)
+
+  /// Avaliação manual do professor.
+  nota     Float?
+  feedback String? @db.Text
+
+  /// Datas (controle correto: entregueEm só quando realmente enviar).
+  createdAt   DateTime  @default(now())
+  entregueEm  DateTime?
+  corrigidoEm DateTime?
+
+  @@unique([tarefaId, alunoId])
+  @@index([tarefaId])
+  @@index([turmaId, alunoId])
+}
+
+/// Arquivos anexos de uma entrega de tarefa (multi-upload).
+model EntregaTarefaArquivo {
+  id              Int           @id @default(autoincrement())
+  entregaTarefaId Int
+  entregaTarefa   EntregaTarefa @relation(fields: [entregaTarefaId], references: [id], onDelete: Cascade)
+
+  url          String
+  storagePath  String?
+  nomeArquivo  String
+  mimeType     String?
+  tamanhoBytes Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([entregaTarefaId])
+}
+
+// --------------------------------------------
+// COMUNICAÇÃO: AVISOS (FEED) + ANEXOS + COMENTÁRIOS
+// --------------------------------------------
+
+/// Aviso no mural da turma (feed cronológico, com "fixado").
+model AvisoTurma {
+  id Int @id @default(autoincrement())
+
+  turmaId Int
+  turma   Turma @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  /// Autor (ergonomia) + vínculo FK forte (TurmaProfessor).
+  autorId      Int
+  autor        Usuario        @relation("Usuario_AvisosCriados", fields: [autorId], references: [id], onDelete: Cascade)
+  autorVinculo TurmaProfessor @relation("TP_AvisoAutor", fields: [turmaId, autorId], references: [turmaId, professorId], onDelete: Cascade)
+
+  titulo   String
+  conteudo String  @db.Text
+  fixado   Boolean @default(false)
+
+  anexos      AvisoTurmaAnexo[]
+  comentarios ComentarioAviso[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([turmaId])
+  @@index([turmaId, fixado, createdAt])
+}
+
+/// Anexos do aviso (normalizado).
+model AvisoTurmaAnexo {
+  id      Int        @id @default(autoincrement())
+  avisoId Int
+  aviso   AvisoTurma @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+
+  url         String
+  storagePath String?
+  nome        String?
+  tipo        String? // mime (image/png, application/pdf, ...)
+
+  createdAt DateTime @default(now())
+
+  @@index([avisoId])
+}
+
+/// Comentário em aviso (pode ser aluno ou professor).
+/// Membership (aluno/prof) é validado no backend (não dá para FK “union” em Prisma).
+model ComentarioAviso {
+  id      Int        @id @default(autoincrement())
+  avisoId Int
+  aviso   AvisoTurma @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  texto     String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([avisoId, createdAt])
+  @@index([usuarioId])
+}
+
+// --------------------------------------------
+// FÓRUM: DÚVIDAS CONTEXTUAIS (Q&A) + SOLUÇÃO OFICIAL
+// --------------------------------------------
+
+/// Tópico do fórum da turma.
+/// Pode ser contextual: vinculado a um agendamento, material ou tarefa.
+model TopicoForum {
+  id Int @id @default(autoincrement())
+
+  turmaId Int
+  turma   Turma @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  autorId Int
+  autor   Usuario @relation(fields: [autorId], references: [id], onDelete: Cascade)
+
+  titulo   String
+  conteudo String @db.Text
+
+  resolvido Boolean @default(false)
+
+  /// Contexto opcional (diferencial LMS).
+  agendamentoId Int?
+  agendamento   AgendamentoSimulado? @relation(fields: [agendamentoId], references: [id], onDelete: SetNull)
+
+  materialId Int?
+  material   MaterialTurma? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
+  tarefaId Int?
+  tarefa   Tarefa? @relation(fields: [tarefaId], references: [id], onDelete: SetNull)
+
+  /// Solução oficial (normalizado).
+  solucaoRespostaId Int?
+  solucaoResposta   RespostaForum? @relation("Topico_Solucao", fields: [solucaoRespostaId], references: [id], onDelete: SetNull)
+
+  respostas RespostaForum[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([turmaId])
+  @@index([autorId])
+  @@index([agendamentoId])
+  @@index([materialId])
+  @@index([tarefaId])
+}
+
+/// Resposta em tópico do fórum.
+/// "ehSolucao" é opcional/derivado; a fonte de verdade é TopicoForum.solucaoRespostaId.
+model RespostaForum {
+  id Int @id @default(autoincrement())
+
+  topicoId Int
+  topico   TopicoForum @relation(fields: [topicoId], references: [id], onDelete: Cascade)
+
+  autorId Int
+  autor   Usuario @relation(fields: [autorId], references: [id], onDelete: Cascade)
+
+  conteudo String @db.Text
+
+  /// Campo derivado (opcional). Recomenda-se manter sincronizado via backend.
+  ehSolucao Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  /// Relação reversa para solução oficial.
+  topicoComoSolucao TopicoForum[] @relation("Topico_Solucao")
+
+  @@index([topicoId, createdAt])
+  @@index([autorId])
+}
+
+// --------------------------------------------
+// FREQUÊNCIA: CHECK-IN GAMIFICADO
+// --------------------------------------------
+
+/// Sessão de check-in aberta por um professor por tempo limitado.
+model SessaoCheckIn {
+  id Int @id @default(autoincrement())
+
+  turmaId Int
+  turma   Turma @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  /// Professor que abriu (ergonomia) + vínculo FK forte (TurmaProfessor).
+  abertoPorId      Int
+  abertoPor        Usuario        @relation("Usuario_CheckinsAbertos", fields: [abertoPorId], references: [id], onDelete: Cascade)
+  abertoPorVinculo TurmaProfessor @relation("TP_CheckInAbertoPor", fields: [turmaId, abertoPorId], references: [turmaId, professorId], onDelete: Cascade)
+
+  /// Código curto (pode ser usado para validar presença presencial).
+  codigo String
+
+  ativo Boolean @default(true)
+
+  abertoEm DateTime @default(now())
+  fechaEm  DateTime
+
+  registros CheckInRegistro[]
+
+  @@index([turmaId, ativo])
+  @@index([abertoPorId])
+}
+
+/// Registro de check-in do aluno.
+model CheckInRegistro {
+  id Int @id @default(autoincrement())
+
+  sessaoId Int
+  sessao   SessaoCheckIn @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  turmaId Int
+  alunoId Int
+
+  /// Aluno (ergonomia) + vínculo FK forte com TurmaAluno.
+  aluno        Usuario    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  alunoVinculo TurmaAluno @relation("TA_CheckInRegistro", fields: [turmaId, alunoId], references: [turmaId, alunoId], onDelete: Cascade)
+
+  realizadoEm DateTime @default(now())
+
+  /// Metadados opcionais (use com cuidado).
+  ip      String?
+  gpsLat  Float?
+  gpsLong Float?
+
+  @@unique([sessaoId, alunoId])
+  @@index([sessaoId])
+  @@index([turmaId, alunoId])
 }

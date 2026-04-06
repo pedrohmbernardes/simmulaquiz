@@ -18,16 +18,12 @@ function assertServerOnly() {
 
 /**
  * ✅ Buckets
- * - Público: questões/imagens do conteúdo (mantém compat com o seu fluxo atual)
- * - Privado: fotos de perfil (avatar)
- *
- * IMPORTANTE:
- * - Crie o bucket privado no painel do Supabase com este nome:
- *   simmulaquiz-perfis  (PRIVATE)
- * - O bucket simmulaquiz-assets pode permanecer PUBLIC para não quebrar imagens de questões.
+ * - Public: questoes, materiais
+ * - Private: perfis
  */
-const BUCKET_PUBLIC = 'simmulaquiz-assets' as const;
-const BUCKET_PRIVATE = 'simmulaquiz-perfis' as const;
+const BUCKET_ASSETS = 'simmulaquiz-assets' as const; // Imagens de questões
+const BUCKET_PERFIS = 'simmulaquiz-perfis' as const; // Privado
+const BUCKET_MATERIAIS = 'turma-materiais' as const; // Novo bucket público para PDFs
 
 const SAFE_EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -35,6 +31,7 @@ const SAFE_EXT_BY_MIME: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/gif': 'gif',
+  'application/pdf': 'pdf', // ✅ Suporte a PDF adicionado
 };
 
 function getEnv(name: string): string | null {
@@ -60,9 +57,9 @@ function getAdminClient(): SupabaseClient {
 
   if (!url || !key) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL: SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não definidos.');
+      throw new Error('FATAL: SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não definidos.');
     }
-    throw new Error('Supabase env ausentes (dev). Defina SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_SERVICE_ROLE_KEY.');
+    throw new Error('Supabase env ausentes (dev).');
   }
 
   if (_client) return _client;
@@ -89,88 +86,75 @@ function sanitizeExtFromMime(mime: string | undefined, fallbackName?: string): s
   return ext.replace(/[^a-z0-9]/g, '').slice(0, 8) || 'bin';
 }
 
-export type UploadFolder = 'questoes' | 'perfis';
+// ✅ Adicionado 'materiais'
+export type UploadFolder = 'questoes' | 'perfis' | 'materiais';
 
 export type UploadResult = {
-  /** URL para uso imediato (pública p/ questoes; signed p/ perfis) */
   url: string;
-  /** Path interno no bucket (use isso para persistir no banco quando for perfis) */
   path: string;
-  bucket: typeof BUCKET_PUBLIC | typeof BUCKET_PRIVATE;
+  bucket: string;
 };
 
 export function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
-/**
- * Gera Signed URL para um path do bucket PRIVADO (perfis).
- */
 export async function getSignedUrlForPerfil(path: string, expiresInSeconds = 60 * 60): Promise<string> {
   const supabaseAdmin = getAdminClient();
-
   const { data, error } = await supabaseAdmin.storage
-    .from(BUCKET_PRIVATE)
+    .from(BUCKET_PERFIS)
     .createSignedUrl(path, expiresInSeconds);
 
   if (error || !data?.signedUrl) {
-    console.error('Erro SignedUrl Supabase (perfis):', error?.message || 'sem signedUrl');
     throw new Error('Falha ao gerar URL assinada');
   }
-
   return data.signedUrl;
 }
 
-/**
- * Resolve a foto do usuário:
- * - se já for URL (legado), retorna como está
- * - se for path (novo), gera signedUrl (bucket privado)
- */
 export async function resolveFotoUrl(
   fotoUrlOrPath: string | null | undefined,
   expiresInSeconds = 60 * 60
 ): Promise<string | null> {
   if (!fotoUrlOrPath) return null;
   if (isHttpUrl(fotoUrlOrPath)) return fotoUrlOrPath;
-
-  // por padrão, tratamos como path de PERFIL
   return getSignedUrlForPerfil(fotoUrlOrPath, expiresInSeconds);
 }
 
 /**
- * Upload no Supabase Storage.
- * - questoes => bucket público (retorna URL pública)
- * - perfis   => bucket privado (retorna signed URL p/ uso imediato + path p/ persistência)
+ * Upload Genérico (Imagens ou PDF)
  */
-export async function uploadImageToSupabase(file: File, folder: UploadFolder): Promise<UploadResult> {
+export async function uploadFileToSupabase(file: File, folder: UploadFolder): Promise<UploadResult> {
   const supabaseAdmin = getAdminClient();
 
   const contentType = (file?.type ?? '').toLowerCase().trim();
   const ext = sanitizeExtFromMime(contentType, (file as any)?.name);
 
-  const safeFolder: UploadFolder = folder === 'perfis' ? 'perfis' : 'questoes';
+  // Seleção de Bucket
+  let bucket: string;
+  if (folder === 'perfis') bucket = BUCKET_PERFIS;
+  else if (folder === 'materiais') bucket = BUCKET_MATERIAIS;
+  else bucket = BUCKET_ASSETS; // default 'questoes'
 
-  const bucket = safeFolder === 'perfis' ? BUCKET_PRIVATE : BUCKET_PUBLIC;
-  const filePath = `${safeFolder}/${uuidv4()}.${ext}`;
+  const filePath = `${folder}/${uuidv4()}.${ext}`;
 
   const { error } = await supabaseAdmin.storage.from(bucket).upload(filePath, file, {
     contentType: contentType || undefined,
     upsert: false,
-    cacheControl: safeFolder === 'perfis' ? '0' : '3600',
+    cacheControl: folder === 'perfis' ? '0' : '3600',
   });
 
   if (error) {
     console.error('Erro Upload Supabase:', error.message);
-    throw new Error('Falha no upload da imagem');
+    throw new Error('Falha no upload do arquivo');
   }
 
-  if (safeFolder === 'perfis') {
-    // URL assinada para uso imediato (NÃO persistir no banco!)
-    const signedUrl = await getSignedUrlForPerfil(filePath, 60 * 60 * 24 * 7); // 7 dias
+  // Se for privado (perfis), retorna signed url temporária
+  if (bucket === BUCKET_PERFIS) {
+    const signedUrl = await getSignedUrlForPerfil(filePath, 60 * 60 * 24); 
     return { url: signedUrl, path: filePath, bucket };
   }
 
-  // URL pública (questões)
+  // Se for público (questoes, materiais), retorna public url
   const { data: publicUrlData } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
 
   return {
@@ -179,3 +163,6 @@ export async function uploadImageToSupabase(file: File, folder: UploadFolder): P
     bucket,
   };
 }
+
+// Mantendo compatibilidade com código antigo (alias)
+export const uploadImageToSupabase = uploadFileToSupabase;

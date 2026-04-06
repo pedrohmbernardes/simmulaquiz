@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Oswald, Roboto, Lato } from "next/font/google";
 import { Toaster } from "sonner";
+import { cookies } from "next/headers"; // ✅ 1. Import necessário
 import "./globals.css";
 
 // 1. Configurando Oswald (Títulos Fortes)
@@ -29,13 +30,22 @@ export const metadata: Metadata = {
   description: "Plataforma de simulados técnicos",
 };
 
-export default function RootLayout({
+// ✅ 2. O componente agora é ASYNC
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // ✅ 3. Lógica para pegar o token de forma segura
+  const cookieStore = await cookies();
+  const csrfToken = cookieStore.get('csrf-token')?.value || '';
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        {/* ✅ 4. Injeção Global do Token CSRF */}
+        <meta name="csrf-token" content={csrfToken} />
+      </head>
       <body
         className={`${oswald.variable} ${roboto.variable} ${lato.variable} bg-brand-lightBlue text-gray-900 antialiased font-sans`}
       >

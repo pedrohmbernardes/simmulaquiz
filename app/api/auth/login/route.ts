@@ -10,7 +10,7 @@ import { enviarCodigoVerificacao, enviarAlertaSegurancaLogin } from '@/lib/mail'
 import { authRateLimit, otpRateLimit } from '@/lib/ratelimit';
 import { registrarLog, AuditAction } from '@/lib/audit';
 import { processarLoginDiario } from '@/lib/gamificacao/engine';
-import { getClientIp, safeApiError } from '@/lib/utils';
+import { getClientIp, safeApiError } from '@/lib/server-utils';
 import { headers } from 'next/headers';
 
 export const runtime = 'nodejs';

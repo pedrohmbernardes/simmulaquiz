@@ -34,9 +34,9 @@ function noStoreJson(data: unknown, init?: ResponseInit) {
   return res;
 }
 
-type Ctx =
-  | { params: { id: string } }
-  | { params: Promise<{ id: string }> };
+type Ctx = {
+  params: Promise<{ id: string }>;
+};
 
 export async function GET(request: NextRequest, ctx: Ctx) {
   try {
@@ -51,8 +51,8 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       return noStoreJson({ error: 'Sessão inválida' }, { status: 401 });
     }
 
-    // ✅ Params (compatível com params normal ou Promise)
-    const params = await Promise.resolve((ctx as any).params);
+    // ✅ Params (Next 16: params é Promise)
+    const params = await ctx.params;
     const questaoId = Number(params?.id);
 
     // ✅ Validação de ID (evita lixo, NaN, negativo, etc.)

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { verifySchema } from '@/lib/validations/auth';
 import { authRateLimit, otpRateLimit } from '@/lib/ratelimit';
 import { registrarLog, AuditAction } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/utils';
+import { getClientIp, safeApiError } from '@/lib/server-utils';
 import { createSession } from '@/lib/auth';
 import { enviarEmailBoasVindas_Aluno } from '@/lib/mail';
 import { generateCSRFToken } from '@/lib/csrf';

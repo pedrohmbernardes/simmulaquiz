@@ -1,6 +1,19 @@
 // app/(admin)/admin/page.tsx
 import { prisma } from '@/lib/prisma';
-import { Users, BookOpen, Trophy, Activity, ArrowUpRight, Brain, TrendingUp, Award, Clock, Sparkles, CheckCircle, Target } from 'lucide-react';
+import { 
+  Users, 
+  BookOpen, 
+  Trophy, 
+  ArrowUpRight, 
+  Brain, 
+  TrendingUp, 
+  Award, 
+  Clock, 
+  Sparkles, 
+  CheckCircle, 
+  Target,
+  School // ✅ Novo ícone importado
+} from 'lucide-react';
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -185,6 +198,16 @@ export default async function AdminDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* ✅ CARD NOVO: MINHAS TURMAS (LMS) */}
+              <QuickActionCard
+                title="Minhas Turmas"
+                description="Crie turmas, adicione alunos e gerencie conteúdos"
+                href="/professor/turmas"
+                icon={School}
+                color="bg-gradient-to-br from-teal-500 to-emerald-500"
+              />
+
               <QuickActionCard
                 title="Gerenciar Questões"
                 description="Visualize, edite e organize o banco de questões"

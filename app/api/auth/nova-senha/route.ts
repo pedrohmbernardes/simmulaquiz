@@ -7,7 +7,7 @@ import { novaSenhaSchema } from '@/lib/validations/auth';
 import { authRateLimit } from '@/lib/ratelimit';
 import { logout, getSession } from '@/lib/auth';
 import { registrarLog, AuditAction } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/utils';
+import { getClientIp, safeApiError } from '@/lib/server-utils';
 import { verifyCSRFToken } from '@/lib/csrf';
 
 export const runtime = 'nodejs';
@@ -29,7 +29,7 @@ async function jitterDelay(minMs = 120, maxMs = 320) {
 
 export async function POST(request: Request) {
   try {
-    const ip = getClientIp(request);
+    const ip = await getClientIp(request);
     const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 250);
 
     // (defesa em profundidade) payload pequeno

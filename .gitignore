@@ -13,8 +13,12 @@
 # testing
 /coverage
 
+# arquivos na raiz
 backup_dados.sql
 Backups.md
+Sistema de Turmas.md
+/prisma/TurmaSchema.prisma
+primeirasIntegracoes-SistemaDeTurmas.md
 
 # next.js
 /.next/

@@ -1,530 +1,481 @@
-import { PrismaClient, TipoRequisitoConquista, CategoriaConquista } from '@prisma/client';
+import { 
+  PrismaClient, 
+  TipoUsuario, 
+  NivelDificuldade, 
+  NivelCognitivo, 
+  TipoModuloItem, 
+  TipoMaterial, 
+  StatusAgendamento, 
+  StatusTurmaAluno,
+  TipoRequisitoConquista,
+  StatusSimulado
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
-// 📂 Importação da Fonte da Verdade (JSON)
-// Certifique-se de que o arquivo 'conquistas_meta.json' está na pasta 'prisma/'
+// 📂 IMPORTAÇÃO DE DADOS
 import conquistasMeta from './conquistas_meta.json';
-
-// Dados Estáticos Auxiliares
+import curriculo from './curriculo.saep.automacao.json';
+import relacionamentos from './relacionamentos.saep.automacao.json';
 import { titulosData } from './titulos-data';
 import { instituicoesData, bancasData } from './data-auxiliares';
 
-// Dados Dinâmicos da Matriz Curricular
-import curriculo from './curriculo.saep.automacao.json';
-import relacionamentos from './relacionamentos.saep.automacao.json';
-
 const prisma = new PrismaClient();
 
-// ============================
-// Helpers de normalização (SAEP)
-// ============================
-function pad2(n: number) {
-  return String(n).padStart(2, '0');
+// ============================================================
+// 🛠️ HELPERS DE NORMALIZAÇÃO DE CÓDIGOS
+// ============================================================
+
+/** Normaliza "UC-01" -> "UC-0001" */
+function normUC(code: string): string {
+  if (!code) return '';
+  const num = code.replace(/\D/g, '');
+  return `UC-${num.padStart(4, '0')}`;
 }
 
-function norm(str: unknown) {
-  return String(str ?? '').trim();
+/** Normaliza "FUNC-01" -> "FUNC-0001" */
+function normFuncao(code: string): string {
+  if (!code) return '';
+  const num = code.replace(/\D/g, '');
+  return `FUNC-${num.padStart(4, '0')}`;
 }
 
-function normUpper(str: unknown) {
-  return norm(str).toUpperCase();
+/** Normaliza "CONH-01" -> "OBJ-CONH-00001" */
+function normConhecimento(code: string): string {
+  if (!code) return '';
+  const num = code.replace(/\D/g, '');
+  return `OBJ-CONH-${num.padStart(5, '0')}`;
 }
 
-// FUNC-0001 -> FUNC-01 (mantém FUNC-01 como está)
-function normFuncaoCodigo(codigo: unknown) {
-  const up = normUpper(codigo);
-  const m = up.match(/^FUNC-0*(\d+)$/);
-  return m ? `FUNC-${pad2(Number(m[1]))}` : up;
+/** Normaliza Sigla de Capacidade (Trim) */
+function normCapacidade(sigla: string): string {
+  return String(sigla ?? '').trim();
 }
 
-// UC-0001 -> UC-01 (mantém UC-01 como está)
-function normUCCodigo(codigo: unknown) {
-  const up = normUpper(codigo);
-  const m = up.match(/^UC-0*(\d+)$/);
-  return m ? `UC-${pad2(Number(m[1]))}` : up;
-}
-
-// OBJ-CONH-00017 -> CONH-17
-// CONH-17 -> CONH-17
-function normConhecimentoCodigo(codigo: unknown) {
-  const up = normUpper(codigo);
-
-  // Já está no formato CONH-xx
-  let m = up.match(/^CONH-0*(\d+)$/);
-  if (m) return `CONH-${pad2(Number(m[1]))}`;
-
-  // Vem no formato OBJ-CONH-000xx (lista de conhecimentos)
-  m = up.match(/^OBJ-CONH-0*(\d+)$/);
-  if (m) return `CONH-${pad2(Number(m[1]))}`;
-
-  return up;
-}
-
-function isValidCategoriaConquista(value: unknown) {
-  return (Object.values(CategoriaConquista) as string[]).includes(String(value));
-}
-
-function setAliases(map: Map<string, number>, id: number, ...keys: string[]) {
-  for (const k of keys) {
-    const kk = normUpper(k);
-    if (kk) map.set(kk, id);
-  }
-}
-
+// ============================================================
+// 🚀 FUNÇÃO PRINCIPAL
+// ============================================================
 async function main() {
-  console.log('🚀 Iniciando Seed SAEP (Schema 2.4 - Gamificação Completa)...');
+  console.log('🌱 [SEED] Iniciando população COMPLETA (v3 - SubConhecimentos)...');
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPass = process.env.ADMIN_INITIAL_PASSWORD;
+  // ------------------------------------------------------------
+  // 1. LIMPEZA SEGURA
+  // ------------------------------------------------------------
+  console.log('🧹 [LIMPEZA] Removendo dados antigos...');
+  
+  // LMS
+  await prisma.entregaTarefaArquivo.deleteMany();
+  await prisma.entregaTarefa.deleteMany();
+  await prisma.tarefa.deleteMany();
+  await prisma.checkInRegistro.deleteMany();
+  await prisma.sessaoCheckIn.deleteMany();
+  await prisma.comentarioAviso.deleteMany();
+  await prisma.avisoTurmaAnexo.deleteMany();
+  await prisma.avisoTurma.deleteMany();
+  await prisma.respostaForum.deleteMany();
+  await prisma.topicoForum.deleteMany();
+  await prisma.agendamentoSimuladoQuestao.deleteMany();
+  await prisma.agendamentoEntrega.deleteMany();
+  await prisma.agendamentoSimulado.deleteMany();
+  await prisma.moduloItem.deleteMany();
+  await prisma.moduloTurma.deleteMany();
+  await prisma.materialTurma.deleteMany();
+  await prisma.turmaAluno.deleteMany();
+  await prisma.turmaProfessor.deleteMany();
+  await prisma.turma.deleteMany();
 
-  if (!adminEmail || !adminPass) {
-    throw new Error('❌ ERRO: Configure ADMIN_EMAIL e ADMIN_INITIAL_PASSWORD no arquivo .env');
-  }
-
-  // Casting para 'any' para evitar bloqueios de tipagem estrita nos arquivos JSON importados
-  const _conquistasMeta = conquistasMeta as any[];
-  const _titulosData = titulosData as any[];
-  const _instituicoesData = instituicoesData as any[];
-  const _bancasData = bancasData as any[];
-  const _curriculo = curriculo as any;
-  const _relacionamentos = relacionamentos as any;
-
-  // ==========================================
-  // 1. LIMPEZA TOTAL (Ordem de dependência estrita)
-  // ==========================================
-  console.log('🧹 Limpando banco de dados...');
-
-  // 1.1 Tabelas de Log e Histórico (Dependentes de Usuário e Simulado)
+  // Core/Gamificação
+  await prisma.usuarioConquista.deleteMany();
   await prisma.historicoPontos.deleteMany();
+  await prisma.usuarioBadge.deleteMany();
   await prisma.usuarioMetricasDiarias.deleteMany();
-  await prisma.gamificacaoEvento.deleteMany();
-  await prisma.logAuditoria.deleteMany();
-
-  // 1.2 Tabelas de Questões e Simulados (Core da Aplicação)
-  await prisma.questaoTentativa.deleteMany();
+  await prisma.usuarioStreak.deleteMany();
+  await prisma.usuarioGamificacao.deleteMany();
+  await prisma.conquistaRegra.deleteMany();
+  await prisma.conquista.deleteMany();
+  await prisma.titulo.deleteMany();
+  
+  // Questões
   await prisma.questaoErro.deleteMany();
-  await prisma.questaoFavorita.deleteMany();
+  await prisma.questaoTentativa.deleteMany();
   await prisma.simuladosQuestao.deleteMany();
   await prisma.avaliacaoSimulado.deleteMany();
   await prisma.simulado.deleteMany();
-  await prisma.imagemQuestao.deleteMany(); // Se houver imagens
+  await prisma.imagemQuestao.deleteMany();
+  await prisma.questaoFavorita.deleteMany();
   await prisma.questao.deleteMany();
 
-  // 1.3 Tabelas Curriculares (Relacionamentos N:N)
-  await prisma.unidadeCurricularConhecimento.deleteMany();
-  await prisma.subfuncaoCapacidade.deleteMany();
-  await prisma.capacidadeConhecimento.deleteMany();
+  // Pedagógico (Relacionamentos)
   await prisma.cursoFuncao.deleteMany();
+  await prisma.unidadeCurricularConhecimento.deleteMany();
+  await prisma.capacidadeConhecimento.deleteMany();
+  await prisma.subfuncaoCapacidade.deleteMany();
 
-  // 1.4 Tabelas Curriculares (Entidades Base)
+  // Pedagógico (Entidades)
   await prisma.subConhecimento.deleteMany();
-  await prisma.subfuncao.deleteMany();
   await prisma.conhecimento.deleteMany();
   await prisma.capacidade.deleteMany();
+  await prisma.subfuncao.deleteMany();
   await prisma.funcao.deleteMany();
   await prisma.unidadeCurricular.deleteMany();
   await prisma.cursoTecnico.deleteMany();
 
-  // 1.5 Tabelas de Gamificação (Core)
-  await prisma.usuarioConquista.deleteMany();
-  await prisma.conquistaRegra.deleteMany();
-  await prisma.conquista.deleteMany();
-  await prisma.usuarioStreak.deleteMany();
-  await prisma.usuarioGamificacao.deleteMany();
-  await prisma.titulo.deleteMany();
-  await prisma.rankingEntry.deleteMany();
-  await prisma.rankingSnapshot.deleteMany();
-
-  // 1.6 Tabelas de Usuário e Auxiliares
-  await prisma.sessaoEstudo.deleteMany();
-  await prisma.usuario.deleteMany();
-  await prisma.instituicao.deleteMany();
+  // Auxiliares
   await prisma.banca.deleteMany();
+  await prisma.instituicao.deleteMany();
+  await prisma.logAuditoria.deleteMany();
+  await prisma.tokenBlacklist.deleteMany();
+  await prisma.usuario.deleteMany();
 
-  console.log('✨ Banco de dados limpo.');
+  console.log('✅ Banco limpo.');
 
-  // ==========================================
-  // 2. RECONSTRUÇÃO DO CURRÍCULO (COM NORMALIZAÇÃO)
-  // ==========================================
-  console.log('🏗️  Reconstruindo Currículo...');
-
-  // Mapas aceitam BOTH formatos (ex: UC-0001 e UC-01) para facilitar lookup e evitar “perdas silenciosas”
-  const mapUC = new Map<string, number>();
-  const mapFunc = new Map<string, number>();
-  const mapSubFunc = new Map<string, number>();
-  const mapCap = new Map<string, number>();
-  const mapConh = new Map<string, number>();
-
-  const cursoCodigo = norm(_curriculo?.cursoTecnico?.codigo);
-  const cursoNome = norm(_curriculo?.cursoTecnico?.nome);
-  const cursoDescricao = _curriculo?.cursoTecnico?.descricao ?? null;
-
-  const curso = await prisma.cursoTecnico.create({
-    data: {
-      codigo: cursoCodigo,
-      nome: cursoNome,
-      descricao: cursoDescricao
-    }
-  });
-
-  // 2.1 Unidades Curriculares
-  let ucCount = 0;
-  for (const uc of _curriculo.unidadesCurriculares ?? []) {
-    const codigoOriginal = normUpper(uc.codigo);
-    const codigoNorm = normUCCodigo(uc.codigo);
-
-    const created = await prisma.unidadeCurricular.create({
-      data: {
-        codigo: codigoNorm,
-        nome: norm(uc.nome),
-        descricao: uc.descricao ?? null,
-        cargaHoraria: uc.cargaHoraria ?? null,
-        cursoTecnicoId: curso.id
-      }
-    });
-
-    setAliases(mapUC, created.id, codigoNorm, codigoOriginal);
-    ucCount++;
-  }
-
-  // 2.2 Funções
-  let funcCount = 0;
-  for (const f of _curriculo.funcoes ?? []) {
-    const codigoOriginal = normUpper(f.codigo);
-    const codigoNorm = normFuncaoCodigo(f.codigo);
-
-    const created = await prisma.funcao.create({
-      data: {
-        codigo: codigoNorm,
-        nome: norm(f.nome),
-        descricao: f.descricao ?? null
-      }
-    });
-
-    setAliases(mapFunc, created.id, codigoNorm, codigoOriginal);
-    funcCount++;
-  }
-
-  // 2.3 Subfunções
-  let subFuncCount = 0;
-  let subFuncSemFuncao = 0;
-  for (const sub of _curriculo.subfuncoes ?? []) {
-    const subCodigo = normUpper(sub.codigo);
-    const funcaoCodigoNorm = normFuncaoCodigo(sub.funcaoCodigo);
-    const funcaoId = mapFunc.get(funcaoCodigoNorm);
-
-    if (!funcaoId) {
-      subFuncSemFuncao++;
-      continue;
-    }
-
-    const created = await prisma.subfuncao.create({
-      data: {
-        codigo: subCodigo,
-        nome: norm(sub.nome),
-        descricao: sub.descricao ?? null,
-        funcaoId
-      }
-    });
-
-    setAliases(mapSubFunc, created.id, subCodigo);
-    subFuncCount++;
-  }
-
-  // 2.4 Capacidades (sigla deve bater com o relacionamento)
-  let capCount = 0;
-  for (const cap of _curriculo.capacidades ?? []) {
-    const sigla = normUpper(cap.sigla);
-    const created = await prisma.capacidade.create({
-      data: {
-        sigla,
-        descricao: norm(cap.descricao)
-      }
-    });
-    setAliases(mapCap, created.id, sigla);
-    capCount++;
-  }
-
-  // 2.5 Conhecimentos (OBJ-CONH-000xx -> CONH-xx)
-  let conhCount = 0;
-
-  // ✅ novo map
-  const mapConhInfoById = new Map<number, { codigo: string; nome: string }>();
-
-  for (const conh of _curriculo.conhecimentos ?? []) {
-    const codigoOriginal = normUpper(conh.codigo);
-    const codigoNorm = normConhecimentoCodigo(conh.codigo);
-
-    const created = await prisma.conhecimento.create({
-      data: {
-        codigo: codigoNorm,
-        nome: norm(conh.nome),
-        descricao: conh.descricao ?? null
-      }
-    });
-
-    // alias: CONH-xx e OBJ-CONH-000xx
-    setAliases(mapConh, created.id, codigoNorm, codigoOriginal);
-
-    // ✅ salva info por id
-    mapConhInfoById.set(created.id, { codigo: created.codigo, nome: created.nome });
-
-    conhCount++;
-  }
-
-
-  // 2.6 SubConhecimentos (conhecimentoCodigo já vem como CONH-xx em vários casos)
-    let subConhCount = 0;
-    let subConhIgnorados = 0;
-    let subConhSemPai = 0;
-
-    // ✅ DECLARA FORA do IF (pra poder logar depois)
-    const subConhIgnoradosDetalhes: Array<{
-      codigo: string;
-      nomeOriginal: string;
-      conhecimentoCodigoOriginal: string;
-      conhecimentoCodigoNorm: string;
-      conhecimentoId?: number;
-      paiCodigo?: string;
-      paiNome?: string;
-    }> = [];
-
-    if ((_curriculo.subConhecimentos ?? []).length > 0) {
-      for (const subc of _curriculo.subConhecimentos ?? []) {
-        const nomeOriginal = String(subc.nome ?? '');
-        const nome = norm(nomeOriginal);
-
-        // saneamento mínimo (há entradas literalmente "{")
-        if (!nome || nome === '{' || nome === '}') {
-          subConhIgnorados++;
-
-          const conhecimentoCodigoOriginal = normUpper(subc.conhecimentoCodigo);
-          const conhecimentoCodigoNorm = normConhecimentoCodigo(subc.conhecimentoCodigo);
-          const conhecimentoId = mapConh.get(conhecimentoCodigoNorm);
-          const infoPai = conhecimentoId ? mapConhInfoById.get(conhecimentoId) : undefined;
-
-          subConhIgnoradosDetalhes.push({
-            codigo: normUpper(subc.codigo),
-            nomeOriginal,
-            conhecimentoCodigoOriginal,
-            conhecimentoCodigoNorm,
-            conhecimentoId: conhecimentoId ?? undefined,
-            paiCodigo: infoPai?.codigo,
-            paiNome: infoPai?.nome,
-          });
-
-          continue;
-        }
-
-        const conhCodigoNorm = normConhecimentoCodigo(subc.conhecimentoCodigo);
-        const conhId = mapConh.get(conhCodigoNorm);
-
-        if (!conhId) {
-          subConhSemPai++;
-          continue;
-        }
-
-        await prisma.subConhecimento.create({
-          data: {
-            codigo: normUpper(subc.codigo),
-            nome,
-            descricao: subc.descricao ?? null,
-            ordem: subc.ordem ?? null,
-            conhecimentoId: conhId,
-          },
-        });
-
-        subConhCount++;
-      }
-    }
-
-
-  console.log(
-    `✅ Currículo criado: ${ucCount} UCs | ${funcCount} Funções | ${subFuncCount} Subfunções | ${capCount} Capacidades | ${conhCount} Conhecimentos | ${subConhCount} SubConhecimentos`
-  );
-
-  if (subFuncSemFuncao > 0) console.warn(`⚠️  ${subFuncSemFuncao} subfunções não foram criadas por falta de função (código não mapeado).`);
-
-  if (subConhIgnorados > 0) {
-    console.warn(`⚠️  ${subConhIgnorados} subConhecimentos ignorados por nome inválido (ex: "{").`);
-
-    console.warn('📌 Lista de subConhecimentos ignorados (detalhes):');
-    for (const item of subConhIgnoradosDetalhes) {
-      console.warn(
-        `   - codigo=${item.codigo} | nomeOriginal="${item.nomeOriginal}"` +
-        ` | conhOrig=${item.conhecimentoCodigoOriginal} | conhNorm=${item.conhecimentoCodigoNorm}` +
-        ` | conhId=${item.conhecimentoId ?? 'N/A'} | paiCodigo=${item.paiCodigo ?? 'N/A'} | paiNome="${item.paiNome ?? 'N/A'}"`
-      );
-    }
-  }
-
+  // ------------------------------------------------------------
+  // 2. DADOS ESTÁTICOS
+  // ------------------------------------------------------------
+  console.log('🏫 Inserindo Instituições, Bancas e Títulos...');
+  await prisma.instituicao.createMany({ data: instituicoesData, skipDuplicates: true });
+  await prisma.banca.createMany({ data: bancasData, skipDuplicates: true });
   
-
-  if (subConhSemPai > 0) console.warn(`⚠️  ${subConhSemPai} subConhecimentos não foram criados por falta do Conhecimento pai (código não mapeado).`);
-
-  // ==========================================
-  // 3. LINKANDO ENTIDADES (RELACIONAMENTOS)
-  // ==========================================
-  console.log('🔗 Linkando Entidades Curriculares...');
-
-  // 3.1 Curso ↔ Funções
-  const cursoFuncoesData: { cursoTecnicoId: number; funcaoId: number }[] = [];
-  let cursoFuncoesSemFuncao = 0;
-
-  for (const rel of _relacionamentos.cursoFuncoes ?? []) {
-    // se existir mais de 1 curso no futuro, esse filtro evita “link errado”
-    if (norm(rel.cursoCodigo) && norm(rel.cursoCodigo) !== cursoCodigo) continue;
-
-    const funcId = mapFunc.get(normFuncaoCodigo(rel.funcaoCodigo));
-    if (!funcId) {
-      cursoFuncoesSemFuncao++;
-      continue;
-    }
-    cursoFuncoesData.push({ cursoTecnicoId: curso.id, funcaoId: funcId });
-  }
-
-  if (cursoFuncoesData.length > 0) {
-    await prisma.cursoFuncao.createMany({ data: cursoFuncoesData, skipDuplicates: true });
-  }
-  if (cursoFuncoesSemFuncao > 0) console.warn(`⚠️  ${cursoFuncoesSemFuncao} vínculos Curso↔Função não criados (Função não mapeada).`);
-
-  // 3.2 Subfunções ↔ Capacidades
-  const subfuncaoCapsData: { subfuncaoId: number; capacidadeId: number }[] = [];
-  let subfuncaoCapsPerdidos = 0;
-
-  for (const rel of _relacionamentos.subfuncaoCapacidades ?? []) {
-    const subId = mapSubFunc.get(normUpper(rel.subfuncaoCodigo));
-    const capId = mapCap.get(normUpper(rel.capacidadeSigla));
-    if (!subId || !capId) {
-      subfuncaoCapsPerdidos++;
-      continue;
-    }
-    subfuncaoCapsData.push({ subfuncaoId: subId, capacidadeId: capId });
-  }
-
-  if (subfuncaoCapsData.length > 0) {
-    await prisma.subfuncaoCapacidade.createMany({ data: subfuncaoCapsData, skipDuplicates: true });
-  }
-  if (subfuncaoCapsPerdidos > 0) console.warn(`⚠️  ${subfuncaoCapsPerdidos} vínculos Subfunção↔Capacidade não criados (Subfunção/Capacidade não mapeada).`);
-
-  // 3.3 Unidade Curricular ↔ Conhecimentos
-  const ucConhData: { unidadeCurricularId: number; conhecimentoId: number }[] = [];
-  let ucConhPerdidos = 0;
-
-  for (const rel of _relacionamentos.unidadeCurricularConhecimentos ?? []) {
-    const ucId = mapUC.get(normUCCodigo(rel.unidadeCurricularCodigo));
-    const conhId = mapConh.get(normConhecimentoCodigo(rel.conhecimentoCodigo));
-    if (!ucId || !conhId) {
-      ucConhPerdidos++;
-      continue;
-    }
-    ucConhData.push({ unidadeCurricularId: ucId, conhecimentoId: conhId });
-  }
-
-  if (ucConhData.length > 0) {
-    await prisma.unidadeCurricularConhecimento.createMany({ data: ucConhData, skipDuplicates: true });
-  }
-  if (ucConhPerdidos > 0) console.warn(`⚠️  ${ucConhPerdidos} vínculos UC↔Conhecimento não criados (UC/Conhecimento não mapeado).`);
-
-  // 3.4 Capacidade ↔ Conhecimentos
-  const capConhData: { capacidadeId: number; conhecimentoId: number }[] = [];
-  let capConhPerdidos = 0;
-
-  for (const rel of _relacionamentos.capacidadeConhecimentos ?? []) {
-    const capId = mapCap.get(normUpper(rel.capacidadeSigla));
-    const conhId = mapConh.get(normConhecimentoCodigo(rel.conhecimentoCodigo));
-    if (!capId || !conhId) {
-      capConhPerdidos++;
-      continue;
-    }
-    capConhData.push({ capacidadeId: capId, conhecimentoId: conhId });
-  }
-
-  if (capConhData.length > 0) {
-    await prisma.capacidadeConhecimento.createMany({ data: capConhData, skipDuplicates: true });
-  }
-  if (capConhPerdidos > 0) console.warn(`⚠️  ${capConhPerdidos} vínculos Capacidade↔Conhecimento não criados (Capacidade/Conhecimento não mapeado).`);
-
-  console.log('✅ Relacionamentos curriculares linkados.');
-
-  // ==========================================
-  // 4. GAMIFICAÇÃO (Fonte: conquistas_meta.json)
-  // ==========================================
-  console.log('🏆 Configurando Gamificação (Conquistas e Títulos)...');
-
   await prisma.titulo.createMany({
-    data: _titulosData.map((t: any) => ({ nome: t.nome, nivel: t.nivel, minPontos: t.pontos })),
+    data: titulosData.map(t => ({
+      nivel: t.nivel,
+      nome: t.nome,
+      minPontos: t.pontos,
+      urlImagem: `titulo_${t.nivel}.png`,
+      corHex: '#3b82f6'
+    })),
     skipDuplicates: true
   });
 
-  for (const c of _conquistasMeta) {
-    // 🛡️ Fallback de Segurança para Enum:
-    // Se o requisitoTipo no JSON não existir no Enum do Prisma, usa 'SIMULADOS_TOTAL' para não quebrar o seed.
-    const requisitoTipoValido = (Object.values(TipoRequisitoConquista) as string[]).includes(c.requisitoTipo)
-      ? c.requisitoTipo
-      : 'SIMULADOS_TOTAL';
+  // ------------------------------------------------------------
+  // 3. MATRIZ CURRICULAR (ENTIDADES)
+  // ------------------------------------------------------------
+  console.log('🎓 Importando Entidades Pedagógicas...');
 
-    const categoriaValida = isValidCategoriaConquista(c.categoria) ? c.categoria : 'INICIO_ENGAJAMENTO';
+  // 3.1 Curso Técnico
+  const curso = await prisma.cursoTecnico.create({
+    data: {
+      codigo: curriculo.cursoTecnico.codigo,
+      nome: curriculo.cursoTecnico.nome,
+      descricao: curriculo.cursoTecnico.descricao
+    }
+  });
 
+  // 3.2 Unidades Curriculares (UCs)
+  await prisma.unidadeCurricular.createMany({
+    data: curriculo.unidadesCurriculares.map(uc => ({
+      codigo: normUC(uc.codigo),
+      nome: uc.nome,
+      descricao: uc.descricao,
+      cursoTecnicoId: curso.id
+    })),
+    skipDuplicates: true
+  });
+
+  // 3.3 Funções
+  const funcoesList = (curriculo as any).funcoes || [];
+  for (const f of funcoesList) {
+    await prisma.funcao.create({
+      data: { 
+        codigo: normFuncao(f.codigo), 
+        nome: f.nome, 
+        descricao: f.descricao 
+      }
+    });
+  }
+
+  // 3.4 Subfunções (NA RAIZ)
+  const subfuncoesList = (curriculo as any).subfuncoes || [];
+  console.log(`   ... Processando ${subfuncoesList.length} Subfunções...`);
+  
+  for (const sf of subfuncoesList) {
+    const parentCode = normFuncao(sf.funcaoCodigo);
+    const funcaoPai = await prisma.funcao.findUnique({ where: { codigo: parentCode } });
+    
+    if (funcaoPai) {
+      await prisma.subfuncao.upsert({
+        where: { codigo: sf.codigo },
+        update: {},
+        create: {
+          codigo: sf.codigo,
+          nome: sf.nome,
+          descricao: sf.descricao,
+          funcaoId: funcaoPai.id
+        }
+      });
+    }
+  }
+
+  // 3.5 Capacidades
+  if ((curriculo as any).capacidades) {
+    await prisma.capacidade.createMany({
+      data: (curriculo as any).capacidades.map((c: any) => ({
+        sigla: normCapacidade(c.sigla),
+        descricao: c.descricao
+      })),
+      skipDuplicates: true
+    });
+  }
+
+  // 3.6 Conhecimentos
+  const conhecimentosList = (curriculo as any).conhecimentos || [];
+  console.log(`   ... Criando ${conhecimentosList.length} Conhecimentos...`);
+
+  for (const c of conhecimentosList) {
+    const code = normConhecimento(c.codigo);
+    await prisma.conhecimento.upsert({
+      where: { codigo: code },
+      update: {},
+      create: {
+        codigo: code,
+        nome: c.nome,
+        descricao: c.descricao
+      }
+    });
+  }
+
+  // 3.7 SubConhecimentos (NA RAIZ - Agora corrigido!)
+  const subConhecimentosList = (curriculo as any).subConhecimentos || [];
+  console.log(`   ... Criando ${subConhecimentosList.length} SubConhecimentos...`);
+
+  for (const sc of subConhecimentosList) {
+    // Normaliza o código do pai (ex: CONH-01 -> OBJ-CONH-00001)
+    const parentCode = normConhecimento(sc.conhecimentoCodigo);
+    const parent = await prisma.conhecimento.findUnique({ where: { codigo: parentCode } });
+
+    if (parent) {
+      await prisma.subConhecimento.upsert({
+        where: { codigo: sc.codigo },
+        update: {},
+        create: {
+          codigo: sc.codigo,
+          nome: sc.nome,
+          descricao: sc.descricao,
+          conhecimentoId: parent.id
+        }
+      });
+    } else {
+      // console.warn(`SubConhecimento ${sc.codigo} órfão: Pai ${parentCode} não encontrado.`);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 4. RELACIONAMENTOS PEDAGÓGICOS (VÍNCULOS COMPLETOS)
+  // ------------------------------------------------------------
+  console.log('🔗 Vinculando Relacionamentos...');
+  
+  // A) Curso <-> Função
+  const relCursoFuncao = (relacionamentos as any).cursoFuncoes || [];
+  let countCF = 0;
+  for (const rel of relCursoFuncao) {
+    const funcaoCode = normFuncao(rel.funcaoCodigo);
+    const func = await prisma.funcao.findUnique({ where: { codigo: funcaoCode } });
+    if (func && curso) {
+       await prisma.cursoFuncao.upsert({
+         where: { cursoTecnicoId_funcaoId: { cursoTecnicoId: curso.id, funcaoId: func.id } },
+         create: { cursoTecnicoId: curso.id, funcaoId: func.id },
+         update: {}
+       });
+       countCF++;
+    }
+  }
+  console.log(`   -> Curso-Função: ${countCF}`);
+
+  // B) UC <-> Conhecimento
+  const relUC = relacionamentos.unidadeCurricularConhecimentos || [];
+  let countUC = 0;
+  for (const rel of relUC) {
+    const ucCode = normUC(rel.unidadeCurricularCodigo); 
+    const conhCode = normConhecimento(rel.conhecimentoCodigo);
+    const uc = await prisma.unidadeCurricular.findUnique({ where: { codigo: ucCode } });
+    const conh = await prisma.conhecimento.findUnique({ where: { codigo: conhCode } });
+    if (uc && conh) {
+      await prisma.unidadeCurricularConhecimento.upsert({
+        where: { unidadeCurricularId_conhecimentoId: { unidadeCurricularId: uc.id, conhecimentoId: conh.id } },
+        create: { unidadeCurricularId: uc.id, conhecimentoId: conh.id },
+        update: {}
+      });
+      countUC++;
+    }
+  }
+  console.log(`   -> UC-Conhecimento: ${countUC}`);
+
+  // C) Capacidade <-> Conhecimento
+  const relCap = (relacionamentos as any).capacidadeConhecimentos || [];
+  let countCap = 0;
+  for (const rel of relCap) {
+    const capSigla = normCapacidade(rel.capacidadeSigla);
+    const conhCode = normConhecimento(rel.conhecimentoCodigo);
+    const cap = await prisma.capacidade.findUnique({ where: { sigla: capSigla } });
+    const conh = await prisma.conhecimento.findUnique({ where: { codigo: conhCode } });
+    if (cap && conh) {
+      await prisma.capacidadeConhecimento.upsert({
+        where: { capacidadeId_conhecimentoId: { capacidadeId: cap.id, conhecimentoId: conh.id } },
+        create: { capacidadeId: cap.id, conhecimentoId: conh.id },
+        update: {}
+      });
+      countCap++;
+    }
+  }
+  console.log(`   -> Capacidade-Conhecimento: ${countCap}`);
+
+  // D) Subfunção <-> Capacidade
+  const relSubCap = (relacionamentos as any).subfuncaoCapacidades || [];
+  let countSubCap = 0;
+  for (const rel of relSubCap) {
+    const subCode = rel.subfuncaoCodigo; 
+    const capSigla = normCapacidade(rel.capacidadeSigla);
+    const sub = await prisma.subfuncao.findUnique({ where: { codigo: subCode } });
+    const cap = await prisma.capacidade.findUnique({ where: { sigla: capSigla } });
+    if (sub && cap) {
+      await prisma.subfuncaoCapacidade.upsert({
+        where: { subfuncaoId_capacidadeId: { subfuncaoId: sub.id, capacidadeId: cap.id } },
+        create: { subfuncaoId: sub.id, capacidadeId: cap.id },
+        update: {}
+      });
+      countSubCap++;
+    }
+  }
+  console.log(`   -> Subfunção-Capacidade: ${countSubCap}`);
+
+  // ------------------------------------------------------------
+  // 5. GAMIFICAÇÃO
+  // ------------------------------------------------------------
+  console.log('🏅 Configurando Conquistas...');
+  for (const meta of conquistasMeta) {
+    const c = meta as any;
     await prisma.conquista.create({
       data: {
         key: c.key,
         nome: c.nome,
-        descricao: c.descricao || c.desc || 'Sem descrição', // Suporta ambos os formatos
-        icone: c.icone || 'Trophy',
-
-        // Dados de Requisito
-        requisitoTipo: requisitoTipoValido,
+        descricao: c.descricao,
+        requisitoTipo: c.requisitoTipo as TipoRequisitoConquista,
         requisitoValor: c.requisitoValor || 0,
-
-        // Dados de Recompensa
-        pontos: c.pontos || 0,
-        raridade: c.raridade || 'COMUM',
-        categoria: categoriaValida,
-        bonusMultiplier: c.bonusMultiplier || 1.0, // Lê do JSON gerado
-
-        // Flags de Controle
-        oculta: c.oculta || false,
-        impossivel: c.impossivel || false,
-        adminOnly: c.adminOnly || false,
-        ativo: c.ativo !== undefined ? c.ativo : true
+        pontos: c.pontos || 10,
+        raridade: (c.raridade || 'COMUM') as any,
+        categoria: (c.categoria || 'INICIO_ENGAJAMENTO') as any,
+        icone: c.icone || 'default_badge'
       }
     });
   }
 
-  // ==========================================
-  // 5. USUÁRIOS E DADOS DE TESTE
-  // ==========================================
-  console.log('👤 Criando Usuários...');
+  // ------------------------------------------------------------
+  // 6. USUÁRIOS & LMS
+  // ------------------------------------------------------------
+  console.log('🏫 Configurando Cenário LMS...');
+  const passwordHash = await bcrypt.hash('123456', 10);
+  const tituloInicial = await prisma.titulo.findFirst({ where: { nivel: 1 } });
 
-  const hashedAdmin = await bcrypt.hash(adminPass, 10);
-
-  // Criar ADMIN
-  await prisma.usuario.create({
+  const admin = await prisma.usuario.create({
     data: {
       nome: 'Administrador Simmula',
-      email: adminEmail,
-      senhaHash: hashedAdmin,
-      tipo: 'SUPER_ADMIN',
-      ativo: true,
-      dataNascimento: new Date('1998-03-11'),
-      gamificacao: { create: { nivel: 100, pontos: 989171 } }
+      email: 'admin@simmula.com',
+      senhaHash: passwordHash,
+      tipo: TipoUsuario.SUPER_ADMIN,
+      dataNascimento: new Date('1990-01-01'),
+      emailVerificado: true,
+      gamificacao: { create: { tituloId: tituloInicial?.id, nivel: 10, pontos: 5000 } }
     }
   });
 
-  // ==========================================
-  // 6. AUXILIARES
-  // ==========================================
-  console.log('🏫 Inserindo Instituições e Bancas...');
-  await prisma.instituicao.createMany({ data: _instituicoesData, skipDuplicates: true });
-  await prisma.banca.createMany({ data: _bancasData, skipDuplicates: true });
+  const professor = await prisma.usuario.create({
+    data: {
+      nome: 'Prof. Xavier',
+      email: 'prof@simmula.com',
+      senhaHash: passwordHash,
+      tipo: TipoUsuario.PROFESSOR,
+      dataNascimento: new Date('1980-05-20'),
+      emailVerificado: true,
+      gamificacao: { create: { tituloId: tituloInicial?.id } }
+    }
+  });
 
-  console.log('✅ Seed Finalizado com Sucesso! Gamificação e Currículo Prontos.');
+  const aluno = await prisma.usuario.create({
+    data: {
+      nome: 'Aluno Exemplo',
+      email: 'aluno@simmula.com',
+      senhaHash: passwordHash,
+      tipo: TipoUsuario.ALUNO,
+      dataNascimento: new Date('2005-03-15'),
+      emailVerificado: true,
+      gamificacao: { create: { tituloId: tituloInicial?.id } }
+    }
+  });
+
+  // LMS: Turma Básica
+  const turma = await prisma.turma.create({
+    data: {
+      codigo: 'TURMA-2026-AUTO',
+      nome: 'Automação Industrial - Módulo I',
+      ativo: true,
+      professores: { create: { professorId: professor.id, role: 'COORDENADOR' } },
+      alunos: { create: { alunoId: aluno.id, status: StatusTurmaAluno.ATIVO } }
+    }
+  });
+
+  // LMS: Material
+  const material = await prisma.materialTurma.create({
+    data: {
+      turmaId: turma.id,
+      autorId: professor.id,
+      titulo: 'Apostila: Introdução',
+      tipo: TipoMaterial.LINK_EXTERNO,
+      url: 'https://docs.google.com/presentation/d/exemplo'
+    }
+  });
+
+  // LMS: Questão de Exemplo
+  const ucDemo = await prisma.unidadeCurricular.findFirst();
+  if (ucDemo) {
+    const q1 = await prisma.questao.create({
+      data: {
+        codigo: 'QST-001',
+        enunciado: 'Questão de Teste',
+        alternativaA: 'A', alternativaB: 'B', alternativaC: 'C', alternativaD: 'D', alternativaE: 'E',
+        alternativaCorreta: 'A',
+        dificuldade: NivelDificuldade.FACIL,
+        unidadeCurricularId: ucDemo.id
+      }
+    });
+
+    const agendamento = await prisma.agendamentoSimulado.create({
+      data: {
+        turmaId: turma.id,
+        criadoPorId: professor.id,
+        titulo: 'Avaliação Diagnóstica',
+        qtdeQuestoes: 1,
+        duracaoMinutos: 45,
+        status: StatusAgendamento.PUBLICADO,
+        dataInicio: new Date(),
+        dataFim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        config: {}, 
+        questoes: { create: [{ questaoId: q1.id, ordem: 1 }] },
+        entregas: { create: { alunoId: aluno.id } }
+      }
+    });
+
+    await prisma.moduloTurma.create({
+      data: {
+        turmaId: turma.id,
+        autorId: professor.id,
+        titulo: 'Módulo 01',
+        ordem: 1,
+        publicado: true,
+        itens: {
+          create: [
+            { titulo: 'Apostila', tipo: TipoModuloItem.MATERIAL, materialId: material.id, ordem: 1 },
+            { titulo: 'Avaliação', tipo: TipoModuloItem.AGENDAMENTO_SIMULADO, agendamentoId: agendamento.id, ordem: 2 }
+          ]
+        }
+      }
+    });
+  }
+
+  console.log('✅ Seed COMPLETO finalizado!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erro Fatal no Seed:', e);
+    console.error('❌ Erro fatal no seed:', e);
     process.exit(1);
   })
   .finally(async () => {

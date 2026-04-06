@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { verifySchema } from '@/lib/validations/auth';
 import { authRateLimit, otpRateLimit } from '@/lib/ratelimit';
 import { registrarLog, AuditAction } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/utils';
+import { getClientIp, safeApiError } from '@/lib/server-utils';
 import { createSession } from '@/lib/auth';
 import { enviarEmailBoasVindas_Aluno } from '@/lib/mail';
 import { generateCSRFToken } from '@/lib/csrf';
@@ -41,7 +41,7 @@ const BONUS_VERIFICACAO_EMAIL = 50; // ajuste como quiser (pontos/xp)
 
 export async function POST(request: Request) {
   try {
-    const ip = getClientIp(request);
+    const ip = await getClientIp(request);
     const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 250);
 
     // (Defesa em profundidade) payload pequeno

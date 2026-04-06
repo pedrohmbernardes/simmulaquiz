@@ -183,3 +183,7 @@ export const apiRateLimit = createLimiter(15, '2 m', 'simmula_adm_options');
 // Otimizado para fluxo de trabalho intenso de criação/edição por usuários confiáveis (Admins/Professores).
 // Permite 60 requisições de salvamento por minuto (1 por segundo em média).
 export const adminContentRateLimit = createLimiter(60, '60 s', 'admin-content');
+
+// Checkin para os estudante de determinada turma
+// 5 tentativas de checkin, bloqueio por 10 minutos
+export const checkinRateLimit = createLimiter(5, '10 m', 'checkin_estudante');

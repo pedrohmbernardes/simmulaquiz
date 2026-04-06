@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { safeApiError } from '@/lib/utils';
+import { safeApiError } from '@/lib/server-utils';
 import { getSession } from '@/lib/auth';
 import { Redis } from '@upstash/redis';
 import { apiRateLimit } from '@/lib/ratelimit'; // ✅ Proteção contra DoS

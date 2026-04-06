@@ -1,0 +1,505 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { format, formatDistanceToNow, isToday, isTomorrow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { 
+  Megaphone, 
+  CalendarDays, 
+  Clock, 
+  CheckCircle2, 
+  ChevronRight,
+  ArrowRight,
+  Zap,
+  TrendingUp,
+  FileText,
+  Users,
+  BookOpen,
+  Sparkles,
+  Target,
+  Activity,
+  Brain,
+  Timer,
+  Calendar,
+  Bell,
+  MessageCircle,
+  Trophy,
+  CalendarCheck // Ícone novo para Frequência
+} from "lucide-react";
+
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function TurmaDashboardPage({ params }: PageProps) {
+  const { id } = await params;
+  const session = await getSession();
+
+  if (!session || session.role !== "ALUNO") redirect("/login");
+
+  const turmaId = parseInt(id);
+  const alunoId = parseInt(session.sub);
+
+  if (isNaN(turmaId)) redirect("/estudante/turmas");
+
+  // 1. Buscas Paralelas para Performance (Dados da Turma + Dados de Frequência)
+  const [turma, totalAulas, minhasPresencas] = await Promise.all([
+    // A. Dados Principais da Turma
+    prisma.turma.findFirst({
+      where: {
+        id: turmaId,
+        alunos: { some: { alunoId: alunoId, status: "ATIVO" } }
+      },
+      include: {
+        avisos: {
+          take: 3,
+          orderBy: [{ fixado: 'desc' }, { createdAt: 'desc' }],
+          include: { autor: { select: { nome: true, fotoUrl: true } } }
+        },
+        agendamentos: {
+          where: { status: "PUBLICADO" },
+          include: {
+            entregas: {
+              where: { alunoId: alunoId },
+              select: { status: true, notaPercentual: true, createdAt: true }
+            }
+          }
+        },
+        tarefas: {
+          include: {
+            entregas: {
+              where: { alunoId: alunoId },
+              select: { status: true, nota: true, createdAt: true }
+            }
+          }
+        },
+        professores: {
+          include: {
+            professor: {
+              select: { nome: true, fotoUrl: true }
+            }
+          }
+        }
+      }
+    }),
+    
+    // B. Total de Sessões de Check-in (Aulas passadas)
+    prisma.sessaoCheckIn.count({
+      where: { 
+        turmaId: turmaId,
+        fechaEm: { lt: new Date() } // Apenas aulas que já ocorreram
+      }
+    }),
+
+    // C. Minhas Presenças
+    prisma.checkInRegistro.count({
+      where: {
+        turmaId: turmaId,
+        alunoId: alunoId
+      }
+    })
+  ]);
+
+  if (!turma) redirect("/estudante/turmas");
+
+  const agora = new Date();
+  
+  // --- Processamento de Métricas ---
+
+  // 1. Frequência
+  const taxaFrequencia = totalAulas > 0 
+    ? Math.round((minhasPresencas / totalAulas) * 100) 
+    : 100; // Começa com 100% se não teve aula
+
+  // 2. Atividades e Prazos
+  const listaAgendamentos = turma.agendamentos.map(ag => ({
+    id: ag.id,
+    titulo: ag.titulo,
+    tipo: 'SIMULADO' as const,
+    dataFim: new Date(ag.dataFim),
+    dataInicio: new Date(ag.dataInicio),
+    entregue: ag.entregas.length > 0 && ["CONCLUIDO", "ENTREGUE", "EM_ANDAMENTO"].includes(ag.entregas[0].status),
+    nota: ag.entregas[0]?.notaPercentual,
+    link: `/estudante/turmas/${id}/agendamentos/${ag.id}/inicio`,
+    duracao: ag.duracaoMinutos,
+  }));
+
+  const listaTarefas = turma.tarefas.map(t => ({
+    id: t.id,
+    titulo: t.titulo,
+    tipo: 'TAREFA' as const,
+    dataFim: t.dataEntrega ? new Date(t.dataEntrega) : null,
+    dataInicio: new Date(t.createdAt),
+    entregue: t.entregas.length > 0 && t.entregas[0].status !== 'PENDENTE',
+    nota: t.entregas[0]?.nota,
+    link: `/estudante/turmas/${id}/tarefas/${t.id}`,
+  }));
+
+  const todasAtividades = [...listaAgendamentos, ...listaTarefas].sort((a, b) => {
+    if (!a.dataFim) return 1; 
+    if (!b.dataFim) return -1;
+    return a.dataFim.getTime() - b.dataFim.getTime();
+  });
+
+  const pendentes = todasAtividades.filter(a => !a.entregue && (!a.dataFim || a.dataFim >= agora));
+  const concluidas = todasAtividades.filter(a => a.entregue);
+  const atrasadas = todasAtividades.filter(a => !a.entregue && a.dataFim && a.dataFim < agora);
+  
+  const atividadeDestaque = pendentes.length > 0 ? pendentes[0] : null;
+  const proximasAtividades = pendentes.slice(0, 6);
+  
+  // 3. Média Geral (Combinando Notas de Tarefas e Simulados)
+  // Normalizando para base 10: Simulados (0-100) / 10, Tarefas (0-10)
+  const notasNormalizadas = concluidas
+    .filter(a => a.nota !== null && a.nota !== undefined)
+    .map(a => a.tipo === 'SIMULADO' ? (a.nota! / 10) : a.nota!);
+
+  const mediaNotas = notasNormalizadas.length > 0 
+    ? notasNormalizadas.reduce((acc, nota) => acc + nota, 0) / notasNormalizadas.length 
+    : 0;
+
+  const totalAtividadesCount = todasAtividades.length;
+  const taxaConclusao = totalAtividadesCount > 0 ? (concluidas.length / totalAtividadesCount) * 100 : 0;
+
+  // Helpers de UI
+  const getPrazoText = (data: Date) => {
+    if (isToday(data)) return "Hoje";
+    if (isTomorrow(data)) return "Amanhã";
+    return format(data, "dd/MM", { locale: ptBR });
+  };
+
+  const getPrazoColor = (data: Date | null) => {
+    if (!data) return "text-slate-500";
+    const diffHours = (data.getTime() - agora.getTime()) / (1000 * 60 * 60);
+    if (diffHours < 0) return "text-red-600 font-bold";
+    if (diffHours < 24) return "text-orange-600 font-bold";
+    if (diffHours < 72) return "text-amber-600 font-semibold";
+    return "text-violet-600";
+  };
+
+  return (
+    // ✅ CORREÇÃO 1: Ocultar barra de rolagem mantendo funcionalidade
+    // As classes abaixo funcionam para Chrome/Safari/Edge/Firefox
+    <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+      <div className="max-w-[1920px] mx-auto px-6 lg:px-8 xl:px-12 py-8 space-y-8">
+        
+        {/* KPI Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          
+          {/* Card 1 - Progresso */}
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-violet-600 to-purple-700 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <Target className="h-6 w-6" />
+                </div>
+                <TrendingUp className="h-5 w-5 text-emerald-300" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-violet-100">Taxa de Conclusão</p>
+                <p className="text-4xl font-bold">{Math.round(taxaConclusao)}%</p>
+                <Progress value={taxaConclusao} className="h-2 bg-white/20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2 - Desempenho */}
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-600 to-rose-700 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <Sparkles className="h-5 w-5 text-yellow-300" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-pink-100">Média Geral</p>
+                <p className="text-4xl font-bold">{mediaNotas.toFixed(1)}</p>
+                <p className="text-xs text-pink-100">{concluidas.length} atividades avaliadas</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 3 - Pendências */}
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <Clock className="h-6 w-6" />
+                </div>
+                {atrasadas.length > 0 && <Bell className="h-5 w-5 text-red-200 animate-bounce" />}
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-amber-100">Pendentes</p>
+                <p className="text-4xl font-bold">{pendentes.length}</p>
+                {atrasadas.length > 0 && (
+                  <p className="text-xs text-red-200 font-semibold">{atrasadas.length} atrasada{atrasadas.length > 1 ? 's' : ''}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ✅ CORREÇÃO 2: Novo Card de Frequência (Substituindo Streak) */}
+          <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-600 to-blue-700 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <CalendarCheck className="h-6 w-6 text-cyan-100" />
+                </div>
+                <Activity className="h-5 w-5 text-cyan-200" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-cyan-100">Minha Frequência</p>
+                <p className="text-4xl font-bold">{taxaFrequencia}%</p>
+                <p className="text-xs text-cyan-100">
+                  {minhasPresencas} presenças em {totalAulas} aulas
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Dashboard Grid Principal */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          
+          {/* Esquerda - Conteúdo Principal (2/3) */}
+          <div className="xl:col-span-2 space-y-6">
+            
+            {/* Destaque / Próxima Entrega */}
+            {atividadeDestaque && (
+              <Card className="border-0 shadow-2xl bg-gradient-to-br from-fuchsia-600 via-purple-600 to-violet-700 text-white overflow-hidden">
+                <div className="absolute inset-0 bg-grid-white/5"></div>
+                <CardContent className="p-8 relative z-10">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm animate-pulse">
+                        <Zap className="h-7 w-7 text-yellow-300" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold uppercase tracking-wider text-pink-200">Foco Agora</p>
+                        <p className="text-2xl font-bold mt-1">Próxima Entrega</p>
+                      </div>
+                    </div>
+                    <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-300 font-bold px-3 py-1">
+                      URGENTE
+                    </Badge>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <h3 className="text-2xl font-bold mb-3">{atividadeDestaque.titulo}</h3>
+                    <div className="flex flex-wrap items-center gap-4 mb-6">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4" />
+                        <span className="font-semibold">
+                          {atividadeDestaque.dataFim 
+                            ? `${getPrazoText(atividadeDestaque.dataFim)} às ${format(atividadeDestaque.dataFim, "HH:mm")}`
+                            : 'Sem prazo'}
+                        </span>
+                      </div>
+                      {atividadeDestaque.tipo === 'SIMULADO' && atividadeDestaque.duracao && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Timer className="h-4 w-4" />
+                          <span>{atividadeDestaque.duracao} minutos</span>
+                        </div>
+                      )}
+                      <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                        {atividadeDestaque.tipo === 'SIMULADO' ? 'Simulado' : 'Tarefa'}
+                      </Badge>
+                    </div>
+                    <Button size="lg" className="w-full bg-white text-purple-700 hover:bg-white/90 font-bold shadow-xl" asChild>
+                      <Link href={atividadeDestaque.link}>
+                        Começar Agora
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Lista Próximas Atividades */}
+            <Card className="border-violet-200 shadow-lg">
+              <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-violet-900">
+                    <Calendar className="h-5 w-5 text-violet-600" />
+                    Próximas Atividades
+                  </CardTitle>
+                  <Badge variant="outline" className="text-violet-700 border-violet-300">
+                    {proximasAtividades.length} pendente{proximasAtividades.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {proximasAtividades.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="p-4 bg-violet-100 rounded-full mb-4">
+                      <CheckCircle2 className="h-12 w-12 text-violet-600" />
+                    </div>
+                    <p className="text-lg font-semibold text-violet-900">Tudo em dia!</p>
+                    <p className="text-sm text-violet-600 mt-1">Nenhuma atividade pendente no momento.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-violet-100">
+                    {proximasAtividades.map((atv) => (
+                      <Link 
+                        key={`${atv.tipo}-${atv.id}`}
+                        href={atv.link}
+                        className="flex items-center gap-4 p-5 hover:bg-violet-50/50 transition-colors group"
+                      >
+                        <div className={`p-3.5 rounded-xl shadow-sm group-hover:scale-110 transition-transform ${
+                          atv.tipo === 'SIMULADO' 
+                            ? 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700' 
+                            : 'bg-gradient-to-br from-pink-100 to-pink-200 text-pink-700'
+                        }`}>
+                          {atv.tipo === 'SIMULADO' ? <Brain className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-violet-900 truncate group-hover:text-purple-700 transition-colors">
+                            {atv.titulo}
+                          </h4>
+                          <div className="flex items-center gap-3 mt-1.5">
+                            <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-violet-100 text-violet-700 font-semibold">
+                              {atv.tipo === 'SIMULADO' ? 'Simulado' : 'Tarefa'}
+                            </Badge>
+                            {atv.dataFim && (
+                              <span className={`text-xs flex items-center gap-1 font-semibold ${getPrazoColor(atv.dataFim)}`}>
+                                <CalendarDays className="h-3 w-3" />
+                                {getPrazoText(atv.dataFim)} {format(atv.dataFim, "HH:mm")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <ChevronRight className="h-5 w-5 text-violet-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Direita - Sidebar Info (1/3) */}
+          <div className="space-y-6">
+            
+            {/* Mural / Avisos */}
+            <Card className="border-violet-200 shadow-lg">
+              <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2 text-violet-900 text-base">
+                  <Megaphone className="h-5 w-5 text-violet-600" />
+                  Avisos Recentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {turma.avisos.length === 0 ? (
+                  <p className="text-sm text-violet-500 text-center py-4">Nenhum aviso no momento</p>
+                ) : (
+                  turma.avisos.map((aviso) => (
+                    <div key={aviso.id} className="space-y-2 pb-4 border-b border-violet-100 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7 ring-2 ring-violet-100">
+                          <AvatarImage src={aviso.autor.fotoUrl || undefined} />
+                          <AvatarFallback className="bg-violet-200 text-violet-700 text-xs font-bold">
+                            {aviso.autor.nome[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-violet-900 truncate">{aviso.autor.nome}</p>
+                          <p className="text-[10px] text-violet-500">
+                            {formatDistanceToNow(new Date(aviso.createdAt), { addSuffix: true, locale: ptBR })}
+                          </p>
+                        </div>
+                        {aviso.fixado && <Badge className="bg-violet-600 text-white text-[9px] h-4">Fixado</Badge>}
+                      </div>
+                      <p className="text-sm text-violet-700 line-clamp-2 leading-relaxed">
+                        {aviso.conteudo.replace(/<[^>]+>/g, '')}
+                      </p>
+                    </div>
+                  ))
+                )}
+                <Button variant="outline" size="sm" className="w-full border-violet-300 text-violet-700 hover:bg-violet-50" asChild>
+                  <Link href={`/estudante/turmas/${id}/mural`}>
+                    Ver todos os avisos
+                    <ArrowRight className="ml-2 h-3 w-3" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Professores */}
+            <Card className="border-violet-200 shadow-lg">
+              <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2 text-violet-900 text-base">
+                  <Users className="h-5 w-5 text-violet-600" />
+                  Professor{turma.professores.length > 1 ? 'es' : ''}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {turma.professores.map(({ professor }) => (
+                  <div key={professor.nome} className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 ring-2 ring-violet-200">
+                      <AvatarImage src={professor.fotoUrl || undefined} />
+                      <AvatarFallback className="bg-violet-200 text-violet-700 font-bold">
+                        {professor.nome[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-violet-900 text-sm">{professor.nome}</p>
+                      <p className="text-xs text-violet-600">Professor(a)</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Acesso Rápido */}
+            <Card className="border-violet-200 shadow-lg">
+              <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2 text-violet-900 text-base">
+                  <Zap className="h-5 w-5 text-violet-600" />
+                  Acesso Rápido
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Link href={`/estudante/turmas/${id}/conteudo`} className="flex flex-col items-center justify-center p-4 bg-violet-50 hover:bg-violet-100 rounded-xl transition-colors group border-2 border-transparent hover:border-violet-300">
+                    <BookOpen className="h-6 w-6 text-violet-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold text-violet-700">Conteúdos</span>
+                  </Link>
+
+                  <Link href={`/estudante/turmas/${id}/forum`} className="flex flex-col items-center justify-center p-4 bg-pink-50 hover:bg-pink-100 rounded-xl transition-colors group border-2 border-transparent hover:border-pink-300">
+                    <MessageCircle className="h-6 w-6 text-pink-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold text-pink-700">Fórum</span>
+                  </Link>
+
+                  <Link href={`/estudante/turmas/${id}/presenca`} className="flex flex-col items-center justify-center p-4 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors group border-2 border-transparent hover:border-emerald-300">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold text-emerald-700">Frequência</span>
+                  </Link>
+
+                  <Link href={`/estudante/turmas/${id}/pessoas`} className="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors group border-2 border-transparent hover:border-amber-300">
+                    <Users className="h-6 w-6 text-amber-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold text-amber-700">Turma</span>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

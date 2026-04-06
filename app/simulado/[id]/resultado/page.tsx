@@ -15,6 +15,8 @@ import {
   Trophy,
   Flame,
   Star,
+  School,
+  LayoutDashboard,
 } from "lucide-react";
 
 // --- TIPAGENS ---
@@ -70,6 +72,11 @@ type ResultadoResponse = {
     strikesUsados: number;
     strikesMax: number;
     anuladoMotivo: string | null;
+    agendamentoOrigem?: {
+      id: number;
+      turmaId: number;
+      titulo: string;
+    } | null;
   };
   detalhamento: {
     acertadas: AcertadaItem[];
@@ -317,7 +324,7 @@ export default function ResultadoSimuladoPage() {
   const router = useRouter();
   const params = useParams<{ id?: string }>();
 
-  // Estados
+// Estados
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ResultadoResponse | null>(null);
@@ -334,11 +341,25 @@ export default function ResultadoSimuladoPage() {
   // Flag local (anti-“Gerar novamente” em volta via history/cache)
   const [localAnaliseExists, setLocalAnaliseExists] = useState(false);
 
-  const simuladoId = useMemo(() => {
+const simuladoId = useMemo(() => {
     const raw = params?.id;
     const n = Number(raw);
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [params?.id]);
+
+  // ✅ LÓGICA DE DIRECIONAMENTO DINÂMICO
+  const infoTurma = useMemo(() => {
+    if (!data?.simulado?.agendamentoOrigem) return null;
+    return data.simulado.agendamentoOrigem;
+  }, [data]);
+
+  const handleVoltar = () => {
+    if (infoTurma) {
+      router.push(`/estudante/turmas/${infoTurma.turmaId}`);
+    } else {
+      router.push("/estudante");
+    }
+  };
 
   const loadingPhrases = [
     "Processando dados do simulado...",
@@ -418,7 +439,7 @@ export default function ResultadoSimuladoPage() {
   );
 
   // Carregar Dados Iniciais
-  useEffect(() => {
+useEffect(() => {
     if (!simuladoId) {
       setLoading(false);
       setError("ID do simulado inválido.");
@@ -427,7 +448,7 @@ export default function ResultadoSimuladoPage() {
 
     const ac = new AbortController();
 
-    async function loadAllData() {
+async function loadAllData() {
       try {
         setLoading(true);
 
@@ -601,6 +622,7 @@ export default function ResultadoSimuladoPage() {
 
   const { simulado, detalhamento } = data;
   const percentual = simulado.notaPercentual ?? 0;
+
   const scoreStyle =
     percentual >= 80
       ? "text-emerald-600 bg-emerald-50"
@@ -637,13 +659,13 @@ export default function ResultadoSimuladoPage() {
           </div>
         )}
 
-        {/* Cabeçalho */}
+        {/* Cabeçalho Atualizado com Contexto de Turma */}
         <div className="rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl font-oswald uppercase">
-                  Relatório de Desempenho
+                  {infoTurma ? "Resultado da Avaliação" : "Relatório de Desempenho"}
                 </h1>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
@@ -653,10 +675,20 @@ export default function ResultadoSimuladoPage() {
                   {simulado.status}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-zinc-500 font-medium">
-                Simulado #{simulado.id} • {simulado.tipo}
-              </p>
+              
+              {/* ✅ EXIBIÇÃO DA TURMA NO SUBTÍTULO */}
+              {infoTurma ? (
+                <div className="mt-2 flex items-center gap-2 text-blue-600 font-bold text-sm uppercase">
+                  <School size={16} />
+                  <span>Turma: {infoTurma.titulo}</span>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-zinc-500 font-medium">
+                  Simulado #{simulado.id} • {simulado.tipo}
+                </p>
+              )}
             </div>
+            
             <div className="flex shrink-0 gap-3">
               <button
                 onClick={() => router.push("/estudante/caderno-erros")}
@@ -664,11 +696,14 @@ export default function ResultadoSimuladoPage() {
               >
                 Caderno de Erros
               </button>
+              
+              {/* ✅ BOTÃO VOLTAR INTELIGENTE */}
               <button
-                onClick={() => router.push("/estudante")}
-                className="rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 transition"
+                onClick={handleVoltar}
+                className="flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 transition"
               >
-                Voltar
+                {infoTurma ? <School size={16} /> : <LayoutDashboard size={16} />}
+                {infoTurma ? "Voltar para Turma" : "Voltar"}
               </button>
             </div>
           </div>
@@ -688,6 +723,16 @@ export default function ResultadoSimuladoPage() {
             <MetricCard label="Tempo Total" value={formatTempo(simulado.tempoGastoMinutos)} color="amber" />
             <MetricCard label="Revisão Pendente" value={detalhamento.erradas.length} color="red" />
           </div>
+          
+          {/* ✅ BANNER DE NOTA REGISTRADA (Apenas Turmas) */}
+          {infoTurma && (
+            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-blue-50 p-4 border border-blue-100 text-blue-700">
+              <Sparkles size={20} className="animate-pulse" />
+              <p className="text-sm font-medium">
+                Esta nota foi registrada oficialmente na sua turma. Seu professor já pode visualizar seu desempenho.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* --- CARD DE IA (gera ou consulta) --- */}

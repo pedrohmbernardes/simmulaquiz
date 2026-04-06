@@ -7,7 +7,7 @@ import { useCsrf } from '@/lib/hooks/use-csrf';
 import { 
   Menu, X, LogOut, BookOpen, Users, ExternalLink, 
   LayoutDashboard, Sparkles, Brain, GraduationCap,
-  ChevronRight, Zap, Award, TrendingUp
+  ChevronRight, Zap, Award, TrendingUp, School // ✅ Ícone School adicionado
 } from 'lucide-react';
 
 export default function SidebarNav({ session }: { session: any }) {
@@ -142,6 +142,15 @@ export default function SidebarNav({ session }: { session: any }) {
                   <LayoutDashboard size={18} />
                 </div>
                 <span className="flex-1 font-semibold">Dashboard</span>
+                <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+              </Link>
+
+              {/* ✅ NOVO LINK PARA TURMAS */}
+              <Link href="/professor/turmas" className={getLinkClass('/professor/turmas')} onClick={() => setIsOpen(false)}>
+                <div className="p-1.5 rounded-lg bg-white/50 group-hover:bg-white transition-colors">
+                  <School size={18} />
+                </div>
+                <span className="flex-1 font-semibold">Minhas Turmas</span>
                 <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
               </Link>
 

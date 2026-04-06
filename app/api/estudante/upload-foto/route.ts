@@ -8,7 +8,7 @@ import { authRateLimit } from "@/lib/ratelimit";
 import { AuditAction, registrarLog } from "@/lib/audit";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { prisma } from "@/lib/prisma";
-import { getClientIp, safeApiError } from "@/lib/utils";
+import { getClientIp, safeApiError } from "@/lib/server-utils";
 
 // ✅ Garante runtime Node (Sharp não funciona no Edge)
 export const runtime = "nodejs";
@@ -58,7 +58,7 @@ const validTypes = new Set<SniffedType>(["jpeg", "png", "webp", "gif"]);
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = getClientIp(request);
+    const ip = await getClientIp(request);
 
     // 1) Auth
     const session = await getSession();

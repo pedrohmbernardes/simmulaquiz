@@ -1,3 +1,4 @@
+// app/(student)/estudante/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -17,10 +18,10 @@ import {
   Target,
   ChevronRight,
   Medal,
-  Zap // Ícone novo para ação rápida
+  Zap,
+  School // ✅ Novo ícone para o card de Turmas
 } from 'lucide-react';
 
-// Import dos Componentes
 import { LevelBar } from '@/components/gamificacao/LevelBar';
 import { PontosDisplay } from '@/components/gamificacao/PontosDisplay';
 import { MetricCard } from '@/components/analytics/MetricCard';
@@ -52,7 +53,8 @@ export default async function StudentDashboard() {
   const userId = Number(session.sub);
 
   // 2. Busca de Dados Otimizada (Server-Side)
-  const [usuario, gamificacao, metricas, topSemana] = await Promise.all([
+  // Adicionamos turmasCount no destructuring
+  const [usuario, gamificacao, metricas, topSemana, turmasCount] = await Promise.all([
     // A: Dados do Usuário + CONQUISTAS
     prisma.usuario.findUnique({
       where: { id: userId },
@@ -112,14 +114,17 @@ export default async function StudentDashboard() {
         nome: users.find(u => u.id === r.usuarioId)?.nome.split(' ')[0] || 'Anônimo',
         pontos: r._sum.quantidade || 0
       }));
+    }),
+
+    // ✅ E: Contagem de Turmas Ativas (NOVO)
+    prisma.turmaAluno.count({
+      where: { alunoId: userId, status: 'ATIVO' }
     })
   ]);
 
   if (!usuario || !gamificacao) return <div className="p-8 text-center text-red-500">Erro ao carregar perfil.</div>;
 
-  // Lógica alterada para calcular dinamicamente via XP (igual ao Ranking),
-  // ignorando a relação 'gamificacao.titulo' que pode estar desatualizada no DB.
-  
+  // Lógica de Títulos e XP
   const tituloCalculado = await prisma.titulo.findFirst({
     where: { minPontos: { lte: gamificacao.pontos } },
     orderBy: { minPontos: 'desc' },
@@ -127,21 +132,15 @@ export default async function StudentDashboard() {
 
   const tituloAtual = tituloCalculado || { nome: 'Iniciante', nivel: 1, minPontos: 0 };
 
-  // 2. Busca o PRÓXIMO título (meta)
-  // Ajuste: buscamos o próximo baseado nos pontos do título atual calculado
   const proximoTitulo = await prisma.titulo.findFirst({
     where: { minPontos: { gt: tituloAtual.minPontos } },
     orderBy: { minPontos: 'asc' }
   });
 
-  // 3. Define os pontos de baliza
   const xpPiso = tituloAtual?.minPontos || 0;
-  const xpMeta = proximoTitulo?.minPontos || (gamificacao.pontos + 1000); // Fallback se for nível máximo
-
-  // 4. Cálculo Relativo (Barra enche de 0 a 100 a cada nível)
+  const xpMeta = proximoTitulo?.minPontos || (gamificacao.pontos + 1000); 
   const xpGanhoNoNivel = Math.max(0, gamificacao.pontos - xpPiso);
-  const xpNecessarioNoNivel = Math.max(1, xpMeta - xpPiso); // Evita divisão por zero
-  
+  const xpNecessarioNoNivel = Math.max(1, xpMeta - xpPiso); 
   const percentualNivel = Math.min(100, Math.round((xpGanhoNoNivel / xpNecessarioNoNivel) * 100));
 
   const totalConquistas = usuario._count.conquistas;
@@ -175,7 +174,7 @@ export default async function StudentDashboard() {
             <LevelBar 
               percentual={percentualNivel} 
               proximoTitulo={proximoTitulo?.nome || 'Nível Máximo'} 
-              pontosRestantes={xpMeta - gamificacao.pontos} // Quanto falta no total
+              pontosRestantes={xpMeta - gamificacao.pontos} 
             />
           </div>
         </div>
@@ -201,7 +200,7 @@ export default async function StudentDashboard() {
         </div>
       </div>
 
-      {/* ✅ 2. AÇÕES PRINCIPAIS (LAYOUT OTIMIZADO) */}
+      {/* ✅ 2. AÇÕES PRINCIPAIS (ATUALIZADO) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         {/* BOTÃO PRIMÁRIO: NOVO SIMULADO */}
@@ -215,7 +214,7 @@ export default async function StudentDashboard() {
                 <Play size={24} fill="currentColor" />
               </div>
               <span className="text-xs font-black text-white uppercase tracking-widest border border-white/20 px-2 py-0.5 rounded-md">
-                Ação Recomendada
+                Treino Rápido
               </span>
             </div>
             <h3 className="text-2xl font-extrabold text-white font-oswald uppercase italic">
@@ -223,7 +222,6 @@ export default async function StudentDashboard() {
             </h3>
             <p className="text-white/90 text-sm mt-1">Teste seus conhecimentos agora e suba no ranking.</p>
           </div>
-          {/* Efeito decorativo */}
           <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-4 translate-y-4 group-hover:scale-110 transition-transform">
              <Zap size={120} className="text-white/20" />
           </div>
@@ -232,23 +230,36 @@ export default async function StudentDashboard() {
           </div>
         </Link>
 
-        {/* BOTÃO SECUNDÁRIO: ANÁLISE */}
-        <div className="bg-white/95 border border-gray-100 p-6 rounded-2xl flex flex-col justify-center gap-2 shadow-sm relative overflow-hidden">
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600">
-              <BrainCircuit size={24} />
+        {/* ✅ BOTÃO SECUNDÁRIO: MINHAS TURMAS (SUBSTITUI O CARD DE ANÁLISE) */}
+        <Link 
+          href="/estudante/turmas"
+          className="group relative overflow-hidden bg-white/95 border border-gray-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-center gap-2"
+        >
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <School size={24} />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-gray-900 font-oswald uppercase group-hover:text-blue-700 transition-colors">
+                  Minhas Turmas
+                </h4>
+                <p className="text-xs text-gray-500 font-medium group-hover:text-gray-600">
+                  Acesse aulas, materiais e provas dos professores.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-base font-bold text-gray-900 font-oswald uppercase">Análise Inteligente</h4>
-              <p className="text-xs text-gray-500 font-medium">Descubra onde melhorar com insights acionáveis.</p>
+            
+            {/* Badge de contador dinâmico */}
+            <div className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-600 border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700">
+              {turmasCount} Ativa{turmasCount !== 1 && 's'}
             </div>
           </div>
-          <button 
-            className="mt-4 w-full bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md hover:bg-indigo-700 transition-all border border-transparent font-roboto uppercase tracking-wide flex items-center justify-center gap-2"
-          >
-            <Target size={14} /> Filtragem Avançada
-          </button>
-        </div>
+          
+          <div className="mt-4 flex items-center text-xs font-bold text-blue-600 uppercase tracking-wider group-hover:underline">
+            Acessar Sala de Aula <ChevronRight size={14} className="ml-1" />
+          </div>
+        </Link>
       </div>
 
       {/* 3. ATALHOS RÁPIDOS */}
@@ -374,7 +385,7 @@ export default async function StudentDashboard() {
   );
 }
 
-// Componente Helper para os Cards de Atalho (DRY)
+// Componente Helper para os Cards de Atalho (Mantido)
 function ShortcutCard({ href, icon: Icon, title, subtitle, colorClass }: any) {
   const colors: any = {
     rose: {

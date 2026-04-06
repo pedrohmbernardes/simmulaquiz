@@ -79,21 +79,17 @@ function normalizeMetricasResumo(metricasResumo: any) {
 
   const mr = metricasResumo;
 
-  // --- simulado: compatibilidade de chaves ---
   if (mr.simulado && typeof mr.simulado === "object") {
     const s = mr.simulado;
 
-    // se veio "nota", espelha em "notaPercentual" (mantém ambos)
     if (s.notaPercentual == null && s.nota != null) {
       s.notaPercentual = s.nota;
     }
 
-    // se não veio tempoMedioSeg, tenta tempoMedioGlobalSeg
     if (s.tempoMedioSeg == null && s.tempoMedioGlobalSeg != null) {
       s.tempoMedioSeg = s.tempoMedioGlobalSeg;
     }
 
-    // percentual cru (se faltar)
     const total = coerceNumber(s.total);
     const acertos = coerceNumber(s.acertos);
 
@@ -102,7 +98,6 @@ function normalizeMetricasResumo(metricasResumo: any) {
     }
   }
 
-  // --- dificuldade: normaliza "Muito Fácil" -> "MUITO_FACIL" etc (sem alterar o banco) ---
   if (Array.isArray(mr.dificuldade)) {
     const merged = new Map<string, any>();
 
@@ -116,20 +111,16 @@ function normalizeMetricasResumo(metricasResumo: any) {
         continue;
       }
 
-      // merge conservador (soma totais/contagens/tempos)
       prev.total = Number(prev.total ?? 0) + Number(item.total ?? 0);
       prev.acertos = Number(prev.acertos ?? 0) + Number(item.acertos ?? 0);
       prev.erros = Number(prev.erros ?? 0) + Number(item.erros ?? 0);
       prev.naoRespondidas = Number(prev.naoRespondidas ?? 0) + Number(item.naoRespondidas ?? 0);
-      // soma tempos se existirem (para recálculo)
+
       const tPrev = coerceNumber(prev.tempoMedioSeg);
       const tItem = coerceNumber(item.tempoMedioSeg);
 
-      // Se ambos têm tempo médio, é difícil recompor somaTempo. Então, mantemos o que existir.
-      // (Como é apenas para UI, preferimos NÃO inventar.)
       if (tPrev == null && tItem != null) prev.tempoMedioSeg = tItem;
 
-      // recalc acuracia se possível
       const respondidas = Number(prev.total ?? 0) - Number(prev.naoRespondidas ?? 0);
       prev.respondidas = respondidas;
       prev.acuracia = respondidas > 0 ? Number(prev.acertos ?? 0) / respondidas : 0;
@@ -149,11 +140,12 @@ function normalizeMetricasResumo(metricasResumo: any) {
   return mr;
 }
 
-export async function GET(
-  req: NextRequest,
-  // Ajuste para Next.js 15+ onde params é Promise, mantendo compatibilidade com 14
-  ctx: { params: Promise<{ id: string }> | { id: string } }
-) {
+// ✅ CORREÇÃO AQUI
+type Ctx = {
+  params: Promise<{ id: string }>;
+};
+
+export async function GET(req: NextRequest, ctx: Ctx) {
   const session: any = await getSession();
   if (!session) return noStoreJson({ error: "Não autorizado" }, { status: 401 });
 
@@ -163,13 +155,12 @@ export async function GET(
   const ip = getClientIp(req);
   const userAgent = req.headers.get("user-agent") || undefined;
 
-  // Rate limit de leitura (proteção contra scraping de análises)
   const rl = await csrfRateLimit.limit(`simulado-analise:get:${userId}:${ip}`);
   if (!rl.success) {
     return noStoreJson({ error: "Muitas requisições. Aguarde alguns instantes." }, { status: 429 });
   }
 
-  // Tratamento híbrido para params (Promise ou Objeto)
+  // ✅ NOVO padrão Next 16
   const params = await ctx.params;
   const { id } = params;
   const simuladoId = parsePositiveInt(id);
@@ -179,7 +170,6 @@ export async function GET(
   }
 
   try {
-    // Busca a avaliação garantindo que o simulado pertence ao usuário
     const avaliacao = await prisma.avaliacaoSimulado.findFirst({
       where: {
         simuladoId,
@@ -192,11 +182,7 @@ export async function GET(
         pontosFortes: true,
         pontosFracos: true,
         recomendacoes: true,
-
-        // Dados fundamentais para os gráficos
         metricasResumo: true,
-
-        // Metadados técnicos
         modeloIA: true,
         tokensTotal: true,
         createdAt: true,
@@ -204,8 +190,6 @@ export async function GET(
     });
 
     if (!avaliacao) {
-      // Verificação de segurança silenciosa (IDOR check)
-      // Se o simulado existe mas não é do usuário, logamos a tentativa
       const simuladoExiste = await prisma.simulado.findUnique({
         where: { id: simuladoId },
         select: { id: true, usuarioId: true },
@@ -223,11 +207,9 @@ export async function GET(
         }).catch(() => {});
       }
 
-      // Retorna 404 padrão (não revela se o simulado existe ou não para terceiros)
       return noStoreJson({ error: "Análise não encontrada." }, { status: 404 });
     }
 
-    // ✅ Normaliza apenas o payload retornado (não altera DB)
     const normalized = {
       ...avaliacao,
       metricasResumo: normalizeMetricasResumo(avaliacao.metricasResumo as any),

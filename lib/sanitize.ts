@@ -2,34 +2,37 @@ import xss from 'xss';
 
 /**
  * Sanitiza uma string removendo tags HTML perigosas (XSS)
- * Remove scripts, iframes e atributos de eventos (onclick, onerror),
- * mas permite texto puro seguro.
  */
 export function sanitizeString(text: unknown): string {
   if (typeof text !== 'string') return '';
-  // .trim() remove espaços em branco extras no início/fim
-  // xss() substitui o DOMPurify.sanitize() mantendo a segurança
   return xss(text.trim());
 }
 
 /**
  * Sanitiza recursivamente um objeto ou array.
- * Útil para limpar o body inteiro de uma requisição JSON antes de passar para o Zod/Prisma.
+ * IGNORA objetos Date para evitar corrupção de dados no Prisma.
  */
 export function sanitizeObject<T>(obj: T): T {
+  // 1. Se for string, sanitiza
   if (typeof obj === 'string') {
     return sanitizeString(obj) as unknown as T;
   }
   
+  // 2. Se for data, retorna intacto (CORREÇÃO CRÍTICA)
+  if (obj instanceof Date) {
+    return obj;
+  }
+  
+  // 3. Se for array, mapeia recursivamente
   if (Array.isArray(obj)) {
     return obj.map(item => sanitizeObject(item)) as unknown as T;
   }
   
+  // 4. Se for objeto genérico, varre as chaves
   if (typeof obj === 'object' && obj !== null) {
     const result: any = {};
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        // Recursão para limpar objetos aninhados
         result[key] = sanitizeObject((obj as any)[key]);
       }
     }

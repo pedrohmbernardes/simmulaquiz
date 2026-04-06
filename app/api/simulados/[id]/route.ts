@@ -42,13 +42,17 @@ function parsePositiveInt(raw: unknown): number | null {
   return n;
 }
 
+type Ctx = {
+  params: Promise<{ id: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  ctx: { params: { id?: string | string[] } | Promise<{ id?: string | string[] }> }
+  ctx: Ctx
 ) {
   try {
-    // ✅ params blindado (compatível com variações)
-    const { id } = await Promise.resolve(ctx.params);
+    // ✅ params no formato esperado pelo Next 16
+    const { id } = await ctx.params;
     const simuladoId = parsePositiveInt(id);
     if (!simuladoId) {
       return noStoreJson({ error: 'ID inválido' }, { status: 400 });

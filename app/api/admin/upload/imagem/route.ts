@@ -7,7 +7,7 @@ import { getSession } from "@/lib/auth";
 import { adminContentRateLimit } from "@/lib/ratelimit"; // ✅ Limite correto para admins
 import { AuditAction, registrarLog } from "@/lib/audit";
 import { verifyCSRFToken } from "@/lib/csrf";
-import { getClientIp, safeApiError } from "@/lib/utils";
+import { getClientIp, safeApiError } from "@/lib/server-utils";
 
 // ✅ Garante runtime Node
 export const runtime = "nodejs";
@@ -39,7 +39,7 @@ const validTypes = new Set<SniffedType>(["jpeg", "png", "webp", "gif"]);
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = getClientIp(request);
+    const ip = await getClientIp(request);
 
     // 1) Auth - Apenas Admin/Professor
     const session = await getSession();

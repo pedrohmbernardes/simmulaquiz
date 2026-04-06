@@ -7,7 +7,7 @@ import { uploadImageToSupabase } from '@/lib/storage/supabase';
 import { getSession } from '@/lib/auth';
 import { authRateLimit } from '@/lib/ratelimit';
 import { AuditAction, registrarLog } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/utils';
+import { getClientIp, safeApiError } from '@/lib/server-utils';
 import { verifyCSRFToken } from '@/lib/csrf';
 
 export const runtime = 'nodejs';
@@ -97,11 +97,12 @@ export async function POST(request: NextRequest) {
     const rl = await authRateLimit.limit(rlKey);
 
     if (!rl.success) {
+      const ipResolved = await ip;
       await registrarLog({
         acao: AuditAction.SISTEMA_ERRO,
         usuarioId,
         usuarioNome: session.name,
-        detalhes: { erro: 'Rate limit de upload excedido', ip, rota: '/api/upload/imagem' },
+        detalhes: { erro: 'Rate limit de upload excedido', ip: ipResolved, rota: '/api/upload/imagem' },
       });
 
       return noStoreJson(

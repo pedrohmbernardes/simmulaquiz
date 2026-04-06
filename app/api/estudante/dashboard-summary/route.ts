@@ -6,7 +6,6 @@ import { expensiveOpsRateLimit } from '@/lib/ratelimit';
 import { headers } from 'next/headers';
 // ----------------------------------------------------------------------
 // IMPORTANTE: Ajuste o caminho abaixo se sua função estiver em outro arquivo
-// Baseado na sua árvore, supus que a engine contém a lógica central.
 import { processarLoginDiario } from '@/lib/gamificacao/engine'; 
 // ----------------------------------------------------------------------
 
@@ -49,8 +48,6 @@ export async function GET() {
     }
 
     // --- RATE LIMIT ---
-    // Mantemos a verificação aqui. Se o usuário der F5 freneticamente,
-    // ele será bloqueado antes de processar o login diário, protegendo o banco.
     if (expensiveOpsRateLimit) {
       const ip = await getClientIp();
       const { success, limit, reset, remaining } =
@@ -72,24 +69,24 @@ export async function GET() {
     }
 
     // =====================================================================
-    // 🔥 CORREÇÃO DO STREAK / LOGIN DIÁRIO (SLIDING SESSION)
+    // 🔥 GAMIFICACÃO: STREAK / LOGIN DIÁRIO
     // =====================================================================
-    // Executamos a lógica aqui. Se o usuário virou o dia e acessou o painel
-    // (sem fazer login explícito), isso garante o cômputo do streak.
     try {
-      // A função processarLoginDiario DEVE ser idempotente (verificar se já ganhou hoje).
-      // Se ela já ganhou hoje, a função retorna sem fazer nada.
       await processarLoginDiario(userId);
     } catch (error) {
-      // Não queremos que uma falha na gamificação quebre o dashboard inteiro.
-      // Logamos o erro e seguimos carregando os dados.
       console.error(`[Dashboard] Falha ao processar streak para user ${userId}:`, error);
     }
     // =====================================================================
 
-    // Agora buscamos os dados (que já estarão atualizados com o XP do login acima)
-    const [usuario, estatisticasGerais, ultimosSimulados, rankingGeral] =
-      await Promise.all([
+    // Agora buscamos os dados (incluindo a contagem de turmas)
+    const [
+        usuario, 
+        estatisticasGerais, 
+        ultimosSimulados, 
+        rankingGeral,
+        totalTurmas // <--- NOVO: Contagem de Turmas
+    ] = await Promise.all([
+        // 1. Dados do Usuário
         prisma.usuario.findUnique({
           where: { id: userId },
           select: {
@@ -100,12 +97,14 @@ export async function GET() {
           },
         }),
 
+        // 2. Estatísticas Gerais (Simulados)
         prisma.simulado.aggregate({
           where: { usuarioId: userId, status: 'CONCLUIDO' },
           _count: { id: true },
           _avg: { notaPercentual: true },
         }),
 
+        // 3. Gráfico de Evolução (Últimos 10)
         prisma.simulado.findMany({
           where: { usuarioId: userId, status: 'CONCLUIDO' },
           orderBy: { createdAt: 'asc' },
@@ -113,6 +112,7 @@ export async function GET() {
           select: { createdAt: true, notaPercentual: true },
         }),
 
+        // 4. Ranking Geral (Top 3)
         prisma.usuarioGamificacao.findMany({
           take: 3,
           orderBy: { pontos: 'desc' },
@@ -121,6 +121,14 @@ export async function GET() {
             usuario: { select: { nome: true } },
           },
         }),
+
+        // 5. NOVO: Contagem de Turmas Ativas para o Card
+        prisma.turmaAluno.count({
+            where: {
+                alunoId: userId,
+                status: 'ATIVO'
+            }
+        })
       ]);
 
     if (!usuario) {
@@ -129,7 +137,6 @@ export async function GET() {
 
     const xpTotal = usuario.gamificacao?.pontos ?? 0;
     const tituloAtual = await getTituloPorXP(xpTotal);
-
     const progresso = await calcularProgressoNivel(userId);
 
     const dadosGrafico = ultimosSimulados.map((s) => ({
@@ -140,7 +147,7 @@ export async function GET() {
       aproveitamento: Math.round(s.notaPercentual || 0),
     }));
 
-    // Top 3 do ranking
+    // Top 3 do ranking formatado
     const topSemana = await Promise.all(
       rankingGeral.map(async (r, index) => {
         const t = await getTituloPorXP(r.pontos);
@@ -160,6 +167,8 @@ export async function GET() {
       gamificacao: usuario.gamificacao,
       titulo: tituloAtual.nome,
       progresso,
+      // Injetamos a contagem de turmas na raiz ou metrics, conforme esperado pelo Front
+      turmasAtivas: totalTurmas, 
       metrics: {
         totalSimulados: estatisticasGerais._count.id,
         media: Math.round(estatisticasGerais._avg.notaPercentual || 0),
