@@ -140,10 +140,14 @@ export async function POST(request: Request) {
         }
       });
 
-      // Dispara E-mail
-      enviarCodigoRecuperacao(usuario.email, otpCode).catch((err: unknown) => {
-          console.error('Falha ao enviar código de recuperação:', err instanceof Error ? err.message : String(err));
-      });
+      // Dispara E-mail (AWAIT - para ambiente serverless garantir que a função tente enviar o email até o fim, mesmo que demore um pouco)
+      try {
+        await enviarCodigoRecuperacao(usuario.email, otpCode);
+      } catch (err: unknown) {
+        console.error('Falha ao enviar código de recuperação:', err instanceof Error ? err.message : String(err));
+        // Mesmo falhando o email (ex: falha no google), não travamos o usuário, 
+        // mas o await garante que a Vercel tentou até o fim.
+      }
 
       await registrarLog({
         acao: AuditAction.USUARIO_RECUPERAR_SENHA,
