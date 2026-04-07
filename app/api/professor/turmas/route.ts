@@ -9,15 +9,36 @@ import { sanitizeObject } from "@/lib/sanitize";
 import { registrarLog, AuditAction } from "@/lib/audit";
 import { verifyCSRFToken } from "@/lib/csrf"; // ✅ Adicionado para segurança manual
 
-// Gera um código único amigável: TUR-ANO-RANDOM (ex: TUR-2026-X9B)
+// // Gera um código único amigável: TUR-ANO-RANDOM (ex: TUR-2026-X9B)
+// function gerarCodigoTurma(): string {
+//   const ano = new Date().getFullYear();
+//   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; 
+//   let randomStr = "";
+//   for (let i = 0; i < 3; i++) {
+//     randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+//   }
+//   return `TUR-${ano}-${randomStr}`;
+// }
+
 function gerarCodigoTurma(): string {
-  const ano = new Date().getFullYear();
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; 
-  let randomStr = "";
-  for (let i = 0; i < 3; i++) {
-    randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `TUR-${ano}-${randomStr}`;
+  // Omitimos I, O, 1 e 0 para evitar erros de digitação dos alunos
+  const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ"; 
+  const numeros = "23456789"; 
+
+  const getRandom = (chars: string, length: number) => {
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const parte1 = getRandom(letras, 3);
+  const parte2 = getRandom(numeros, 4);
+  const parte3 = getRandom(letras, 3);
+
+  return `${parte1}-${parte2}-${parte3}`;
+  // Exemplo de saída: XBZ-4872-KPW
 }
 
 // --- GET: Listar TODAS as Turmas do Professor ---

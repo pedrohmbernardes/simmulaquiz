@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { X, Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+// 1. Importe o seu hook customizado (ajuste o caminho se necessário)
+import { useSecureFetch } from "@/lib/hooks/useSecureFetch"; 
 
 interface CreateTurmaModalProps {
   isOpen: boolean;
@@ -19,8 +21,11 @@ export default function CreateTurmaModal({
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    imagemUrl: "", // Opcional: Futuramente pode ser um upload
+    imagemUrl: "", 
   });
+
+  // 2. Instancie o secureFetch
+  const secureFetch = useSecureFetch();
 
   if (!isOpen) return null;
 
@@ -29,18 +34,20 @@ export default function CreateTurmaModal({
     setLoading(true);
 
     try {
-      const res = await fetch("/api/professor/turmas", {
+      // 3. Substitua o 'fetch' por 'secureFetch'
+      // Nota: Não precisa mais do JSON.stringify nem do Content-Type, 
+      // o seu hook useSecureFetch já faz isso!
+      const res = await secureFetch("/api/professor/turmas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData, 
       });
 
       const data = await res.json();
 
+      // O secureFetch já lança erro para 401 e 403, mas mantemos sua 
+      // validação original para erros de negócio (ex: Zod)
       if (!res.ok) {
-        // Se a API retornou erro (ex: validação Zod)
         if (data.details) {
-          // Pega o primeiro erro detalhado, se houver
           const firstError = Object.values(data.details.fieldErrors || {})[0];
           throw new Error(Array.isArray(firstError) ? firstError[0] : "Dados inválidos");
         }
@@ -49,9 +56,8 @@ export default function CreateTurmaModal({
 
       toast.success(`Turma "${data.nome}" criada com sucesso!`);
       
-      // Limpa o formulário e fecha
       setFormData({ nome: "", descricao: "", imagemUrl: "" });
-      onSuccess(); // Recarrega a lista na página pai
+      onSuccess(); 
       
     } catch (error: any) {
       console.error(error);
