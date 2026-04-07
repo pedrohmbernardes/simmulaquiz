@@ -17,7 +17,7 @@ import {
   BarChart3,
   Award,
   Target,
-  ClipboardList // Ícone novo para diferenciar Simulado de Tarefa
+  ClipboardList
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,9 @@ interface PageProps {
 
 export default async function ProfessorTurmaDashboard({ params }: PageProps) {
   const session = await getSession();
-  if (!session || session.role !== 'PROFESSOR') {
+  
+  // 1. RBAC Flexível
+  if (!session || (session.role !== 'PROFESSOR' && session.role !== 'SUPER_ADMIN')) {
     redirect('/login');
   }
 
@@ -39,18 +41,21 @@ export default async function ProfessorTurmaDashboard({ params }: PageProps) {
 
   if (isNaN(turmaIdInt)) redirect('/professor/turmas');
 
-  // Buscando dados da turma + listas recentes de tarefas e simulados
+  const isSuperAdmin = session.role === 'SUPER_ADMIN';
+
+  // 2. Lógica de Query Dinâmica (Admin acessa tudo, Professor acessa as dele)
+  const whereClause = isSuperAdmin
+    ? { id: turmaIdInt }
+    : { id: turmaIdInt, professores: { some: { professorId: parseInt(session.sub) } } };
+
   const turma = await prisma.turma.findUnique({
-    where: { 
-      id: turmaIdInt,
-      professores: { some: { professorId: parseInt(session.sub) } }
-    },
+    where: whereClause,
     include: {
       _count: {
         select: {
           alunos: { where: { status: 'ATIVO' } },
-          agendamentos: true, // Contagem total
-          tarefas: true,      // Contagem total
+          agendamentos: true,
+          tarefas: true,
           materiais: true,
           avisos: true,
           forumTopicos: { where: { resolvido: false } }
@@ -66,7 +71,7 @@ export default async function ProfessorTurmaDashboard({ params }: PageProps) {
           dataEntrega: true
         }
       },
-      agendamentos: { // Nova busca para o feed unificado
+      agendamentos: {
         take: 5,
         orderBy: { createdAt: 'desc' },
         select: {
@@ -116,7 +121,7 @@ export default async function ProfessorTurmaDashboard({ params }: PageProps) {
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
                   <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30">
-                    Visão Geral
+                    {isSuperAdmin ? "Visão Geral (Modo Admin)" : "Visão Geral"}
                   </Badge>
                 </div>
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
@@ -150,7 +155,7 @@ export default async function ProfessorTurmaDashboard({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Metrics Grid - ATUALIZADO: 5 Colunas para separar Tarefas de Simulados */}
+        {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           <MetricCard 
             icon={Users} 
@@ -170,7 +175,6 @@ export default async function ProfessorTurmaDashboard({ params }: PageProps) {
             href={`/professor/turmas/${turmaId}/conteudo`}
             gradient="from-emerald-500 to-teal-500"
           />
-          {/* Card Tarefas Separado */}
           <MetricCard 
             icon={FileText} 
             label="Tarefas" 
@@ -180,7 +184,6 @@ export default async function ProfessorTurmaDashboard({ params }: PageProps) {
             href={`/professor/turmas/${turmaId}/tarefas`}
             gradient="from-violet-500 to-purple-500"
           />
-          {/* Card Simulados Separado */}
           <MetricCard 
             icon={PenTool} 
             label="Simulados" 

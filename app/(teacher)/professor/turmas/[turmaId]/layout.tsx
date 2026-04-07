@@ -13,7 +13,9 @@ interface TurmaLayoutProps {
 
 export default async function TurmaLayout({ children, params }: TurmaLayoutProps) {
   const session = await getSession();
-  if (!session || session.role !== 'PROFESSOR') {
+  
+  // 1. RBAC Flexível: Permite Professor e Super Admin
+  if (!session || (session.role !== 'PROFESSOR' && session.role !== 'SUPER_ADMIN')) {
     redirect('/login');
   }
 
@@ -24,15 +26,22 @@ export default async function TurmaLayout({ children, params }: TurmaLayoutProps
     redirect('/professor/turmas');
   }
 
-  const turma = await prisma.turma.findUnique({
-    where: {
-      id: turmaIdInt,
-      professores: {
-        some: {
-          professorId: parseInt(session.sub),
+  const isSuperAdmin = session.role === 'SUPER_ADMIN';
+
+  // 2. Query Dinâmica: Super Admin não precisa estar na tabela pivot
+  const whereClause = isSuperAdmin
+    ? { id: turmaIdInt }
+    : {
+        id: turmaIdInt,
+        professores: {
+          some: {
+            professorId: parseInt(session.sub),
+          },
         },
-      },
-    },
+      };
+
+  const turma = await prisma.turma.findUnique({
+    where: whereClause,
     select: {
       id: true,
       nome: true,
@@ -73,6 +82,12 @@ export default async function TurmaLayout({ children, params }: TurmaLayoutProps
               </Link>
               <span className="text-slate-300">/</span>
               <span className="font-medium text-slate-700">{turma.nome}</span>
+              {/* Badge indicando o modo Admin */}
+              {isSuperAdmin && (
+                 <Badge variant="outline" className="ml-2 text-[10px] uppercase text-amber-600 border-amber-200 bg-amber-50">
+                    Modo Global
+                 </Badge>
+              )}
             </div>
 
             {/* Info Principal da Turma - Layout Horizontal Compacto */}

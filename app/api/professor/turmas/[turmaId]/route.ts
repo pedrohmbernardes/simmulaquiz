@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { registrarLog, AuditAction } from "@/lib/audit";
 import { safeApiError } from "@/lib/server-utils";
 import { z } from "zod";
-import { verifyCSRFToken } from "@/lib/csrf"; // ✅ CSRF
-import { sanitizeObject } from "@/lib/sanitize"; // ✅ XSS
+import { verifyCSRFToken } from "@/lib/csrf"; 
+import { sanitizeObject } from "@/lib/sanitize"; 
 
 // Schema de validação para atualização
 const updateTurmaSchema = z.object({
@@ -15,34 +15,34 @@ const updateTurmaSchema = z.object({
   ativo: z.boolean().optional(),
 });
 
-// --- GET: Detalhes da Turma (Adicionado para suportar edição) ---
+// --- GET: Detalhes da Turma ---
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ turmaId: string }> }
 ) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "PROFESSOR") {
+    // ✅ Permite Admin
+    if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
     const { turmaId } = await params;
     const turmaIdInt = Number(turmaId);
     const userId = Number(session.sub);
+    const isSuperAdmin = session.role === "SUPER_ADMIN";
 
     if (isNaN(turmaIdInt)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    // 1. Verifica Propriedade + Busca Dados (Anti-IDOR)
-    // Só retorna se o usuário estiver na lista de professores da turma
-    const turma = await prisma.turma.findFirst({
-      where: {
-        id: turmaIdInt,
-        professores: {
-          some: { professorId: userId }
-        }
-      },
+    // ✅ Query Dinâmica para ignorar pivot caso seja Admin
+    const whereClause = isSuperAdmin
+      ? { id: turmaIdInt }
+      : { id: turmaIdInt, professores: { some: { professorId: userId } } };
+
+    const turma = await prisma.turma.findUnique({
+      where: whereClause,
       include: {
         _count: {
           select: { 
@@ -75,7 +75,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    // 2. 🛡️ CSRF Check (Defense in Depth)
+    // 2. 🛡️ CSRF Check
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
       await registrarLog({
@@ -89,24 +89,23 @@ export async function PATCH(
     const { turmaId } = await params;
     const turmaIdInt = Number(turmaId);
     const userId = Number(session.sub);
+    const isSuperAdmin = session.role === "SUPER_ADMIN";
 
     if (isNaN(turmaIdInt)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
     // 3. Verifica Propriedade (IDOR)
-    const isOwner = await prisma.turmaProfessor.findUnique({
-      where: {
-        turmaId_professorId: {
-          turmaId: turmaIdInt,
-          professorId: userId,
+    if (!isSuperAdmin) {
+      const isOwner = await prisma.turmaProfessor.findUnique({
+        where: {
+          turmaId_professorId: { turmaId: turmaIdInt, professorId: userId },
         },
-      },
-    });
+      });
 
-    // Se for SUPER_ADMIN, pode pular essa checagem se desejar, mas mantemos restrito por segurança
-    if (!isOwner && session.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Você não administra esta turma." }, { status: 403 });
+      if (!isOwner) {
+        return NextResponse.json({ error: "Você não administra esta turma." }, { status: 403 });
+      }
     }
 
     // 4. Valida e Sanitiza Body
@@ -117,7 +116,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Dados inválidos", details: validation.error.flatten() }, { status: 400 });
     }
 
-    // Sanitização de XSS
     const data = sanitizeObject(validation.data);
 
     // 5. Atualiza
@@ -162,20 +160,22 @@ export async function DELETE(
     const { turmaId } = await params;
     const turmaIdInt = Number(turmaId);
     const userId = Number(session.sub);
+    const isSuperAdmin = session.role === "SUPER_ADMIN";
 
     // 2. Verifica Propriedade
-    const isOwner = await prisma.turmaProfessor.findUnique({
-      where: {
-        turmaId_professorId: { turmaId: turmaIdInt, professorId: userId },
-      },
-    });
+    if (!isSuperAdmin) {
+      const isOwner = await prisma.turmaProfessor.findUnique({
+        where: {
+          turmaId_professorId: { turmaId: turmaIdInt, professorId: userId },
+        },
+      });
 
-    if (!isOwner && session.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      if (!isOwner) {
+        return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      }
     }
 
     // 3. Soft Delete (Arquivamento)
-    // Mantém integridade de agendamentos e notas passadas
     const turmaArquivada = await prisma.turma.update({
       where: { id: turmaIdInt },
       data: { ativo: false },
@@ -183,7 +183,7 @@ export async function DELETE(
 
     // 4. Log
     await registrarLog({
-      acao: AuditAction.TURMA_EXCLUIR, // Usando TURMA_EXCLUIR semanticamente para o usuário, tecnicamente é update
+      acao: AuditAction.TURMA_EXCLUIR, 
       usuarioId: userId,
       usuarioNome: session.name,
       recurso: `Turma: ${turmaIdInt}`,

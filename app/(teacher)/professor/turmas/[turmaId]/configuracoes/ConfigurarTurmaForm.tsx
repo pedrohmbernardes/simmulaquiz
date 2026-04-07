@@ -49,6 +49,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
+// ✅ Importação do hook seguro
+import { useSecureFetch } from "@/lib/hooks/useSecureFetch";
+
 const formSchema = z.object({
   nome: z.string().min(3, "Mínimo 3 caracteres").max(50, "Máximo 50 caracteres"),
   descricao: z.string().max(200, "Máximo 200 caracteres").optional(),
@@ -58,8 +61,10 @@ export function ConfigurarTurmaForm({ turma, turmaId }: { turma: any; turmaId: n
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  
+  // ✅ Inicialização do secureFetch
+  const secureFetch = useSecureFetch();
 
-  // Formulário para dados básicos
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,7 +77,8 @@ export function ConfigurarTurmaForm({ turma, turmaId }: { turma: any; turmaId: n
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
-      const res = await fetch(`/api/professor/turmas/${turma.id}`, {
+      // ✅ Substituído fetch por secureFetch
+      const res = await secureFetch(`/api/professor/turmas/${turma.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -98,7 +104,8 @@ export function ConfigurarTurmaForm({ turma, turmaId }: { turma: any; turmaId: n
     setIsArchiving(true);
     try {
       const novoStatus = !turma.ativo;
-      const res = await fetch(`/api/professor/turmas/${turma.id}`, {
+      // ✅ Substituído fetch por secureFetch
+      const res = await secureFetch(`/api/professor/turmas/${turma.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ativo: novoStatus }),

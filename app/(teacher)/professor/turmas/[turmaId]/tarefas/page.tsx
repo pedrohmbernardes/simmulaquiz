@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 import { NovaTarefaDialog } from "@/components/classroom/NovaTarefaDialog";
 import { DeletarTarefaButton } from "@/components/classroom/DeletarTarefaButton";
-// ✅ Importação do novo componente de edição
 import { EditarTarefaDialog } from "@/components/classroom/EditarTarefaDialog";
 
 interface PageProps {
@@ -27,20 +26,30 @@ export default async function TarefasPage({ params }: PageProps) {
   const { turmaId } = await params;
   const session = await getSession();
 
-  if (!session || session.role !== "PROFESSOR") redirect("/login");
+  // 1. Segurança e Sessão Flexível (Permite Professor e Super Admin)
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
+    redirect("/login");
+  }
+  
   const turmaIdInt = parseInt(turmaId);
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
 
-  // Validação de Acesso
-  const isOwner = await prisma.turmaProfessor.findUnique({
-    where: {
-      turmaId_professorId: {
-        turmaId: turmaIdInt,
-        professorId: parseInt(session.sub)
+  // 2. Validação de Acesso (Dinâmica)
+  let temAcesso = isSuperAdmin;
+
+  if (!isSuperAdmin) {
+    const isOwner = await prisma.turmaProfessor.findUnique({
+      where: {
+        turmaId_professorId: {
+          turmaId: turmaIdInt,
+          professorId: parseInt(session.sub)
+        }
       }
-    }
-  });
+    });
+    temAcesso = !!isOwner;
+  }
 
-  if (!isOwner) redirect("/professor/dashboard");
+  if (!temAcesso) redirect("/professor/dashboard");
 
   // Busca Tarefas com contagem de entregas
   const tarefas = await prisma.tarefa.findMany({
@@ -214,7 +223,6 @@ export default async function TarefasPage({ params }: PageProps) {
                             
                             {/* Actions */}
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              {/* ✅ ADICIONADO: Botão de Editar */}
                               <EditarTarefaDialog 
                                 turmaId={turmaIdInt}
                                 tarefa={tarefa}

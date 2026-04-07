@@ -15,8 +15,8 @@ export default async function ConfiguracoesTurmaPage({ params }: PageProps) {
   const { turmaId } = await params;
   const session = await getSession();
 
-  // 1. Validação de Sessão
-  if (!session || session.role !== 'PROFESSOR') {
+  // 1. Validação de Sessão Flexível (Permite Professor e Super Admin)
+  if (!session || (session.role !== 'PROFESSOR' && session.role !== 'SUPER_ADMIN')) {
     redirect('/login');
   }
 
@@ -25,12 +25,19 @@ export default async function ConfiguracoesTurmaPage({ params }: PageProps) {
     redirect('/professor/turmas');
   }
 
-  // 2. Busca de Dados (Garante que o professor é dono da turma)
+  const isSuperAdmin = session.role === 'SUPER_ADMIN';
+
+  // 2. Validação Dinâmica de Acesso e Busca de Dados
+  // Super Admin busca a turma ignorando a tabela pivot.
+  const whereClause = isSuperAdmin
+    ? { id: turmaIdInt }
+    : { 
+        id: turmaIdInt, 
+        professores: { some: { professorId: parseInt(session.sub) } } 
+      };
+
   const turma = await prisma.turma.findUnique({
-    where: { 
-      id: turmaIdInt,
-      professores: { some: { professorId: parseInt(session.sub) } }
-    },
+    where: whereClause,
     select: {
       id: true,
       nome: true,

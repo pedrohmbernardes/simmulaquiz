@@ -22,23 +22,33 @@ export default async function ConteudoPage({ params }: PageProps) {
   const { turmaId } = await params;
   const session = await getSession();
 
-  // 1. Segurança e Sessão
-  if (!session || session.role !== "PROFESSOR") redirect("/login");
+  // 1. Segurança e Sessão Flexível (Permite Professor e Super Admin)
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
+    redirect("/login");
+  }
+  
   const turmaIdInt = parseInt(turmaId);
-
   if (isNaN(turmaIdInt)) redirect("/professor/dashboard");
 
-  // 2. Validação de Propriedade
-  const isOwner = await prisma.turmaProfessor.findUnique({
-    where: {
-      turmaId_professorId: {
-        turmaId: turmaIdInt,
-        professorId: parseInt(session.sub)
-      }
-    }
-  });
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
 
-  if (!isOwner) redirect("/professor/dashboard");
+  // 2. Validação de Propriedade (Query Dinâmica)
+  // Super Admin ignora a verificação na tabela pivot (TurmaProfessor)
+  let temAcesso = isSuperAdmin;
+  
+  if (!isSuperAdmin) {
+      const isOwner = await prisma.turmaProfessor.findUnique({
+        where: {
+          turmaId_professorId: {
+            turmaId: turmaIdInt,
+            professorId: parseInt(session.sub)
+          }
+        }
+      });
+      temAcesso = !!isOwner;
+  }
+
+  if (!temAcesso) redirect("/professor/dashboard");
 
   // 3. Busca Módulos e Itens (Eager Loading)
   const modulos = await prisma.moduloTurma.findMany({

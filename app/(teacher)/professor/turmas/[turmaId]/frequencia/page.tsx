@@ -21,19 +21,32 @@ export default async function FrequenciaPage({ params }: PageProps) {
   const { turmaId } = await params;
   const session = await getSession();
 
-  if (!session || session.role !== "PROFESSOR") redirect("/login");
+  // 1. Segurança e Sessão Flexível (Permite Professor e Super Admin)
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
+    redirect("/login");
+  }
+  
   const turmaIdInt = parseInt(turmaId);
+  if (isNaN(turmaIdInt)) redirect("/professor/dashboard");
 
-  const isOwner = await prisma.turmaProfessor.findUnique({
-    where: {
-      turmaId_professorId: {
-        turmaId: turmaIdInt,
-        professorId: parseInt(session.sub),
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
+
+  // 2. Validação de Acesso (Dinâmica)
+  let temAcesso = isSuperAdmin;
+
+  if (!isSuperAdmin) {
+    const isOwner = await prisma.turmaProfessor.findUnique({
+      where: {
+        turmaId_professorId: {
+          turmaId: turmaIdInt,
+          professorId: parseInt(session.sub),
+        },
       },
-    },
-  });
+    });
+    temAcesso = !!isOwner;
+  }
 
-  if (!isOwner) redirect("/professor/dashboard");
+  if (!temAcesso) redirect("/professor/dashboard");
 
   const sessoes = await prisma.sessaoCheckIn.findMany({
     where: { turmaId: turmaIdInt },

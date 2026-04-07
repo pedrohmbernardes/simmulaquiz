@@ -21,14 +21,23 @@ export default async function PessoasPage({ params }: PageProps) {
   const { turmaId } = await params;
   const session = await getSession();
 
-  if (!session || session.role !== "PROFESSOR") redirect("/login");
+  // 1. Segurança e Sessão Flexível (Permite Professor e Super Admin)
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
+    redirect("/login");
+  }
+  
   const turmaIdInt = parseInt(turmaId);
+  if (isNaN(turmaIdInt)) redirect("/professor/dashboard");
+
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
+
+  // 2. Validação de Acesso (Dinâmica)
+  const whereClause = isSuperAdmin
+    ? { id: turmaIdInt }
+    : { id: turmaIdInt, professores: { some: { professorId: parseInt(session.sub) } } };
 
   const turma = await prisma.turma.findUnique({
-    where: {
-      id: turmaIdInt,
-      professores: { some: { professorId: parseInt(session.sub) } },
-    },
+    where: whereClause,
     select: { codigo: true, nome: true },
   });
 

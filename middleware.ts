@@ -205,6 +205,7 @@ export async function middleware(request: NextRequest) {
   // 3) Rotas Protegidas
   const protectedPrefixes = [
     '/admin',
+    '/professor',
     '/escolha-perfil',
     '/estudante',
     '/simulado',
@@ -273,6 +274,7 @@ export const config = {
   matcher: [
     // Pages
     '/admin/:path*',
+    '/professor/:path*',
     '/escolha-perfil',
     '/estudante/:path*',
     '/simulado/:path*',

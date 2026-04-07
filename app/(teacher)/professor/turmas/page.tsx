@@ -6,9 +6,7 @@ import {
   GraduationCap, 
   MoreVertical, 
   Users, 
-  BookOpen,
-  Calendar,
-  Clock
+  BookOpen
 } from "lucide-react";
 import { CreateTurmaButton } from "@/components/turmas/CreateTurmaButton";
 import { Badge } from "@/components/ui/badge";
@@ -25,21 +23,24 @@ import { Button } from "@/components/ui/button";
 export default async function ProfessorTurmasPage() {
   const session = await getSession();
 
-  // 1. RBAC Estrito
-  if (!session || session.role !== "PROFESSOR") {
+  // 1. RBAC Flexível: Permite Professor e Super Admin
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
     redirect("/login");
   }
 
-  const professorId = parseInt(session.sub);
+  const usuarioId = parseInt(session.sub);
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
 
-  // 2. Query Segura
+  // 2. Query Dinâmica (Visão Global para Admin)
   const turmas = await prisma.turma.findMany({
-    where: {
-      professores: {
-        some: { professorId: professorId }
-      },
-      ativo: true
-    },
+    where: isSuperAdmin 
+      ? { ativo: true } // Super Admin vê todas as turmas ativas do sistema
+      : {
+          professores: {
+            some: { professorId: usuarioId }
+          },
+          ativo: true
+        },
     include: {
       _count: {
         select: {
@@ -59,10 +60,10 @@ export default async function ProfessorTurmasPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">
-              Minhas Turmas
+              {isSuperAdmin ? "Todas as Turmas" : "Minhas Turmas"}
             </h1>
             <p className="text-slate-600">
-              Gerencie suas {turmas.length} {turmas.length === 1 ? 'turma ativa' : 'turmas ativas'}
+              Gerencie {turmas.length} {turmas.length === 1 ? 'turma ativa' : 'turmas ativas'}
             </p>
           </div>
           
@@ -82,7 +83,7 @@ export default async function ProfessorTurmasPage() {
             </div>
             
             <h3 className="text-xl font-semibold text-slate-900 mb-2">
-              Nenhuma turma criada ainda
+              Nenhuma turma encontrada
             </h3>
             <p className="text-slate-500 text-sm max-w-md text-center mb-8">
               Comece criando sua primeira turma para adicionar alunos, organizar conteúdos e agendar atividades.

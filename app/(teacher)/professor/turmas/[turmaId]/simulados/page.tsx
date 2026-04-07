@@ -21,24 +21,35 @@ export default async function SimuladosPage({ params }: PageProps) {
   const { turmaId } = await params;
   const session = await getSession();
 
-  if (!session || session.role !== "PROFESSOR") redirect("/login");
+  // 1. Segurança e Sessão Flexível (Permite Professor e Super Admin)
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
+    redirect("/login");
+  }
   
   const turmaIdInt = parseInt(turmaId);
   if (isNaN(turmaIdInt)) redirect("/professor/dashboard");
 
-  // 1. Verifica Permissão
-  const isOwner = await prisma.turmaProfessor.findUnique({
-    where: {
-      turmaId_professorId: {
-        turmaId: turmaIdInt,
-        professorId: parseInt(session.sub)
+  const isSuperAdmin = session.role === "SUPER_ADMIN";
+
+  // 2. Validação de Propriedade (Query Dinâmica)
+  // Super Admin ignora a verificação na tabela pivot (TurmaProfessor)
+  let temAcesso = isSuperAdmin;
+
+  if (!isSuperAdmin) {
+    const isOwner = await prisma.turmaProfessor.findUnique({
+      where: {
+        turmaId_professorId: {
+          turmaId: turmaIdInt,
+          professorId: parseInt(session.sub)
+        }
       }
-    }
-  });
+    });
+    temAcesso = !!isOwner;
+  }
 
-  if (!isOwner) redirect("/professor/dashboard");
+  if (!temAcesso) redirect("/professor/dashboard");
 
-  // 2. Busca Agendamentos
+  // 3. Busca Agendamentos
   const agendamentos = await prisma.agendamentoSimulado.findMany({
     where: { turmaId: turmaIdInt },
     orderBy: { createdAt: "desc" },
@@ -56,7 +67,7 @@ export default async function SimuladosPage({ params }: PageProps) {
     }
   });
 
-  // 3. Cálculo das Estatísticas
+  // 4. Cálculo das Estatísticas
   const now = new Date();
   
   const agendados = agendamentos.filter(a => {
