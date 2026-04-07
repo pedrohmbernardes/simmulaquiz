@@ -1065,7 +1065,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
         )}
       </div>
 
-      <QuestaoPreviewModal questao={previewData} isOpen={previewOpen} onClose={closePreview} compact />
+      <QuestaoPreviewModal questao={previewData} isOpen={previewOpen} onClose={closePreview}/>
 
       {/* Dialog de Confirmação */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>

@@ -69,7 +69,7 @@ export default async function TurmaLayout({ children, params }: TurmaLayoutProps
       {/* Área Principal */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Cabeçalho Compacto e Fixo */}
-        <header className="z-30 flex-shrink-0 border-b border-slate-200 bg-white shadow-sm">
+        <header className="flex-shrink-0 border-b border-slate-200 bg-white shadow-sm">
           <div className="px-8 py-5">
             {/* Breadcrumb */}
             <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
