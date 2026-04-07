@@ -24,6 +24,7 @@ export default async function MinhasTurmasPage() {
   const matriculas = await prisma.turmaAluno.findMany({
     where: {
       alunoId: alunoId,
+      turma: { ativo: true },
     },
     include: {
       turma: {
