@@ -8,11 +8,12 @@ import {
   Plus, Search, Edit3, Trash2, Image as ImageIcon, 
   Layers, ChevronDown, Filter, BrainCircuit, Target, BookOpen, 
   Hash, XCircle, ChevronUp, GraduationCap, Building2, Calendar, FileBadge,
-  Sparkles, TrendingUp, Award
+  Sparkles, TrendingUp, Award, Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { QuestaoPreviewModal, useQuestaoPreview } from './QuestaoPreviewModal';
 
 export default function AdminQuestoesPage() {
   const router = useRouter();
@@ -36,6 +37,8 @@ export default function AdminQuestoesPage() {
     showMenu, setShowMenu, 
     modal, setModal, handleDeleteClick, handlePageChange
   } = useQuestoesLogic();
+
+  const { previewData, previewOpen, previewLoading, openPreview, closePreview } = useQuestaoPreview();
 
   const isIdSearch = filters.busca.startsWith('#');
   const idValue = isIdSearch ? filters.busca.substring(1) : '';
@@ -97,6 +100,11 @@ export default function AdminQuestoesPage() {
           isOpen={modal.isOpen} type={modal.type} title={modal.title} message={modal.message}
           onConfirm={modal.action || undefined} onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
           confirmText="Sim, Excluir" cancelText="Cancelar"
+        />
+        <QuestaoPreviewModal 
+          questao={previewData} 
+          isOpen={previewOpen} 
+          onClose={closePreview} 
         />
         
         {/* HEADER MODERNO */}
@@ -261,7 +269,7 @@ export default function AdminQuestoesPage() {
                     className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition bg-white"
                   >
                     <option value="">Todas</option>
-                    {options.ucs?.map((uc: any) => (
+                    {options.unidades?.map((uc: any) => (
                       <option key={uc.id} value={uc.id}>{uc.nome}</option>
                     ))}
                   </select>
@@ -350,10 +358,19 @@ export default function AdminQuestoesPage() {
                     <tr key={q.id} className="group hover:bg-indigo-50/30 transition-colors">
                       {/* ID */}
                       <td className="px-6 py-5 align-top">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-slate-100 to-gray-100 text-slate-700 rounded-lg font-bold text-sm border border-slate-200">
-                          <Hash size={14} />
-                          {q.id}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openPreview(q.id)}
+                            className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-all"
+                            title="Visualizar questão"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-slate-100 to-gray-100 text-slate-700 rounded-lg font-bold text-sm border border-slate-200">
+                            <Hash size={14} />
+                            {q.id}
+                          </span>
+                        </div>
                       </td>
 
                       {/* QUESTÃO */}

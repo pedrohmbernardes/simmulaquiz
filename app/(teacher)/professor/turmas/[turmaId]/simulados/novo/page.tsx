@@ -13,7 +13,7 @@ import {
   ArrowLeft, PlusCircle, Trash2, CheckCircle2,
   BookOpen, Target, GraduationCap, Hash,
   ArrowRight, Eye, Sparkles, AlertCircle,
-  BarChart3, Layers, TrendingUp, FileText
+  BarChart3, Layers, TrendingUp, FileText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSecureFetch } from "@/lib/hooks/useSecureFetch";
+import { QuestaoPreviewModal, useQuestaoPreview } from "@/app/(admin)/admin/questoes/QuestaoPreviewModal";
 
 // --- SCHEMAS E TIPOS ---
 const formSchema = z.object({
@@ -76,6 +77,8 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
   const router = useRouter();
   const searchParams = useSearchParams(); // ✅ Hook para ler Query Params
   const secureFetch = useSecureFetch();
+
+  const { previewData, previewOpen, openPreview, closePreview } = useQuestaoPreview();
   
   // ✅ Captura o moduloId da URL (se existir)
   const moduloId = searchParams.get("moduloId") ? parseInt(searchParams.get("moduloId")!) : undefined;
@@ -745,9 +748,20 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
                     <BookOpen size={20} />
                     Banco de Questões
                   </CardTitle>
-                  <Badge variant="secondary" className="text-sm px-3 py-1 bg-white shadow-sm text-indigo-600">
-                    {questoesDisponiveis.length} encontradas
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-sm px-3 py-1 bg-white shadow-sm text-indigo-600">
+                      {questoesDisponiveis.length} encontradas
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => window.open("/admin/questoes", "_blank")}
+                    >
+                      <Eye size={14} />
+                      <span className="hidden lg:inline">Ver Banco de Questões Completo</span>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <ScrollArea className="flex-1 p-6">
@@ -793,7 +807,14 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
                           )}
                           <CardContent className="p-5 space-y-3 relative z-10">
                             <div className="flex justify-between items-start">
-                              <div className="flex gap-2 flex-wrap">
+                              <div className="flex gap-2 flex-wrap items-center">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openPreview(q.id); }}
+                                  className="p-1 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                                  title="Visualizar questão"
+                                >
+                                  <Eye size={14} />
+                                </button>
                                 <Badge variant="outline" className="font-mono text-slate-500">
                                   #{q.id}
                                 </Badge>
@@ -1043,6 +1064,8 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
           </div>
         )}
       </div>
+
+      <QuestaoPreviewModal questao={previewData} isOpen={previewOpen} onClose={closePreview} compact />
 
       {/* Dialog de Confirmação */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>

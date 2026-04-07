@@ -61,23 +61,27 @@ export function useQuestoesLogic() {
     action: null as (() => void) | null,
   });
 
-  // 1. CARGA INICIAL (OPTIONS)
-  useEffect(() => {
-    let mounted = true;
-    async function initOptions() {
-      try {
-        const res = await fetch('/api/admin/options');
-        if (res.ok) {
-          const data = await res.json();
-          if (mounted) setOptions(data);
-        } else {
-            console.error("Falha ao carregar opções:", res.status);
-        }
-      } catch (e) { console.error("Erro ao carregar opções", e); }
-    }
-    initOptions();
-    return () => { mounted = false; };
-  }, []);
+// 1. FILTROS INTELIGENTES (Baseado nas questões existentes, reage a mudanças de filtro)
+useEffect(() => {
+  let mounted = true;
+  async function fetchSmartFilters() {
+    try {
+      const params = new URLSearchParams();
+      if (filters.cursoId) params.set("cursoId", filters.cursoId);
+      if (filters.ucId) params.set("unidadeId", filters.ucId);
+      if (filters.funcaoId) params.set("funcaoId", filters.funcaoId);
+      if (filters.subfuncaoId) params.set("subfuncaoId", filters.subfuncaoId);
+
+      const res = await fetch(`/api/questoes/filtros-inteligentes?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (mounted) setOptions(data);
+      }
+    } catch (e) { console.error("Erro ao carregar filtros inteligentes", e); }
+  }
+  fetchSmartFilters();
+  return () => { mounted = false; };
+}, [filters.cursoId, filters.ucId, filters.funcaoId, filters.subfuncaoId]);
 
   // 2. FETCH QUESTÕES (Com Debounce)
   useEffect(() => {

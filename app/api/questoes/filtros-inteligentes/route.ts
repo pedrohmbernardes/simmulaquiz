@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== "PROFESSOR") return NextResponse.json({}, { status: 403 });
+  if (!session || !["PROFESSOR", "SUPER_ADMIN"].includes(session.role)) return NextResponse.json({}, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   

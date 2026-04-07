@@ -7,7 +7,7 @@ import { NivelDificuldade, NivelCognitivo, Prisma } from "@prisma/client";
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "PROFESSOR") return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    if (!session || !["PROFESSOR", "SUPER_ADMIN"].includes(session.role)) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 
     const { searchParams } = new URL(req.url);
     
