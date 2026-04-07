@@ -118,7 +118,7 @@ export async function GET(
             E: q.alternativaE,
           }, 
           suaResposta: sq.alternativaMarcada,
-          gabarito: q.alternativaCorreta,
+          gabarito: q.alternativaCorreta?.toUpperCase(),
           acertou: sq.correta,
           disciplina: q.unidadeCurricular?.nome,
           dificuldade: q.dificuldade

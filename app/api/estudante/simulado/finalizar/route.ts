@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         if (sq.alternativaMarcada) {
           respondidas++;
           // Comparação segura (garante que ambos sejam strings válidas)
-          isCorrect = sq.alternativaMarcada === sq.questao.alternativaCorreta;
+          isCorrect = sq.alternativaMarcada?.toUpperCase() === sq.questao.alternativaCorreta?.toUpperCase();
         } else {
             // Em branco = Erro
             isCorrect = false;

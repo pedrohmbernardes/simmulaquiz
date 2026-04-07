@@ -265,7 +265,7 @@ export default function ResultadoAlunoPage({
                   {/* Alternativas */}
                   <div className="space-y-2">
                     {Object.entries(q.alternativas).map(([letra, texto]) => {
-                      const isGabarito = letra === q.gabarito;
+                      const isGabarito = letra === q.gabarito?.toUpperCase();
                       const isMarcada = letra === q.suaResposta;
 
                       let styleClass = "border-slate-200 bg-white opacity-50";

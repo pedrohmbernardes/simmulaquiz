@@ -289,7 +289,7 @@ export default async function ResultadoSimuladoPage({ params }: PageProps) {
                       {(Object.keys(alternativasMap) as Array<keyof typeof alternativasMap>).map(
                         (letra) => {
                           const texto = alternativasMap[letra];
-                          const isGabarito = letra === questao.alternativaCorreta;
+                          const isGabarito = letra === questao.alternativaCorreta?.toUpperCase();
                           const isMarcada = letra === sq.alternativaMarcada;
 
                           let styleClass = "border-slate-200 bg-white opacity-50";

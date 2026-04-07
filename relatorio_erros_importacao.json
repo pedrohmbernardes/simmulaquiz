@@ -1,0 +1,107 @@
+[
+  {
+    "index": 15,
+    "enunciado": "Uma linha de envase utiliza um sistema eletropneumático em que sensores pneumáticos de pressão monit",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "2 - Implementar sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "2.3 - Desenvolver interfaces de sistemas de supervisão e controle",
+      "cap": "C4 - Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  },
+  {
+    "index": 17,
+    "enunciado": "Um projeto de sistema eletropneumático para paletização de caixas prevê a utilização de vários cilin",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "2 - Implementar sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "2.2 - Integrar dispositivos e sistemas para controle e automação de processos",
+      "cap": "C4 - Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  },
+  {
+    "index": 81,
+    "enunciado": "Numa linha de envase, pressostatos monitoram a pressão da rede de ar e enviam sinais ao CLP; ao aval",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "2 - Implementar sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "2.3 - Desenvolver interfaces de sistemas de supervisão e controle",
+      "cap": "C4 — Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  },
+  {
+    "index": 83,
+    "enunciado": "No projeto de paletização, vários cilindros e pressostatos são monitorados pelo CLP; ao definir a ló",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "2 - Implementar sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "2.2 - Integrar dispositivos e sistemas para controle e automação de processos",
+      "cap": "C4 — Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  },
+  {
+    "index": 87,
+    "enunciado": "Em um projeto complexo de paletização com múltiplos atuadores e sensores, o engenheiro precisa defin",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "2 - Implementar sistemas de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "2.2 - Integrar dispositivos e sistemas para controle e automação de processos",
+      "cap": "C4 — Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  },
+  {
+    "index": 120,
+    "enunciado": "Um sistema eletrohidráulico de posicionamento utiliza um encoder conectado a uma entrada de alta vel",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "1 - Implementar dispositivos de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "1.1 - Instalar dispositivos eletrônicos e microcontrolados",
+      "cap": "C4 - Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  },
+  {
+    "index": 130,
+    "enunciado": "Um sistema eletropneumático de movimentação de cargas pesadas utiliza um cilindro de dupla ação com ",
+    "motivo": "ERRO_DE_GRAFO",
+    "detalhes": [
+      "Vínculo inválido: Capacidade 'C4' não está ligada ao conhecimento 'OBJ-CONH-00005'. Caps válidas: [C2]"
+    ],
+    "dadosEntrada": {
+      "uc": "Sistemas Eletrohidráulicos e Eletropneumáticos",
+      "func": "1 - Implementar dispositivos de automação e controle para processos industriais, seguindo procedimentos e Normas Técnicas, de Qualidade, Segurança, Saúde e Sustentabilidade",
+      "sub": "1.1 - Instalar dispositivos eletrônicos e microcontrolados",
+      "cap": "C4 - Empregar técnicas de programação e configuração em sistemas lógicos de controle",
+      "conh": "5 - Sensores Digitais e Analógicos"
+    }
+  }
+]
