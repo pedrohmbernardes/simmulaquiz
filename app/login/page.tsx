@@ -197,18 +197,18 @@ export default function LoginPage() {
             <form onSubmit={handleVerify} className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                 <div>
                     <label className="block text-xs font-roboto font-bold text-gray-600 uppercase tracking-wider mb-3 text-center">
-                      Código de 6 dígitos
+                      Código de 8 dígitos
                     </label>
                     <input 
                         type="text" 
-                        maxLength={6}
+                        maxLength={8}
                         autoFocus
                         className={`w-full text-center text-4xl font-mono tracking-[0.6em] p-4 border-2 rounded-2xl outline-none font-bold uppercase transition-all placeholder:tracking-normal shadow-inner
                             ${verifyError 
                                 ? 'border-red-300 bg-red-50/50 text-red-600 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
                                 : 'border-blue-200 bg-blue-50/30 text-blue-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
                             }`}
-                        placeholder="000000"
+                        placeholder="00000000"
                         value={otp}
                         onChange={(e) => {
                             setOtp(e.target.value.replace(/\D/g, ''));

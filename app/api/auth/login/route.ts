@@ -169,7 +169,7 @@ export async function POST(request: Request) {
         }
       }
 
-      const novoToken = crypto.randomInt(100000, 1000000).toString();
+      const novoToken = crypto.randomInt(10000000, 100000000).toString();
       const expiraEm = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       await prisma.usuario.update({
