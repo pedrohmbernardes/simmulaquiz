@@ -4,28 +4,16 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ChevronLeft, ChevronRight, Clock, CheckCircle2, 
-  Save, AlertTriangle, Shield, ShieldAlert, ShieldX,
-  Maximize, Eye, EyeOff
+  AlertTriangle, Shield, ShieldAlert, ShieldX,
+  Maximize, EyeOff, Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useSecureFetch } from "@/lib/hooks/useSecureFetch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
 // ═══════════════════════════════════════════════════════
@@ -58,54 +46,61 @@ interface SimuladoData {
 }
 
 // ═══════════════════════════════════════════════════════
+// MOBILE DETECTION HELPER
+// ═══════════════════════════════════════════════════════
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
+// ═══════════════════════════════════════════════════════
 // STRIKE OVERLAY COMPONENT
 // ═══════════════════════════════════════════════════════
 
 function StrikeOverlay({ 
-  strikes, 
-  showWarning, 
-  onDismiss 
+  strikes, showWarning, onDismiss 
 }: { 
-  strikes: number; 
-  showWarning: boolean; 
-  onDismiss: () => void;
+  strikes: number; showWarning: boolean; onDismiss: () => void;
 }) {
   if (!showWarning) return null;
-
   const isAnulado = strikes >= 3;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className={cn(
-        "w-full max-w-md rounded-2xl p-6 md:p-8 text-center space-y-5 shadow-2xl border animate-in zoom-in-95 duration-300",
+        "w-full max-w-md rounded-2xl p-5 md:p-8 text-center space-y-4 md:space-y-5 shadow-2xl border animate-in zoom-in-95 duration-300",
         isAnulado 
           ? "bg-gradient-to-b from-red-950 to-red-900 border-red-700/50" 
           : "bg-gradient-to-b from-amber-950 to-amber-900 border-amber-700/50"
       )}>
-        {/* Icon */}
         <div className={cn(
-          "mx-auto w-16 h-16 rounded-full flex items-center justify-center",
+          "mx-auto w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center",
           isAnulado ? "bg-red-500/20" : "bg-amber-500/20"
         )}>
           {isAnulado 
-            ? <ShieldX size={32} className="text-red-400" /> 
-            : <ShieldAlert size={32} className="text-amber-400" />
+            ? <ShieldX className="h-7 w-7 md:h-8 md:w-8 text-red-400" /> 
+            : <ShieldAlert className="h-7 w-7 md:h-8 md:w-8 text-amber-400" />
           }
         </div>
 
-        {/* Title */}
         <h2 className={cn(
-          "text-xl md:text-2xl font-bold",
+          "text-lg md:text-2xl font-bold",
           isAnulado ? "text-red-200" : "text-amber-200"
         )}>
-          {isAnulado ? "Simulado Anulado" : "Atenção — Strike Registrado!"}
+          {isAnulado ? "Simulado Anulado" : "Strike Registrado!"}
         </h2>
 
-        {/* Strike indicators */}
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-2.5 md:gap-3">
           {[1, 2, 3].map(i => (
             <div key={i} className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
+              "w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
               i <= strikes 
                 ? "bg-red-500 border-red-400 text-white shadow-lg shadow-red-500/30" 
                 : "bg-white/5 border-white/20 text-white/30"
@@ -115,19 +110,17 @@ function StrikeOverlay({
           ))}
         </div>
 
-        {/* Message */}
-        <p className="text-white/70 text-sm leading-relaxed">
+        <p className="text-white/70 text-xs md:text-sm leading-relaxed">
           {isAnulado 
-            ? "Você atingiu 3 strikes por sair da tela do simulado. Sua prova foi anulada automaticamente e as respostas enviadas."
-            : `Você saiu da tela do simulado. Este é o strike ${strikes} de 3. Ao atingir 3 strikes, sua prova será anulada automaticamente.`
+            ? "Você atingiu 3 strikes por sair da tela do simulado. Sua prova foi anulada e as respostas enviadas."
+            : `Você saiu da tela do simulado. Strike ${strikes}/3. Ao atingir 3, sua prova será anulada.`
           }
         </p>
 
-        {/* Action */}
         {!isAnulado && (
           <Button 
             onClick={onDismiss}
-            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl"
+            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-sm"
           >
             Entendi, voltar ao simulado
           </Button>
@@ -141,47 +134,54 @@ function StrikeOverlay({
 // FULLSCREEN GATE COMPONENT
 // ═══════════════════════════════════════════════════════
 
-function FullscreenGate({ onEnter }: { onEnter: () => void }) {
+function FullscreenGate({ onEnter, isMobile }: { onEnter: () => void; isMobile: boolean }) {
   return (
-    <div className="fixed inset-0 z-[90] bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-lg text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
-        {/* Shield icon */}
-        <div className="mx-auto w-20 h-20 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-          <Shield size={40} className="text-indigo-400" />
+    <div className="fixed inset-0 z-[90] bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-5 md:p-6">
+      <div className="w-full max-w-lg text-center space-y-5 md:space-y-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="mx-auto w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+          <Shield className="h-8 w-8 md:h-10 md:w-10 text-indigo-400" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-white">
+          <h1 className="text-xl md:text-3xl font-bold text-white">
             Modo Avaliação
           </h1>
-          <p className="text-indigo-300/70 text-sm md:text-base max-w-sm mx-auto leading-relaxed">
-            Para iniciar o simulado, é necessário entrar em tela cheia. 
-            Isso garante a integridade da avaliação.
+          <p className="text-indigo-300/70 text-xs md:text-base max-w-sm mx-auto leading-relaxed">
+            {isMobile 
+              ? "Para garantir a integridade da avaliação, o modo prova será ativado. Não saia do aplicativo durante o simulado."
+              : "Para iniciar o simulado, é necessário entrar em tela cheia. Isso garante a integridade da avaliação."
+            }
           </p>
         </div>
 
-        {/* Rules */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3 text-left">
-          <div className="flex items-start gap-3">
-            <EyeOff size={16} className="text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-white/60 text-xs md:text-sm">Copiar e colar está desabilitado durante toda a prova</p>
+        <div className="bg-white/5 rounded-xl border border-white/10 p-3 md:p-4 space-y-2.5 md:space-y-3 text-left">
+          <div className="flex items-start gap-2.5 md:gap-3">
+            <EyeOff size={14} className="text-amber-400 mt-0.5 shrink-0 md:w-4 md:h-4" />
+            <p className="text-white/60 text-[11px] md:text-sm">Copiar e colar está desabilitado durante toda a prova</p>
           </div>
-          <div className="flex items-start gap-3">
-            <Maximize size={16} className="text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-white/60 text-xs md:text-sm">A prova será realizada em tela cheia obrigatória</p>
-          </div>
-          <div className="flex items-start gap-3">
-            <ShieldAlert size={16} className="text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-white/60 text-xs md:text-sm">Sair da tela gera um strike — 3 strikes anulam a prova</p>
+          {!isMobile && (
+            <div className="flex items-start gap-2.5 md:gap-3">
+              <Maximize size={14} className="text-amber-400 mt-0.5 shrink-0 md:w-4 md:h-4" />
+              <p className="text-white/60 text-[11px] md:text-sm">A prova será realizada em tela cheia obrigatória</p>
+            </div>
+          )}
+          <div className="flex items-start gap-2.5 md:gap-3">
+            <ShieldAlert size={14} className="text-amber-400 mt-0.5 shrink-0 md:w-4 md:h-4" />
+            <p className="text-white/60 text-[11px] md:text-sm">
+              {isMobile 
+                ? "Sair do app ou trocar de aba gera um strike — 3 strikes anulam a prova"
+                : "Sair da tela gera um strike — 3 strikes anulam a prova"
+              }
+            </p>
           </div>
         </div>
 
         <Button 
           onClick={onEnter}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl text-base gap-2 shadow-lg shadow-indigo-600/30"
+          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl text-sm md:text-base gap-2 shadow-lg shadow-indigo-600/30"
         >
-          <Maximize size={18} />
-          Entrar em Tela Cheia e Iniciar
+          {isMobile ? <Shield size={18} /> : <Maximize size={18} />}
+          {isMobile ? "Ativar Modo Prova e Iniciar" : "Entrar em Tela Cheia e Iniciar"}
         </Button>
       </div>
     </div>
@@ -195,11 +195,15 @@ function FullscreenGate({ onEnter }: { onEnter: () => void }) {
 export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
   const router = useRouter();
   const secureFetch = useSecureFetch();
+  const isMobile = useIsMobile();
   
   const [indiceAtual, setIndiceAtual] = useState(0);
   const [respostas, setRespostas] = useState<Record<number, string>>({});
   const [tempoRestante, setTempoRestante] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Status visual para modal de confirmação
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false);
 
   // Security states
   const [fullscreenActive, setFullscreenActive] = useState(false);
@@ -209,7 +213,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
   const isFinalizingRef = useRef(false);
   const strikesRef = useRef(0);
 
-  // ─── Inicializa respostas (preservado) ───
+  // ─── Inicializa respostas ───
   useEffect(() => {
     const map: Record<number, string> = {};
     simulado.questoes.forEach(q => {
@@ -218,7 +222,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
     setRespostas(map);
   }, [simulado]);
 
-  // ─── Proteção contra saída acidental (preservado) ───
+  // ─── Proteção contra saída acidental ───
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (loading) return;
@@ -242,7 +246,6 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
     };
 
     const blockKeyboard = (e: KeyboardEvent) => {
-      // Block Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A, Ctrl+P, Ctrl+S, F12, PrintScreen
       if (
         (e.ctrlKey && ['c', 'v', 'x', 'a', 'p', 's', 'u'].includes(e.key.toLowerCase())) ||
         e.key === 'F12' ||
@@ -287,14 +290,15 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
       await document.documentElement.requestFullscreen();
       setFullscreenActive(true);
     } catch {
-      // Fallback: allow even without fullscreen API (some mobile browsers)
       setFullscreenActive(true);
-      toast.info("Modo avaliação ativado");
+      if (isMobile) {
+        toast.info("Modo avaliação ativado");
+      }
     }
-  }, []);
+  }, [isMobile]);
 
   // ═══════════════════════════════════════════════════
-  // SEGURANÇA 3: Strike System (visibility + fullscreen exit)
+  // SEGURANÇA 3: Strike System
   // ═══════════════════════════════════════════════════
   const finalizarSimulado = useCallback(async (forcado = false) => {
     if (loading) return;
@@ -323,6 +327,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
     } catch (error) {
       toast.error("Erro ao finalizar. Tente novamente.");
       setLoading(false);
+      setShowConfirmFinish(false); // Fecha o modal se houver erro
     }
   }, [loading, router, simulado.id, secureFetch]);
 
@@ -338,7 +343,6 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
       });
     } catch {}
 
-    // Redirect after a moment so user reads the message
     setTimeout(() => {
       window.onbeforeunload = null;
       if (document.fullscreenElement) {
@@ -362,7 +366,6 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
     }
   }, [fullscreenActive, anularPorStrikes]);
 
-  // Listen to visibility change + fullscreen exit
   useEffect(() => {
     if (!fullscreenActive) return;
 
@@ -373,10 +376,8 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
     };
 
     const handleFullscreenChange = () => {
-      // If user exits fullscreen while prova is active
       if (!document.fullscreenElement && fullscreenActive && !isAnuladoRef.current) {
         registerStrike();
-        // Try to re-enter fullscreen
         document.documentElement.requestFullscreen().catch(() => {});
       }
     };
@@ -390,7 +391,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
     };
   }, [fullscreenActive, registerStrike]);
 
-  // ─── CRONÔMETRO (preservado) ───
+  // ─── CRONÔMETRO ───
   useEffect(() => {
     const inicioMs = new Date(simulado.dataInicio).getTime();
     const duracaoMs = simulado.tempoLimiteMinutos * 60 * 1000;
@@ -465,123 +466,96 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
 
   return (
     <>
-      {/* Fullscreen gate */}
-      {!fullscreenActive && <FullscreenGate onEnter={enterFullscreen} />}
+      {!fullscreenActive && <FullscreenGate onEnter={enterFullscreen} isMobile={isMobile} />}
 
-      {/* Strike overlay */}
       <StrikeOverlay 
         strikes={strikes} 
         showWarning={showStrikeWarning} 
         onDismiss={() => {
           setShowStrikeWarning(false);
-          // Re-enter fullscreen after dismissing
           document.documentElement.requestFullscreen().catch(() => {});
         }} 
       />
 
       <div 
         className={cn(
-          "flex flex-col h-screen bg-slate-50 transition-opacity duration-300",
+          "fixed inset-0 z-[55] flex flex-col bg-slate-50 transition-opacity duration-300",
           !fullscreenActive && "opacity-0 pointer-events-none"
         )}
         style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
       >
         
         {/* ═══ HEADER ═══ */}
-        <header className="bg-white/95 backdrop-blur-sm border-b border-slate-200/80 px-3 md:px-5 py-2.5 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-          {/* Left: title + progress */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+        <header className="bg-white/95 backdrop-blur-sm border-b border-slate-200/80 px-3 md:px-5 py-2 md:py-2.5 flex items-center justify-between sticky top-0 z-20 shadow-sm shrink-0">
+          
+          {/* Esquerda: Info */}
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-slate-800 text-xs md:text-sm truncate max-w-[140px] md:max-w-[220px]">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <h1 className="font-bold text-slate-800 text-[11px] md:text-sm truncate max-w-[100px] md:max-w-[220px]">
                   {simulado.titulo}
                 </h1>
                 {simulado.prazoFinalAbsoluto && (
-                  <Badge className="text-[9px] md:text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200/60 px-1.5 h-4 md:h-5 shrink-0">
+                  <Badge className="text-[8px] md:text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200/60 px-1 md:px-1.5 h-3.5 md:h-5 shrink-0 hidden sm:inline-flex">
                     Avaliação
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] md:text-xs text-slate-400 font-mono">
+              <div className="flex items-center gap-1.5 md:gap-2 mt-0.5">
+                <span className="text-[9px] md:text-xs text-slate-400 font-mono">
                   {indiceAtual + 1}/{totalQuestoes}
                 </span>
-                <div className="hidden md:block w-20">
-                  <Progress value={progresso} className="h-1.5" />
+                <div className="w-12 md:w-20">
+                  <Progress value={progresso} className="h-1 md:h-1.5" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Center: timer */}
+          {/* Centro: Cronômetro */}
           <div className={cn(
-            "flex items-center gap-1.5 px-3 md:px-4 py-1 md:py-1.5 rounded-full font-mono font-bold text-sm md:text-lg tabular-nums border transition-all shrink-0",
+            "flex items-center gap-1 md:gap-1.5 px-2.5 md:px-4 py-0.5 md:py-1.5 rounded-full font-mono font-bold text-xs md:text-lg tabular-nums border transition-all shrink-0",
             tempoUrgente 
               ? "bg-red-50 text-red-600 border-red-200 animate-pulse shadow-sm shadow-red-100" 
               : "bg-slate-50 text-slate-700 border-slate-200"
           )}>
-            <Clock size={14} className="md:w-[18px] md:h-[18px]" />
+            <Clock size={12} className="md:w-[18px] md:h-[18px]" />
             {formatTempo(tempoRestante)}
           </div>
 
-          {/* Right: strikes + finalizar */}
-          <div className="flex items-center gap-2 md:gap-3 flex-1 justify-end">
-            {/* Strike indicator */}
+          {/* Direita: Ação Finalizar */}
+          <div className="flex items-center gap-1.5 md:gap-3 flex-1 justify-end">
             {strikes > 0 && (
-              <div className="flex items-center gap-1 shrink-0">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className={cn(
-                    "w-2 h-2 md:w-2.5 md:h-2.5 rounded-full transition-all",
-                    i <= strikes ? "bg-red-500" : "bg-slate-200"
-                  )} />
-                ))}
+              <div className="hidden sm:flex items-center gap-0.5 md:gap-1 shrink-0 px-2 py-1 bg-amber-50 rounded-lg border border-amber-200">
+                <AlertTriangle size={12} className="text-amber-500" />
+                <span className="text-[10px] md:text-xs font-bold text-amber-600">Strikes: {strikes}/3</span>
               </div>
             )}
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  disabled={loading} 
-                  size="sm"
-                  className={cn(
-                    "font-bold gap-1.5 transition-all text-xs md:text-sm px-3 md:px-4 h-8 md:h-9 rounded-lg",
-                    respondidasCount === totalQuestoes 
-                      ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200" 
-                      : "bg-indigo-600 hover:bg-indigo-700"
-                  )}
-                >
-                  {loading 
-                    ? <Clock className="animate-spin" size={14} /> 
-                    : respondidasCount === totalQuestoes 
-                      ? <CheckCircle2 size={14} /> 
-                      : <Save size={14} />
-                  }
-                  <span className="hidden sm:inline">
-                    {respondidasCount === totalQuestoes ? "Entregar" : "Finalizar"}
-                  </span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-2xl max-w-sm mx-auto">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-lg">Finalizar Avaliação?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-sm">
-                    Você respondeu <span className="font-bold text-slate-700">{respondidasCount}</span> de <span className="font-bold text-slate-700">{totalQuestoes}</span> questões. 
-                    <br/><br/>
-                    <span className="text-amber-600 font-medium">Atenção:</span> Ao confirmar, você não poderá alterar suas respostas.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="gap-2">
-                  <AlertDialogCancel disabled={loading} className="rounded-lg">Revisar</AlertDialogCancel>
-                  <AlertDialogAction 
-                    disabled={loading} 
-                    onClick={() => finalizarSimulado(false)} 
-                    className="bg-indigo-600 rounded-lg"
-                  >
-                    Confirmar Entrega
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button 
+              onClick={() => setShowConfirmFinish(true)}
+              disabled={loading} 
+              size="sm"
+              className={cn(
+                "font-bold gap-1.5 transition-all text-[10px] md:text-sm px-3 md:px-5 h-7 md:h-9 rounded-lg shadow-md",
+                respondidasCount === totalQuestoes 
+                  ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200" 
+                  : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200"
+              )}
+            >
+              {loading 
+                ? <Clock className="animate-spin h-3.5 w-3.5" /> 
+                : respondidasCount === totalQuestoes 
+                  ? <CheckCircle2 className="h-3.5 w-3.5" /> 
+                  : <Send className="h-3.5 w-3.5" />
+              }
+              <span className="hidden sm:inline">
+                {respondidasCount === totalQuestoes ? "Entregar Prova" : "Finalizar Prova"}
+              </span>
+              <span className="sm:hidden">
+                {respondidasCount === totalQuestoes ? "Entregar" : "Finalizar"}
+              </span>
+            </Button>
           </div>
         </header>
 
@@ -589,7 +563,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
         <div className="flex flex-1 overflow-hidden">
           
           {/* SIDEBAR — desktop only */}
-          <aside className="hidden lg:flex w-[240px] bg-white/80 backdrop-blur-sm border-r border-slate-200/60 flex-col">
+          <aside className="hidden lg:flex w-[240px] bg-white/80 backdrop-blur-sm border-r border-slate-200/60 flex-col shrink-0">
             <div className="p-4 border-b border-slate-100">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mapa da Prova</h3>
@@ -625,21 +599,24 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
 
           {/* QUESTION AREA */}
           <main className="flex-1 flex flex-col overflow-hidden relative">
-            <ScrollArea className="flex-1 px-4 py-5 md:px-8 md:py-6">
-              <div className="max-w-2xl mx-auto space-y-6 pb-24">
+            <ScrollArea className="flex-1 px-4 py-4 md:px-8 md:py-6">
+              <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 pb-20 md:pb-24">
                 
-                {/* Question number badge */}
+                {/* Question badge */}
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100">
+                  <span className="inline-flex items-center gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg bg-indigo-50 text-indigo-600 text-[11px] md:text-xs font-bold border border-indigo-100">
                     Questão {indiceAtual + 1}
                   </span>
                   {respostas[questaoAtualObj.questaoId] && (
-                    <CheckCircle2 size={14} className="text-emerald-500" />
+                    <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                      <CheckCircle2 size={12} className="md:w-[14px] md:h-[14px]" />
+                      <span className="text-[10px] md:text-xs font-semibold">Salva</span>
+                    </div>
                   )}
                 </div>
 
                 {/* Enunciado */}
-                <div className="text-sm md:text-base text-slate-700 leading-relaxed font-medium">
+                <div className="text-[13px] md:text-base text-slate-700 leading-relaxed font-medium">
                   {questaoAtualObj.enunciado}
                 </div>
 
@@ -647,7 +624,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
                 <RadioGroup 
                   value={respostas[questaoAtualObj.questaoId] || ""} 
                   onValueChange={handleSelecionar}
-                  className="space-y-2.5"
+                  className="space-y-2 md:space-y-2.5"
                 >
                   {["A", "B", "C", "D", "E"].map((letra) => {
                     const texto = (questaoAtualObj.alternativas as any)[letra];
@@ -657,7 +634,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
                       <div 
                         key={letra} 
                         className={cn(
-                          "flex items-start gap-3 p-3 md:p-4 rounded-xl border-2 transition-all cursor-pointer active:scale-[0.99]",
+                          "flex items-start gap-2.5 md:gap-3 p-3 md:p-4 rounded-xl border-2 transition-all cursor-pointer active:scale-[0.99]",
                           selecionada 
                             ? "border-indigo-500 bg-indigo-50/60 shadow-sm shadow-indigo-100" 
                             : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50"
@@ -665,7 +642,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
                         onClick={() => handleSelecionar(letra)}
                       >
                         <div className={cn(
-                          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border-2 transition-all mt-0.5",
+                          "w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-[11px] md:text-xs font-bold shrink-0 border-2 transition-all mt-0.5",
                           selecionada 
                             ? "bg-indigo-600 border-indigo-600 text-white" 
                             : "bg-white border-slate-300 text-slate-400"
@@ -673,7 +650,7 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
                           {letra}
                         </div>
                         <span className={cn(
-                          "text-sm md:text-base leading-relaxed pt-0.5",
+                          "text-[13px] md:text-base leading-relaxed pt-0.5",
                           selecionada ? "text-slate-800 font-medium" : "text-slate-600"
                         )}>
                           {texto}
@@ -687,23 +664,21 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
             </ScrollArea>
 
             {/* Bottom nav */}
-            <div className="bg-white/95 backdrop-blur-sm border-t border-slate-200/60 p-3 md:p-4 flex justify-between items-center sticky bottom-0 z-10">
+            <div className="bg-white/95 backdrop-blur-sm border-t border-slate-200/60 p-2.5 md:p-4 flex justify-between items-center sticky bottom-0 z-10 shrink-0 safe-area-bottom">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setIndiceAtual(prev => Math.max(0, prev - 1))}
                 disabled={indiceAtual === 0}
-                className="gap-1.5 rounded-lg text-xs md:text-sm h-9"
+                className="gap-1 md:gap-1.5 rounded-lg text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"
               >
-                <ChevronLeft size={14} /> Anterior
+                <ChevronLeft size={13} className="md:w-[14px] md:h-[14px]" /> <span className="hidden sm:inline">Anterior</span><span className="sm:hidden">Ant.</span>
               </Button>
 
-              {/* Mobile question dots */}
-              <div className="flex lg:hidden items-center gap-1 max-w-[50%] overflow-hidden justify-center flex-wrap">
+              <div className="flex lg:hidden items-center gap-[3px] md:gap-1 max-w-[55%] overflow-hidden justify-center flex-wrap">
                 {simulado.questoes.map((q, idx) => {
                   const respondida = !!respostas[q.questaoId];
                   const atual = idx === indiceAtual;
-                  // Only show nearby dots on very small screens
                   const distance = Math.abs(idx - indiceAtual);
                   if (totalQuestoes > 15 && distance > 4 && !atual) return null;
                   return (
@@ -711,8 +686,8 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
                       key={q.id} 
                       onClick={() => setIndiceAtual(idx)}
                       className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        atual ? "w-5 bg-indigo-500" : respondida ? "bg-emerald-400" : "bg-slate-300"
+                        "h-2 rounded-full transition-all",
+                        atual ? "w-5 bg-indigo-500" : respondida ? "w-2 bg-emerald-400" : "w-2 bg-slate-300"
                       )} 
                     />
                   );
@@ -723,13 +698,58 @@ export function SimuladoRunner({ simulado }: { simulado: SimuladoData }) {
                 size="sm"
                 onClick={() => setIndiceAtual(prev => Math.min(totalQuestoes - 1, prev + 1))}
                 disabled={indiceAtual === totalQuestoes - 1}
-                className="gap-1.5 bg-slate-800 hover:bg-slate-900 rounded-lg text-xs md:text-sm h-9"
+                className="gap-1 md:gap-1.5 bg-slate-800 hover:bg-slate-900 rounded-lg text-[11px] md:text-sm h-8 md:h-9 px-2.5 md:px-3"
               >
-                Próxima <ChevronRight size={14} />
+                <span className="hidden sm:inline">Próxima</span><span className="sm:hidden">Próx.</span> <ChevronRight size={13} className="md:w-[14px] md:h-[14px]" />
               </Button>
             </div>
           </main>
         </div>
+
+        {/* ═══ MODAL CUSTOMIZADO DE FINALIZAÇÃO ═══ */}
+        {showConfirmFinish && (
+          <div className="absolute inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-[1.5rem] p-6 max-w-sm w-full shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
+              <div className="mx-auto w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+                <Send className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-bold text-center text-slate-900 mb-2">Finalizar Avaliação?</h3>
+              
+              <div className="bg-slate-50 rounded-xl p-4 mb-6 text-center border border-slate-100">
+                <p className="text-sm text-slate-600">
+                  Você respondeu <span className="font-bold text-slate-900">{respondidasCount}</span> de <span className="font-bold text-slate-900">{totalQuestoes}</span> questões.
+                </p>
+                {respondidasCount < totalQuestoes && (
+                  <p className="text-xs text-amber-600 font-semibold mt-2">
+                    Ainda faltam {totalQuestoes - respondidasCount} questões em branco!
+                  </p>
+                )}
+              </div>
+
+              <p className="text-xs text-center text-slate-500 mb-6 px-2">
+                Ao confirmar, suas respostas serão enviadas e você não poderá alterá-las.
+              </p>
+
+              <div className="flex flex-col gap-2.5">
+                <Button 
+                  onClick={() => finalizarSimulado(false)} 
+                  disabled={loading} 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 h-11 text-base font-bold shadow-md shadow-indigo-200"
+                >
+                  {loading ? <Clock className="animate-spin h-5 w-5 mr-2" /> : "Confirmar Entrega"}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowConfirmFinish(false)} 
+                  disabled={loading}
+                  className="w-full h-11 text-slate-500 hover:text-slate-700"
+                >
+                  Voltar e Revisar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

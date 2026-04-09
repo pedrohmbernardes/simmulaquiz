@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { 
-  Menu, LogOut, GraduationCap, Trophy, Star, 
-  LayoutDashboard, User, ChevronDown, Settings,
-  Flame, Zap, Award, Crown
+  LogOut, GraduationCap, Trophy, Star, 
+  LayoutDashboard, User, ChevronDown,
+  Flame, Crown, X
 } from 'lucide-react';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 
@@ -22,9 +23,35 @@ interface StudentNavbarProps {
   } | null;
 }
 
+// ── 1. COMPONENTE EXTRAÍDO PARA FORA ──────────────────────
+interface AvatarCircleProps {
+  size?: 'sm' | 'md' | 'lg';
+  avatarUrl: string | null;
+  initials: string;
+}
+
+function AvatarCircle({ size = 'md', avatarUrl, initials }: AvatarCircleProps) {
+  const sizeClasses = {
+    sm: 'h-8 w-8 text-xs',
+    md: 'h-10 w-10 text-sm',
+    lg: 'h-14 w-14 text-xl',
+  };
+  return (
+    <div className={`relative ${sizeClasses[size]} rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 border-2 border-white shadow-md overflow-hidden flex items-center justify-center shrink-0`}>
+      {avatarUrl ? (
+        <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
+      ) : (
+        <span className="font-bold text-white">{initials}</span>
+      )}
+    </div>
+  );
+}
+
+// ── COMPONENTE PRINCIPAL ──────────────────────────────────
 export default function StudentNavbar({ session }: StudentNavbarProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const pathname = usePathname();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const csrfToken = useCsrf();
@@ -38,24 +65,38 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
   const streak = session?.streak ?? 0;
   
   const avatarUrl = session?.avatarUrl && session.avatarUrl.trim() !== '' ? session.avatarUrl : null;
+  const initials = userName.charAt(0).toUpperCase();
 
+  const isInSimulado = /^\/estudante\/simulado\/\d+$/.test(pathname);
+
+  // ── 2. TODOS OS HOOKS ANTES DO RETURN CONDICIONAL ───────
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsProfileDropdownOpen(false);
+        setIsProfileOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isMobileSheetOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobileSheetOpen]);
+
+  // Retorno condicional executado apenas APÓS os hooks acima
+  if (isInSimulado) return null;
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { 
         method: 'POST',
-        headers: {
-          'x-csrf-token': csrfToken || '' 
-        }
+        headers: { 'x-csrf-token': csrfToken || '' }
       });
       window.location.href = '/login';
     } catch (error) {
@@ -65,292 +106,222 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
   };
 
   return (
-    <nav className="bg-white/95 backdrop-blur-xl border-b border-blue-100/50 sticky top-0 z-50 shadow-lg shadow-blue-500/5 font-sans">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-        <div className="flex justify-between items-center h-20">
-          
-          {/* ESQUERDA: LOGO E MENU MOBILE */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-transparent hover:border-blue-200 group"
-            >
-              <Menu size={24} className="group-hover:scale-110 transition-transform" />
-            </button>
-
-            <Link href="/estudante" className="flex items-center gap-2 sm:gap-3 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
-                <div className="relative w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/30 group-hover:shadow-2xl group-hover:shadow-blue-500/40 transition-all duration-300 group-hover:scale-105">
-                  <GraduationCap size={24} className="sm:w-[26px] sm:h-[26px]" />
-                </div>
+    <>
+      <nav className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+          <div className="flex justify-between items-center h-14 md:h-16">
+            
+            {/* LEFT: Logo */}
+            <Link href="/estudante" className="flex items-center gap-2.5 group">
+              <div className="relative w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-violet-500/20 group-hover:shadow-xl group-hover:shadow-violet-500/30 transition-all group-hover:scale-105">
+                <GraduationCap className="h-5 w-5 md:h-[22px] md:w-[22px]" />
               </div>
-              <div className="flex flex-col justify-center">
-                <span className="font-black text-slate-800 text-base sm:text-xl md:text-2xl leading-none tracking-tight uppercase group-hover:text-blue-700 transition-colors hidden sm:block">
-                  Painel do Estudante
+              <div className="flex flex-col">
+                <span className="font-extrabold text-slate-800 text-sm md:text-base leading-none tracking-tight group-hover:text-violet-700 transition-colors">
+                  <span className="hidden sm:inline">Painel do Estudante</span>
+                  <span className="sm:hidden">Painel</span>
                 </span>
-                <span className="font-black text-slate-800 text-base leading-none tracking-tight uppercase group-hover:text-blue-700 transition-colors sm:hidden">
-                  Painel
-                </span>
-                <span className="text-[10px] sm:text-xs font-black bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-widest mt-0.5 sm:mt-1 uppercase">
+                <span className="text-[9px] md:text-[10px] font-bold text-violet-500 tracking-widest uppercase mt-0.5">
                   SimmulaQuiz
                 </span>
               </div>
             </Link>
-          </div>
 
-          {/* CENTRO: STATS GAMIFICADOS (Desktop) */}
-          <div className="hidden lg:flex items-center gap-4 xl:gap-6 bg-gradient-to-r from-slate-50 via-blue-50/50 to-purple-50/30 px-5 xl:px-6 py-3 rounded-2xl border border-blue-100/50 shadow-inner backdrop-blur-sm">
-             
-             {/* Nível */}
-             <div className="group/stat flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-white/70 transition-all cursor-default" title="Seu Nível Atual">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-yellow-400 rounded-full blur-md opacity-30 group-hover/stat:opacity-50 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-br from-yellow-400 to-amber-500 p-2 rounded-full text-white shadow-md shadow-yellow-500/30">
-                    <Trophy size={16} />
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Nível</span>
-                  <span className="text-lg font-black text-slate-800 leading-none mt-0.5 bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent">{nivel}</span>
-                </div>
-             </div>
-             
-             <div className="h-8 w-[2px] bg-gradient-to-b from-transparent via-slate-300 to-transparent"></div>
-             
-             {/* Pontos XP */}
-             <div className="group/stat flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-white/70 transition-all cursor-default" title="Pontos de Experiência">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-30 group-hover/stat:opacity-50 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 p-2 rounded-full text-white shadow-md shadow-blue-500/30">
-                    <Star size={16} className="fill-white" />
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Pontos</span>
-                  <span className="text-lg font-black text-slate-800 leading-none mt-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{pontos.toLocaleString('pt-BR')}</span>
-                </div>
-             </div>
-             
-             <div className="h-8 w-[2px] bg-gradient-to-b from-transparent via-slate-300 to-transparent"></div>
-             
-             {/* Streak */}
-             <div className="group/stat flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-white/70 transition-all cursor-default" title="Dias Seguidos (Streak)">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-orange-500 rounded-full blur-md opacity-40 group-hover/stat:opacity-60 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-br from-orange-500 to-red-500 p-2 rounded-full text-white shadow-md shadow-orange-500/30">
-                    <Flame size={16} className="fill-yellow-200" />
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Streak</span>
-                  <span className="text-lg font-black text-slate-800 leading-none mt-0.5 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">{streak}</span>
-                </div>
-             </div>
-          </div>
-
-          {/* DIREITA: ADMIN + PERFIL DROPDOWN */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            
-            {/* Botão Admin (Desktop) */}
-            {canAccessAdmin && (
-                <Link 
-                    href="/admin/" 
-                    className="hidden md:flex items-center gap-2 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white px-3 xl:px-4 py-2.5 rounded-xl text-xs font-black transition-all duration-300 shadow-lg shadow-slate-900/30 hover:shadow-xl hover:shadow-slate-900/40 border border-slate-700 group"
-                    title="Acessar Área Administrativa"
-                >
-                    <LayoutDashboard size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="tracking-wider hidden xl:inline">ADMIN</span>
-                </Link>
-            )}
-
-            {/* Dropdown de Perfil (Desktop) */}
-            <div className="relative hidden md:block" ref={dropdownRef}>
-                <button 
-                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                    className="flex items-center gap-2 xl:gap-3 pl-2 xl:pl-3 pr-1.5 xl:pr-2 py-1.5 rounded-2xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 border border-transparent hover:border-blue-200/50 group"
-                >
-                    <div className="flex flex-col items-end">
-                        <span className="text-sm font-black text-slate-800 leading-none group-hover:text-blue-700 transition-colors">{userName.split(' ')[0]}</span>
-                        <div className="flex items-center gap-1 mt-1">
-                          {nivel >= 10 && <Crown size={10} className="text-yellow-500" />}
-                          <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider">{userRole}</span>
-                        </div>
-                    </div>
-                    
-                    <div className="relative h-11 w-11 xl:h-12 xl:w-12 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-white shadow-lg shadow-blue-500/20 overflow-hidden flex items-center justify-center group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300 group-hover:scale-105">
-                        {avatarUrl ? (
-                            <Image 
-                                src={avatarUrl} 
-                                alt="Avatar" 
-                                fill 
-                                className="object-cover" 
-                                unoptimized 
-                            />
-                        ) : (
-                            <span className="text-blue-700 font-black text-lg">
-                                {userName.charAt(0).toUpperCase()}
-                            </span>
-                        )}
-                    </div>
-                    <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Conteúdo do Dropdown - Premium */}
-                {isProfileDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-blue-100/50 p-3 animate-in fade-in slide-in-from-top-2 z-50 backdrop-blur-xl">
-                        
-                        {/* Header do Dropdown */}
-                        <div className="px-4 py-3 mb-2 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100/50">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-white shadow-md overflow-hidden flex items-center justify-center">
-                                  {avatarUrl ? (
-                                      <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
-                                  ) : (
-                                      <span className="text-blue-700 font-black text-lg">
-                                          {userName.charAt(0).toUpperCase()}
-                                      </span>
-                                  )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-black text-slate-800 truncate">{userName}</p>
-                                <p className="text-xs text-slate-500 truncate font-medium">{session?.email}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Mini Stats */}
-                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-blue-200/50">
-                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white rounded-lg flex-1">
-                                <Trophy size={14} className="text-yellow-600" />
-                                <span className="text-xs font-bold text-slate-700">Nv. {nivel}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white rounded-lg flex-1">
-                                <Star size={14} className="text-blue-600 fill-blue-600" />
-                                <span className="text-xs font-bold text-slate-700">{pontos}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white rounded-lg flex-1">
-                                <Flame size={14} className="text-orange-500" />
-                                <span className="text-xs font-bold text-slate-700">{streak}</span>
-                              </div>
-                            </div>
-                        </div>
-                        
-                        {/* Menu Items */}
-                        <div className="space-y-1">
-                          <Link 
-                              href="/estudante/perfil" 
-                              onClick={() => setIsProfileDropdownOpen(false)}
-                              className="group/item flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-slate-700 hover:text-blue-700 text-sm font-bold transition-all duration-300 border border-transparent hover:border-blue-200/50"
-                          >
-                              <div className="p-1.5 rounded-lg bg-slate-100 group-hover/item:bg-white transition-colors">
-                                <User size={16} />
-                              </div>
-                              <span className="flex-1">Meu Perfil</span>
-                              <ChevronDown size={14} className="opacity-0 group-hover/item:opacity-100 -rotate-90 transition-all" />
-                          </Link>
-
-                          <button 
-                              onClick={handleLogout}
-                              className="group/item w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 text-slate-700 hover:text-red-600 text-sm font-bold transition-all duration-300 border border-transparent hover:border-red-200/50"
-                          >
-                              <div className="p-1.5 rounded-lg bg-slate-100 group-hover/item:bg-white transition-colors">
-                                <LogOut size={16} />
-                              </div>
-                              <span className="flex-1 text-left">Sair</span>
-                              <ChevronDown size={14} className="opacity-0 group-hover/item:opacity-100 -rotate-90 transition-all" />
-                          </button>
-                        </div>
-                    </div>
-                )}
+            {/* CENTER: Gamification Stats (Desktop) */}
+            <div className="hidden lg:flex items-center gap-1 bg-slate-50/80 px-2 py-1.5 rounded-xl border border-slate-200/50">
+              <StatChip icon={Trophy} value={nivel} label="Nível" color="text-amber-600" bg="bg-amber-50" />
+              <div className="w-px h-6 bg-slate-200 mx-1" />
+              <StatChip icon={Star} value={pontos.toLocaleString('pt-BR')} label="XP" color="text-violet-600" bg="bg-violet-50" />
+              <div className="w-px h-6 bg-slate-200 mx-1" />
+              <StatChip icon={Flame} value={streak} label="Streak" color="text-orange-600" bg="bg-orange-50" />
             </div>
 
-            {/* Botão Logout Mobile */}
-            <button 
-                onClick={handleLogout}
-                className="md:hidden p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300 border border-transparent hover:border-red-200 group"
-            >
-               <LogOut size={20} className="group-hover:scale-110 transition-transform" />
-            </button>
+            {/* RIGHT: Actions */}
+            <div className="flex items-center gap-2">
+              
+              {canAccessAdmin && (
+                <Link 
+                  href="/admin/" 
+                  className="hidden md:flex items-center gap-1.5 bg-slate-900 hover:bg-black text-white px-3 py-2 rounded-lg text-[11px] font-bold transition-all shadow-sm hover:shadow-md border border-slate-700"
+                >
+                  <LayoutDashboard size={14} />
+                  <span className="hidden xl:inline tracking-wide">ADMIN</span>
+                </Link>
+              )}
+
+              {/* Desktop Profile Dropdown */}
+              <div className="relative hidden md:block" ref={dropdownRef}>
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl hover:bg-slate-100 transition-all group"
+                >
+                  <div className="flex flex-col items-end mr-0.5">
+                    <span className="text-sm font-bold text-slate-700 leading-none group-hover:text-violet-700 transition-colors">{userName.split(' ')[0]}</span>
+                    <span className="text-[10px] text-slate-400 font-medium mt-0.5 flex items-center gap-0.5">
+                      {nivel >= 10 && <Crown size={9} className="text-amber-500" />}
+                      Nível {nivel}
+                    </span>
+                  </div>
+                  {/* 3. Passando as props para o AvatarCircle */}
+                  <AvatarCircle size="md" avatarUrl={avatarUrl} initials={initials} />
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200/80 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 z-50">
+                    <div className="px-4 py-3 bg-gradient-to-br from-violet-600 to-indigo-600">
+                      <div className="flex items-center gap-3">
+                        <AvatarCircle size="md" avatarUrl={avatarUrl} initials={initials} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{userName}</p>
+                          <p className="text-[11px] text-violet-200 truncate">{session?.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-white/20">
+                        <div className="flex items-center gap-1 px-2 py-1 bg-white/15 rounded-md flex-1 justify-center">
+                          <Trophy size={11} className="text-amber-300" />
+                          <span className="text-[11px] font-bold text-white">Nv.{nivel}</span>
+                        </div>
+                        <div className="flex items-center gap-1 px-2 py-1 bg-white/15 rounded-md flex-1 justify-center">
+                          <Star size={11} className="text-violet-200" />
+                          <span className="text-[11px] font-bold text-white">{pontos}</span>
+                        </div>
+                        <div className="flex items-center gap-1 px-2 py-1 bg-white/15 rounded-md flex-1 justify-center">
+                          <Flame size={11} className="text-orange-300" />
+                          <span className="text-[11px] font-bold text-white">{streak}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-1.5">
+                      <Link 
+                        href="/estudante/perfil" 
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:text-violet-700 hover:bg-violet-50 text-sm font-medium transition-colors"
+                      >
+                        <User size={16} />
+                        Meu Perfil
+                      </Link>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 text-sm font-medium transition-colors"
+                      >
+                        <LogOut size={16} />
+                        Sair
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile: Avatar → bottom sheet */}
+              <button
+                onClick={() => setIsMobileSheetOpen(true)}
+                className="md:hidden relative"
+              >
+                <AvatarCircle size="sm" avatarUrl={avatarUrl} initials={initials} />
+                {streak > 0 && (
+                  <span className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center h-4 w-4 rounded-full bg-orange-500 border-2 border-white text-[8px] font-bold text-white">
+                    {streak > 9 ? '9+' : streak}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* MENU MOBILE - Design Premium */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-blue-100 bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 absolute w-full left-0 shadow-2xl p-4 space-y-3 animate-in slide-in-from-top-3 z-50 backdrop-blur-xl">
-            
-            {/* Card de Perfil Mobile */}
-            <div className="relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 shadow-xl border border-white/20">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-              <div className="relative flex items-center gap-4">
-                <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-white to-blue-100 shadow-lg overflow-hidden flex items-center justify-center border-2 border-white/50">
-                    {avatarUrl ? (
-                        <Image src={avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
-                    ) : (
-                        <span className="text-blue-700 font-black text-xl">
-                            {userName.charAt(0).toUpperCase()}
-                        </span>
-                    )}
-                </div>
+      {/* MOBILE PROFILE BOTTOM SHEET */}
+      {isMobileSheetOpen && (
+        <div className="md:hidden fixed inset-0 z-[60]">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setIsMobileSheetOpen(false)}
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 safe-area-bottom">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+            <div className="px-5 pt-2 pb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-slate-800 text-base">Minha Conta</h3>
+                <button onClick={() => setIsMobileSheetOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600">
+                <AvatarCircle size="lg" avatarUrl={avatarUrl} initials={initials} />
                 <div className="flex-1 min-w-0">
-                    <p className="font-black text-white truncate text-lg drop-shadow-sm">{userName}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                        <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/30">
-                          <Trophy size={12} className="text-yellow-300" />
-                          <span className="text-xs font-black text-white">Nível {nivel}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/30">
-                          <Star size={12} className="text-blue-200 fill-blue-200" />
-                          <span className="text-xs font-black text-white">{pontos}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/30">
-                          <Flame size={12} className="text-orange-300" />
-                          <span className="text-xs font-black text-white">{streak}</span>
-                        </div>
-                    </div>
+                  <p className="font-bold text-white text-base truncate">{userName}</p>
+                  <p className="text-violet-200 text-xs truncate mt-0.5">{session?.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="flex flex-col items-center py-2.5 bg-amber-50 rounded-xl border border-amber-100">
+                  <div className="flex items-center gap-1">
+                    <Trophy size={13} className="text-amber-600" />
+                    <span className="text-lg font-bold text-amber-700">{nivel}</span>
+                  </div>
+                  <span className="text-[10px] text-amber-600/70 font-medium mt-0.5">Nível</span>
+                </div>
+                <div className="flex flex-col items-center py-2.5 bg-violet-50 rounded-xl border border-violet-100">
+                  <div className="flex items-center gap-1">
+                    <Star size={13} className="text-violet-600" />
+                    <span className="text-lg font-bold text-violet-700">{pontos}</span>
+                  </div>
+                  <span className="text-[10px] text-violet-600/70 font-medium mt-0.5">Pontos</span>
+                </div>
+                <div className="flex flex-col items-center py-2.5 bg-orange-50 rounded-xl border border-orange-100">
+                  <div className="flex items-center gap-1">
+                    <Flame size={13} className="text-orange-600" />
+                    <span className="text-lg font-bold text-orange-700">{streak}</span>
+                  </div>
+                  <span className="text-[10px] text-orange-600/70 font-medium mt-0.5">Streak</span>
                 </div>
               </div>
             </div>
-            
-            {/* Menu Items Mobile */}
-            <div className="space-y-2">
-              <Link 
-                href="/estudante/perfil" 
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-800 to-amber-900 hover:bg-white rounded-2xl text-slate-700 hover:text-blue-700 font-bold border border-blue-100/50 hover:border-blue-300 transition-all duration-300 text-sm shadow-sm hover:shadow-md group"
-              >
-                  <div className="p-2 rounded-xl bg-amber-900 group-hover:bg-blue-100 transition-colors">
-                    <Settings size={18} className="text-gray-100" />
-                  </div>
-                  <span className="flex-1 text-gray-100">Configurar Perfil</span>
-                  <ChevronDown size={16} className="opacity-0 group-hover:opacity-100 -rotate-90 transition-all" />
+            <div className="h-px bg-slate-100 mx-5" />
+            <div className="px-4 py-3 space-y-1">
+              <Link href="/estudante/perfil" onClick={() => setIsMobileSheetOpen(false)} className="flex items-center gap-3.5 px-3 py-3 rounded-xl text-slate-700 active:bg-slate-50 transition-colors">
+                <div className="p-2 rounded-lg bg-violet-100"><User size={18} className="text-violet-600" /></div>
+                <div>
+                  <span className="font-semibold text-sm">Meu Perfil</span>
+                  <p className="text-[11px] text-slate-400">Configurações da conta</p>
+                </div>
               </Link>
-
               {canAccessAdmin && (
-                  <Link 
-                    href="/admin/questoes" 
-                    className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white rounded-2xl font-black text-sm shadow-lg shadow-slate-900/30 hover:shadow-xl transition-all duration-300 group"
-                  >
-                      <div className="p-2 rounded-xl bg-white/10 group-hover:bg-white/20 transition-colors">
-                        <LayoutDashboard size={18} />
-                      </div>
-                      <span className="flex-1">Painel Admin</span>
-                      <ChevronDown size={16} className="opacity-0 group-hover:opacity-100 -rotate-90 transition-all" />
-                  </Link>
-              )}
-
-              <button 
-                onClick={handleLogout} 
-                className="w-full flex items-center gap-3 p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 rounded-2xl text-slate-700 hover:text-red-600 font-bold transition-all duration-300 text-sm border border-red-100/50 hover:border-red-300 shadow-sm hover:shadow-md group"
-              >
-                  <div className="p-2 rounded-xl bg-red-50 group-hover:bg-red-100 transition-colors">
-                    <LogOut size={18} className="text-red-600" />
+                <Link href="/admin/questoes" onClick={() => setIsMobileSheetOpen(false)} className="flex items-center gap-3.5 px-3 py-3 rounded-xl text-slate-700 active:bg-slate-50 transition-colors">
+                  <div className="p-2 rounded-lg bg-slate-800"><LayoutDashboard size={18} className="text-white" /></div>
+                  <div>
+                    <span className="font-semibold text-sm">Painel Admin</span>
+                    <p className="text-[11px] text-slate-400">Gerenciar questões e turmas</p>
                   </div>
-                  <span className="flex-1 text-left">Sair</span>
-                  <ChevronDown size={16} className="opacity-0 group-hover:opacity-100 -rotate-90 transition-all" />
+                </Link>
+              )}
+              <div className="h-px bg-slate-100 my-1" />
+              <button onClick={handleLogout} className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-red-600 active:bg-red-50 transition-colors">
+                <div className="p-2 rounded-lg bg-red-100"><LogOut size={18} className="text-red-600" /></div>
+                <span className="font-semibold text-sm">Sair da conta</span>
               </button>
             </div>
+            <div className="h-2" />
+          </div>
         </div>
       )}
-    </nav>
+    </>
+  );
+}
+
+// ── Compact stat chip for desktop center bar ──
+function StatChip({ icon: Icon, value, label, color, bg }: {
+  icon: React.ElementType; value: string | number; label: string; color: string; bg: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/80 transition-colors cursor-default" title={label}>
+      <div className={`p-1.5 ${bg} rounded-lg`}><Icon size={14} className={color} /></div>
+      <div className="flex flex-col">
+        <span className={`text-sm font-bold leading-none ${color}`}>{value}</span>
+        <span className="text-[9px] text-slate-400 font-medium leading-none mt-0.5">{label}</span>
+      </div>
+    </div>
   );
 }

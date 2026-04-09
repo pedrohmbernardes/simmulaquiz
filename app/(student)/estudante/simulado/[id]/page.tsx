@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { SimuladoRunner } from "./SimuladoRunner";
+import { getShuffleMap } from "@/lib/utils"; // Importando a nossa função mágica
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -68,13 +69,11 @@ export default async function RealizarSimuladoPage({ params }: PageProps) {
   }
 
   // Verifica se a JANELA DE TEMPO já fechou (Data Fim absoluta do Agendamento)
-  // Nota: Isso bloqueia o acesso mesmo que o aluno ainda tivesse tempo de cronômetro
   if (simulado.agendamentoOrigem?.dataFim && new Date() > simulado.agendamentoOrigem.dataFim) {
-     // Redireciona para resultado para processar o encerramento se necessário
      redirect(`/estudante/simulado/${simuladoId}/resultado?erro=prazo_encerrado`);
   }
 
-  // 4. Preparação de Dados para o Client (Sanitize)
+  // 4. Preparação de Dados para o Client (Sanitize + Randomização)
   const dataInicioReal = simulado.dataInicio || simulado.createdAt;
   const duracao = simulado.tempoLimiteMinutos || simulado.agendamentoOrigem?.duracaoMinutos || 60;
 
@@ -87,20 +86,39 @@ export default async function RealizarSimuladoPage({ params }: PageProps) {
     tempoLimiteMinutos: duracao,
     prazoFinalAbsoluto: simulado.agendamentoOrigem?.dataFim?.toISOString() || null,
     
-    // Questões Mapeadas
-    questoes: simulado.simuladosQuestoes.map(sq => ({
-      id: sq.id, // ID da tabela pivot (usado para salvar a resposta)
-      questaoId: sq.questao.id,
-      enunciado: sq.questao.enunciado,
-      alternativas: {
-        A: sq.questao.alternativaA,
-        B: sq.questao.alternativaB,
-        C: sq.questao.alternativaC,
-        D: sq.questao.alternativaD,
-        E: sq.questao.alternativaE,
-      },
-      alternativaMarcada: sq.alternativaMarcada // Permite retomar prova (Persistência)
-    }))
+    // Questões Mapeadas e Embaralhadas
+    questoes: simulado.simuladosQuestoes.map(sq => {
+      // ── MÁGICA ACONTECENDO AQUI ──
+      // Pega o mapa de embaralhamento fixo para essa prova/questão
+      const mapa = getShuffleMap(simulado.id, sq.questao.id);
+
+      // Função auxiliar para puxar o texto correto da tabela original baseado no mapa
+      const getTextoAlternativa = (letraReal: string) => {
+        switch (letraReal) {
+          case 'A': return sq.questao.alternativaA;
+          case 'B': return sq.questao.alternativaB;
+          case 'C': return sq.questao.alternativaC;
+          case 'D': return sq.questao.alternativaD;
+          case 'E': return sq.questao.alternativaE;
+          default: return "";
+        }
+      };
+
+      return {
+        id: sq.id, 
+        questaoId: sq.questao.id,
+        enunciado: sq.questao.enunciado,
+        alternativas: {
+          A: getTextoAlternativa(mapa["A"]), // Ex: Se mapa["A"] for "C", exibe o texto da C original
+          B: getTextoAlternativa(mapa["B"]),
+          C: getTextoAlternativa(mapa["C"]),
+          D: getTextoAlternativa(mapa["D"]),
+          E: getTextoAlternativa(mapa["E"]),
+        },
+        // O que está no banco salvo como "Marcada" é exatamente o que o aluno viu na tela (ex: "A" embaralhada)
+        alternativaMarcada: sq.alternativaMarcada 
+      };
+    })
   };
 
   return <SimuladoRunner simulado={clientData} />;

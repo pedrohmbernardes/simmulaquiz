@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { registrarLog } from "@/lib/audit"; // Removemos AuditAction daqui se não tiver a constante
+import { registrarLog } from "@/lib/audit"; 
 import { verifyCSRFToken } from "@/lib/csrf"; 
 import { safeApiError } from "@/lib/server-utils";
+import { getShuffleMap } from "@/lib/utils"; // ── Importando nossa função mágica ──
 
 const finalizarSchema = z.object({
   simuladoId: z.number().int().positive(),
@@ -44,11 +45,10 @@ export async function POST(req: NextRequest) {
         simuladosQuestoes: {
           include: { 
             questao: { 
-              select: { alternativaCorreta: true } 
+              select: { id: true, alternativaCorreta: true } // Precisamos do ID da questão para a semente
             } 
           }
         },
-        // Trazemos também o ID da entrega vinculada para facilitar o update depois
         agendamentoEntrega: {
             select: { id: true }
         }
@@ -63,7 +63,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Simulado já finalizado anteriormente." });
     }
 
-    // Correção: Uso de createdAt se dataInicio for nulo
     const agora = new Date();
     const dataInicio = simulado.dataInicio ? new Date(simulado.dataInicio) : simulado.createdAt;
     const tempoGastoSegundos = Math.floor((agora.getTime() - dataInicio.getTime()) / 1000);
@@ -74,14 +73,25 @@ export async function POST(req: NextRequest) {
       let erros = 0;
       let respondidas = 0;
 
-      // A. Processa cada questão (Correção)
+      // A. Processa cada questão (Correção com Tradução de Mapa)
       for (const sq of simulado.simuladosQuestoes) {
         let isCorrect = false;
 
         if (sq.alternativaMarcada) {
           respondidas++;
-          // Comparação segura (garante que ambos sejam strings válidas)
-          isCorrect = sq.alternativaMarcada?.toUpperCase() === sq.questao.alternativaCorreta?.toUpperCase();
+          
+          // ── MÁGICA DA CORREÇÃO AQUI ──
+          // Pega o mesmo mapa determinístico usado no frontend
+          const mapa = getShuffleMap(simuladoId, sq.questao.id);
+          
+          // 1. Pega a letra que o aluno clicou visualmente na tela dele (ex: "A")
+          const letraMarcadaVisivel = sq.alternativaMarcada.toUpperCase();
+          
+          // 2. Descobre qual é a verdadeira letra do banco de dados (ex: "C")
+          const letraRealNoBanco = mapa[letraMarcadaVisivel];
+
+          // 3. Compara a letra traduzida com o gabarito original
+          isCorrect = letraRealNoBanco === sq.questao.alternativaCorreta?.toUpperCase();
         } else {
             // Em branco = Erro
             isCorrect = false;
@@ -90,7 +100,7 @@ export async function POST(req: NextRequest) {
         if (isCorrect) acertos++;
         else erros++; // Em branco conta como erro aqui
 
-        // Atualiza o status da questão no banco
+        // Atualiza o status da questão no banco (agora sabendo de verdade se acertou)
         await tx.simuladosQuestao.update({
           where: { id: sq.id },
           data: { correta: isCorrect }
@@ -98,11 +108,9 @@ export async function POST(req: NextRequest) {
       }
 
       // B. Calcula Nota (0 a 100 para percentual)
-      // Evita divisão por zero
       const totalQuestoes = simulado.qtdeQuestoes > 0 ? simulado.qtdeQuestoes : 1;
       const notaPercentual = parseFloat(((acertos / totalQuestoes) * 100).toFixed(1));
       
-      // Nota absoluta (número de acertos)
       const notaAcertos = acertos;
 
       // C. Atualiza Simulado
@@ -120,7 +128,6 @@ export async function POST(req: NextRequest) {
       });
 
       // D. Atualiza Entrega (LMS Link)
-      // Atualiza o AgendamentoEntrega se houver vinculo
       if (simulado.agendamentoEntrega?.id) {
           await tx.agendamentoEntrega.update({
               where: { id: simulado.agendamentoEntrega.id },
@@ -132,7 +139,6 @@ export async function POST(req: NextRequest) {
               }
           });
       } else if (simulado.agendamentoId) {
-          // Fallback: Atualiza via updateMany (mais seguro se o ID da entrega for incerto)
           await tx.agendamentoEntrega.updateMany({
             where: {
                 agendamentoId: simulado.agendamentoId,
@@ -150,9 +156,9 @@ export async function POST(req: NextRequest) {
       return simuladoAtualizado;
     });
 
-    // 6. Auditoria (Usando string literal para evitar erro de Enum faltante no arquivo audit.ts)
+    // 6. Auditoria
     await registrarLog({
-      acao: "SIMULADO_FINALIZAR", // Hardcoded para evitar erro de TS se o AuditAction não tiver essa chave
+      acao: "SIMULADO_FINALIZAR", 
       usuarioId: alunoId,
       usuarioNome: session.name,
       recurso: `Simulado: ${simuladoId}`,

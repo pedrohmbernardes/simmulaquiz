@@ -118,7 +118,7 @@ export default async function StudentDashboard() {
 
     // ✅ E: Contagem de Turmas Ativas (NOVO)
     prisma.turmaAluno.count({
-      where: { alunoId: userId, status: 'ATIVO' }
+      where: { alunoId: userId, status: 'ATIVO', turma: { ativo: true } }
     })
   ]);
 
@@ -230,33 +230,35 @@ export default async function StudentDashboard() {
           </div>
         </Link>
 
-        {/* ✅ BOTÃO SECUNDÁRIO: MINHAS TURMAS (SUBSTITUI O CARD DE ANÁLISE) */}
-        <Link 
+        <Link
           href="/estudante/turmas"
-          className="group relative overflow-hidden bg-white/95 border border-gray-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-center gap-2"
+          className="group relative overflow-hidden bg-white/95 border border-gray-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col gap-4"
         >
-          <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <School size={24} />
-              </div>
-              <div>
+          {/* Container principal com alinhamento centralizado */}
+          <div className="flex gap-4 items-center">
+            {/* Ícone maior e centralizado */}
+            <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+              <School size={28} /> {/* Aumentado de 24 para 28 */}
+            </div>
+
+            {/* Bloco de texto com badge */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h4 className="text-lg font-bold text-gray-900 font-oswald uppercase group-hover:text-blue-700 transition-colors">
                   Minhas Turmas
                 </h4>
-                <p className="text-xs text-gray-500 font-medium group-hover:text-gray-600">
-                  Acesse aulas, materiais e provas dos professores.
-                </p>
+                <div className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-600 border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700 whitespace-nowrap">
+                  {turmasCount} Ativa{turmasCount !== 1 && 's'}
+                </div>
               </div>
-            </div>
-            
-            {/* Badge de contador dinâmico */}
-            <div className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-600 border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700">
-              {turmasCount} Ativa{turmasCount !== 1 && 's'}
+              <p className="text-xs text-gray-500 font-medium group-hover:text-gray-600 mt-1">
+                Acesse aulas, materiais e provas dos professores.
+              </p>
             </div>
           </div>
-          
-          <div className="mt-4 flex items-center text-xs font-bold text-blue-600 uppercase tracking-wider group-hover:underline">
+
+          {/* Link de ação */}
+          <div className="flex items-center text-xs font-bold text-blue-600 uppercase tracking-wider group-hover:underline">
             Acessar Sala de Aula <ChevronRight size={14} className="ml-1" />
           </div>
         </Link>

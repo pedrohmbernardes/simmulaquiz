@@ -5,6 +5,7 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import JoinTurmaModal from "./JoinTurmaModal"; 
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface JoinTurmaButtonProps {
   text?: string;
@@ -25,9 +26,15 @@ export function JoinTurmaButton({
       <Button 
         onClick={() => setIsOpen(true)} 
         variant={variant}
-        className={className || (variant === 'default' ? "bg-indigo-600 hover:bg-indigo-700" : "")}
+        className={cn(
+          // Se não passar className e for default, aplica o estilo padrão
+          variant === 'default' && !className ? "bg-indigo-600 hover:bg-indigo-700 text-white font-bold" : "",
+          // Estilos base para garantir alinhamento do ícone
+          "gap-2 h-11 md:h-12",
+          className
+        )}
       >
-        {variant !== 'link' && <PlusCircle className="mr-2 h-4 w-4" />}
+        {variant !== 'link' && <PlusCircle size={18} />}
         {text}
       </Button>
 

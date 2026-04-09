@@ -21,35 +21,28 @@ export function BotaoIniciar({ agendamentoId, turmaId, disabled }: BotaoIniciarP
   async function handleStart() {
     setLoading(true);
     try {
-      // Rota da API que criamos e validamos (Transaction)
       const url = `/api/estudante/turmas/${turmaId}/agendamentos/${agendamentoId}/iniciar`;
 
       const res = await secureFetch(url, {
         method: "POST",
-        // O secureFetch já injeta CSRF e Content-Type
-        body: {}, 
+        body: {},
       });
 
       if (!res.ok) {
-        // Tenta ler o erro da API, com fallback genérico
         const erro = await res.json().catch(() => ({}));
-        
-        // Se for erro de "Já finalizado", redireciona para resultado (Idempotência)
+
         if (res.status === 409 && erro.simuladoId) {
-           toast.info("Avaliação já finalizada. Redirecionando para resultados.");
-           router.push(`/estudante/simulado/${erro.simuladoId}/resultado`);
-           return;
+          toast.info("Avaliação já finalizada. Redirecionando para resultados.");
+          router.push(`/estudante/simulado/${erro.simuladoId}/resultado`);
+          return;
         }
 
         throw new Error(erro.error || "Erro ao iniciar avaliação.");
       }
 
       const data = await res.json();
-      
-      // Sucesso! Redireciona para o Runner do Simulado
-      // Usamos a rota global de simulado pois o Runner é o mesmo
       router.push(`/estudante/simulado/${data.simuladoId}`);
-      
+
     } catch (error: any) {
       console.error(error);
       toast.error(error.message);
@@ -58,16 +51,16 @@ export function BotaoIniciar({ agendamentoId, turmaId, disabled }: BotaoIniciarP
   }
 
   return (
-    <Button 
-      size="lg" 
-      className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 font-bold text-lg px-8 py-6 shadow-lg shadow-indigo-200 transition-all hover:scale-105"
+    <Button
+      size="lg"
+      className="w-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black font-bold text-sm md:text-lg px-6 md:px-8 h-12 md:py-6 shadow-lg shadow-slate-900/20 transition-all hover:scale-[1.02] active:scale-100 text-cyan-50"
       onClick={handleStart}
       disabled={loading || disabled}
     >
       {loading ? (
-        <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Iniciando...</>
+        <><Loader2 className="mr-2 h-4 w-4 md:h-5 md:w-5 animate-spin" /> Iniciando...</>
       ) : (
-        <><Play className="mr-2 h-5 w-5 fill-current" /> Começar Avaliação Agora</>
+        <><Play className="mr-2 h-4 w-4 md:h-5 md:w-5 fill-current" /> Começar Avaliação</>
       )}
     </Button>
   );
