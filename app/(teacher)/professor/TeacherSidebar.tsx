@@ -40,7 +40,6 @@ const mainMenuItems: MenuItem[] = [
   { title: "Visão Geral", href: "/admin", icon: LayoutDashboard },
   { title: "Minhas Turmas", href: "/professor/turmas", icon: Users },
   { title: "Banco de Questões", href: "/admin/questoes", icon: BookOpen },
-  // { title: "Relatórios", href: "/professor/relatorios", icon: FileText },
 ];
 
 const getTurmaMenuItems = (turmaId: string): MenuItem[] => [
@@ -52,7 +51,7 @@ const getTurmaMenuItems = (turmaId: string): MenuItem[] => [
   { title: "Fórum", href: `/professor/turmas/${turmaId}/forum`, icon: MessageSquare },
   { title: "Pessoas", href: `/professor/turmas/${turmaId}/pessoas`, icon: Users },
   { title: "Frequência", href: `/professor/turmas/${turmaId}/frequencia`, icon: CalendarCheck },
-  // { title: "Configurações", href: `/professor/turmas/${turmaId}/configuracoes`, icon: Settings },
+  { title: "Configurações", href: `/professor/turmas/${turmaId}/configuracoes`, icon: Settings }, 
 ];
 
 function ItemLabel({ isExpanded, children }: { isExpanded: boolean; children: React.ReactNode }) {
@@ -81,7 +80,6 @@ export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
   const turmaMenuItems = isInTurma && turmaContext ? getTurmaMenuItems(turmaContext.id) : [];
 
   const mainIsActive = (item: MenuItem) => {
-    // Quando estiver dentro de uma turma, NÃO deixa "Minhas Turmas" ativo.
     if (item.href === "/professor/turmas") {
       return !isInTurma && (pathname === item.href || pathname.startsWith(`${item.href}/`));
     }
@@ -99,9 +97,8 @@ export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
   };
 
   const handleLogout = async (e: React.FormEvent) => {
-    e.preventDefault(); // Impede o envio padrão do formulário que ignora headers
+    e.preventDefault();
     try {
-      // O useSecureFetch cuida de injetar o CSRF e o Content-Type
       const response = await secureFetch('/api/auth/logout', { method: 'POST' });
       
       if (response.ok) {
@@ -276,26 +273,8 @@ export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
         )}
       </div>
 
-      {/* Rodapé */}
+      {/* Rodapé (Limpo, apenas com o botão de Logout) */}
       <div className="space-y-1 border-t border-white/10 p-3">
-        {/* {!isInTurma && (
-          <Link
-            href="/professor/configuracoes"
-            className={cn(
-              "group relative flex h-10 min-h-10 items-center rounded-xl px-3",
-              "overflow-hidden leading-5",
-              "transition-colors duration-150",
-              isExpanded ? "justify-start" : "justify-center",
-              "text-slate-300 hover:bg-slate-700/50 hover:text-white"
-            )}
-          >
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-              <Settings className="h-5 w-5 text-slate-400 group-hover:text-white" />
-            </span>
-            <ItemLabel isExpanded={isExpanded}>Configurações</ItemLabel>
-          </Link>
-        )} */}
-
         <form onSubmit={handleLogout}>
           <button
             type="submit"
