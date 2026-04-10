@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { useState } from "react";
+import { useSecureFetch } from "@/lib/hooks/useSecureFetch";
 
 interface TeacherSidebarProps {
   turmaContext?: {
@@ -38,8 +39,8 @@ type MenuItem = {
 const mainMenuItems: MenuItem[] = [
   { title: "Visão Geral", href: "/admin", icon: LayoutDashboard },
   { title: "Minhas Turmas", href: "/professor/turmas", icon: Users },
-  { title: "Banco de Questões", href: "/professor/questoes", icon: BookOpen },
-  { title: "Relatórios", href: "/professor/relatorios", icon: FileText },
+  { title: "Banco de Questões", href: "/admin/questoes", icon: BookOpen },
+  // { title: "Relatórios", href: "/professor/relatorios", icon: FileText },
 ];
 
 const getTurmaMenuItems = (turmaId: string): MenuItem[] => [
@@ -51,7 +52,7 @@ const getTurmaMenuItems = (turmaId: string): MenuItem[] => [
   { title: "Fórum", href: `/professor/turmas/${turmaId}/forum`, icon: MessageSquare },
   { title: "Pessoas", href: `/professor/turmas/${turmaId}/pessoas`, icon: Users },
   { title: "Frequência", href: `/professor/turmas/${turmaId}/frequencia`, icon: CalendarCheck },
-  { title: "Configurações", href: `/professor/turmas/${turmaId}/configuracoes`, icon: Settings },
+  // { title: "Configurações", href: `/professor/turmas/${turmaId}/configuracoes`, icon: Settings },
 ];
 
 function ItemLabel({ isExpanded, children }: { isExpanded: boolean; children: React.ReactNode }) {
@@ -72,6 +73,8 @@ function ItemLabel({ isExpanded, children }: { isExpanded: boolean; children: Re
 
 export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const secureFetch = useSecureFetch();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isInTurma = !!turmaContext;
@@ -93,6 +96,22 @@ export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
   const turmaIsActive = (item: MenuItem) => {
     if (item.exact) return pathname === item.href;
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  };
+
+  const handleLogout = async (e: React.FormEvent) => {
+    e.preventDefault(); // Impede o envio padrão do formulário que ignora headers
+    try {
+      // O useSecureFetch cuida de injetar o CSRF e o Content-Type
+      const response = await secureFetch('/api/auth/logout', { method: 'POST' });
+      
+      if (response.ok) {
+        router.push('/login');
+      } else {
+        console.error("Falha ao processar o logout.");
+      }
+    } catch (error) {
+      console.error("Erro na requisição de logout:", error);
+    }
   };
 
   return (
@@ -259,7 +278,7 @@ export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
 
       {/* Rodapé */}
       <div className="space-y-1 border-t border-white/10 p-3">
-        {!isInTurma && (
+        {/* {!isInTurma && (
           <Link
             href="/professor/configuracoes"
             className={cn(
@@ -275,9 +294,9 @@ export default function TeacherSidebar({ turmaContext }: TeacherSidebarProps) {
             </span>
             <ItemLabel isExpanded={isExpanded}>Configurações</ItemLabel>
           </Link>
-        )}
+        )} */}
 
-        <form action="/api/auth/logout" method="POST">
+        <form onSubmit={handleLogout}>
           <button
             type="submit"
             className={cn(
