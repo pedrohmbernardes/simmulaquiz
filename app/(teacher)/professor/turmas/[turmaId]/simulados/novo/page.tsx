@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, use } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // ✅ useSearchParams adicionado
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import {
   BookOpen, Target, GraduationCap, Hash,
   ArrowRight, Eye, Sparkles, AlertCircle,
   BarChart3, Layers, TrendingUp, FileText,
+  Zap, MousePointerClick,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,11 @@ import { cn } from "@/lib/utils";
 import { useSecureFetch } from "@/lib/hooks/useSecureFetch";
 import { QuestaoPreviewModal, useQuestaoPreview } from "@/app/(admin)/admin/questoes/QuestaoPreviewModal";
 
+// ── Novos Componentes (Modo Automático) ──────────────────────────
+import { StepFiltrosAutomaticos } from "./StepFiltrosAutomaticos";
+import { StepPreviewAutomatico } from "./StepPreviewAutomatico";
+import type { QuestaoGerada, FiltrosAutoState } from "./StepFiltrosAutomaticos";
+
 // --- SCHEMAS E TIPOS ---
 const formSchema = z.object({
   titulo: z.string().min(3, "Título obrigatório"),
@@ -51,6 +57,7 @@ const formSchema = z.object({
   dataInicio: z.date(),
   dataFim: z.date(),
   duracaoMinutos: z.number().min(10, "Mínimo 10 minutos"),
+  qtdeQuestoes: z.number().min(1, "Mínimo 1 questão").max(100, "Máximo 100 questões").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -71,30 +78,37 @@ interface FiltroOpcao {
 }
 
 type Step = 1 | 2 | 3;
+type Modo = "MANUAL" | "AUTO";
 
 export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{ turmaId: string }> }) {
   const { turmaId } = use(params);
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✅ Hook para ler Query Params
+  const searchParams = useSearchParams();
   const secureFetch = useSecureFetch();
 
   const { previewData, previewOpen, openPreview, closePreview } = useQuestaoPreview();
   
-  // ✅ Captura o moduloId da URL (se existir)
   const moduloId = searchParams.get("moduloId") ? parseInt(searchParams.get("moduloId")!) : undefined;
 
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // Estados de Montagem
+  // ── NOVO: Modo de criação ──────────────────────────────────────
+  const [modo, setModo] = useState<Modo>("MANUAL");
+
+  // ── NOVO: Estados do Modo Automático ───────────────────────────
+  const [questoesAuto, setQuestoesAuto] = useState<QuestaoGerada[]>([]);
+  const [filtrosAuto, setFiltrosAuto] = useState<FiltrosAutoState | null>(null);
+
+  // Estados de Montagem (MANUAL - mantidos intactos)
   const [questoesDisponiveis, setQuestoesDisponiveis] = useState<QuestaoDetalhada[]>([]);
   const [questoesSelecionadas, setQuestoesSelecionadas] = useState<QuestaoDetalhada[]>([]);
   const [loadingQuestoes, setLoadingQuestoes] = useState(false);
   const [termoBusca, setTermoBusca] = useState("");
   const [idBusca, setIdBusca] = useState("");
 
-  // Estados dos Filtros Inteligentes
+  // Estados dos Filtros Inteligentes (MANUAL)
   const [filtros, setFiltros] = useState({
     cursoId: "",
     unidadeId: "",
@@ -110,7 +124,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
     unidades: [] as FiltroOpcao[],
     funcoes: [] as FiltroOpcao[],
     subfuncoes: [] as FiltroOpcao[],
-    conhecimientos: [] as FiltroOpcao[]
+    conhecimentos: [] as FiltroOpcao[]
   });
 
   const form = useForm<FormValues>({
@@ -119,12 +133,13 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
       titulo: "",
       descricao: "",
       dataInicio: new Date(),
-      dataFim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 dias
-      duracaoMinutos: 60,
+      dataFim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      duracaoMinutos: 120,
+      qtdeQuestoes: 10,
     },
   });
 
-  // --- CARREGAMENTO DE FILTROS ---
+  // --- CARREGAMENTO DE FILTROS (MANUAL) ---
   const fetchFiltros = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -142,12 +157,12 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
   }, [secureFetch, filtros.cursoId, filtros.unidadeId]);
 
   useEffect(() => {
-    if (currentStep === 2) {
+    if (currentStep === 2 && modo === "MANUAL") {
       fetchFiltros();
     }
-  }, [fetchFiltros, currentStep]);
+  }, [fetchFiltros, currentStep, modo]);
 
-  // --- BUSCA DE QUESTÕES ---
+  // --- BUSCA DE QUESTÕES (MANUAL) ---
   const fetchQuestoes = useCallback(async () => {
     setLoadingQuestoes(true);
     try {
@@ -175,13 +190,13 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
   }, [secureFetch, termoBusca, filtros, idBusca]);
 
   useEffect(() => {
-    if (currentStep === 2) {
+    if (currentStep === 2 && modo === "MANUAL") {
       const timer = setTimeout(fetchQuestoes, 500);
       return () => clearTimeout(timer);
     }
-  }, [fetchQuestoes, currentStep]);
+  }, [fetchQuestoes, currentStep, modo]);
 
-  // --- HANDLERS ---
+  // --- HANDLERS (MANUAL) ---
   const handleFiltroChange = (key: string, value: string) => {
     setFiltros(prev => {
       const newFiltros = { ...prev, [key]: value };
@@ -199,13 +214,8 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
 
   const limparFiltros = () => {
     setFiltros({
-      cursoId: "",
-      unidadeId: "",
-      funcaoId: "",
-      subfuncaoId: "",
-      conhecimentoId: "",
-      dificuldade: "",
-      nivelCognitivo: ""
+      cursoId: "", unidadeId: "", funcaoId: "", subfuncaoId: "",
+      conhecimentoId: "", dificuldade: "", nivelCognitivo: ""
     });
     setTermoBusca("");
     setIdBusca("");
@@ -214,15 +224,18 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
   const toggleQuestao = (questao: QuestaoDetalhada) => {
     setQuestoesSelecionadas(prev => {
       const exists = prev.find(q => q.id === questao.id);
-      if (exists) {
-        return prev.filter(q => q.id !== questao.id);
-      }
+      if (exists) return prev.filter(q => q.id !== questao.id);
       return [...prev, questao];
     });
   };
 
+  // --- SUBMIT (unificado para os dois modos) ---
   const onSubmit = async (data: FormValues) => {
-    if (questoesSelecionadas.length === 0) {
+    const questaoIds = modo === "AUTO"
+      ? questoesAuto.map(q => q.id)
+      : questoesSelecionadas.map(q => q.id);
+
+    if (questaoIds.length === 0) {
       toast.error("Selecione pelo menos uma questão");
       return;
     }
@@ -232,8 +245,11 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
       const payload = {
         ...data,
         turmaId: parseInt(turmaId),
-        questaoIds: questoesSelecionadas.map(q => q.id),
-        moduloId: moduloId, // ✅ Inclui o moduloId no payload se existir
+        questaoIds,
+        moduloId,
+        config: modo === "AUTO"
+          ? { origem: "GERACAO_AUTOMATICA", filtros: filtrosAuto, qtdeSolicitada: data.qtdeQuestoes }
+          : { origem: "MESA_CRIACAO_MANUAL", ids: questaoIds },
       };
 
       const res = await secureFetch(`/api/professor/turmas/${turmaId}/agendamentos`, {
@@ -249,11 +265,10 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
 
       toast.success(moduloId ? "Simulado criado e vinculado ao módulo!" : "Simulado criado com sucesso!");
       
-      // ✅ Redireciona para o local correto dependendo da origem
       if (moduloId) {
-         router.push(`/professor/turmas/${turmaId}/conteudo`); // Volta para Módulos
+         router.push(`/professor/turmas/${turmaId}/conteudo`);
       } else {
-         router.push(`/professor/turmas/${turmaId}/simulados`); // Volta para Lista Geral
+         router.push(`/professor/turmas/${turmaId}/simulados`);
       }
 
     } catch (error: any) {
@@ -264,7 +279,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
     }
   };
 
-  // Cálculo de estatísticas para o preview
+  // Cálculo de estatísticas para o preview MANUAL
   const calcularEstatisticas = () => {
     const stats = {
       total: questoesSelecionadas.length,
@@ -286,6 +301,22 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
 
   const stats = calcularEstatisticas();
 
+  // ── Step labels dinâmicos ──────────────────────────────────────
+  const stepLabels = modo === "AUTO"
+    ? [
+        { num: 1, label: "Configuração", sub: "Dados e modo" },
+        { num: 2, label: "Filtros Automáticos", sub: "Critérios de seleção" },
+        { num: 3, label: "Preview e Confirmação", sub: "Revisar e criar" },
+      ]
+    : [
+        { num: 1, label: "Configuração", sub: "Dados básicos" },
+        { num: 2, label: "Seleção de Questões", sub: "Monte sua prova" },
+        { num: 3, label: "Preview e Confirmação", sub: "Revisar e criar" },
+      ];
+
+  // Qtde de questões para o modo AUTO
+  const qtdeQuestoesAuto = form.watch("qtdeQuestoes") || 10;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 animate-in fade-in duration-500">
       <div className="max-w-[1800px] mx-auto p-6 md:p-8 lg:p-10 space-y-6">
@@ -303,7 +334,6 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
                 <Button
                   variant="ghost"
                   onClick={() => {
-                     // ✅ Volta inteligente
                      if(moduloId) router.push(`/professor/turmas/${turmaId}/conteudo`);
                      else router.push(`/professor/turmas/${turmaId}/simulados`);
                   }}
@@ -319,6 +349,17 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
                         Vinculado ao Módulo
                      </Badge>
                   )}
+                  {/* Badge de Modo */}
+                  {currentStep > 1 && (
+                    <Badge className={cn(
+                      "text-sm font-normal backdrop-blur-sm border-0",
+                      modo === "AUTO"
+                        ? "bg-purple-500/30 text-purple-100"
+                        : "bg-blue-500/30 text-blue-100"
+                    )}>
+                      {modo === "AUTO" ? "⚡ Automático" : "🖱️ Manual"}
+                    </Badge>
+                  )}
                 </h1>
                 <p className="text-blue-100 text-base">
                   Configure, monte e revise sua avaliação em 3 etapas simples
@@ -328,11 +369,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
 
             {/* Steps Indicator */}
             <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {[
-                { num: 1, label: "Configuração" },
-                { num: 2, label: "Seleção de Questões" },
-                { num: 3, label: "Preview e Confirmação" }
-              ].map((step, idx) => (
+              {stepLabels.map((step, idx) => (
                 <div key={step.num} className="flex items-center gap-4 min-w-fit">
                   <div className="flex items-center gap-3">
                     <div className={cn(
@@ -353,9 +390,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
                         {step.label}
                       </p>
                       <p className="text-xs text-blue-100">
-                        {step.num === 1 && "Dados básicos"}
-                        {step.num === 2 && "Monte sua prova"}
-                        {step.num === 3 && "Revisar e criar"}
+                        {step.sub}
                       </p>
                     </div>
                   </div>
@@ -371,7 +406,9 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
           </div>
         </div>
 
-        {/* Step 1: Configuração */}
+        {/* ══════════════════════════════════════════════════════════
+            STEP 1: Configuração (com seletor de modo na direita)
+           ══════════════════════════════════════════════════════════ */}
         {currentStep === 1 && (
           <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50/50 border-b">
@@ -384,213 +421,362 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
             </CardHeader>
             <CardContent className="p-8">
               <Form {...form}>
-                <form className="space-y-6 max-w-3xl">
-                  <FormField
-                    control={form.control}
-                    name="titulo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold text-slate-900">
-                          Título do Simulado *
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Ex: Avaliação Final - Matemática Básica"
-                            className="h-12 text-base"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="descricao"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold text-slate-900">
-                          Descrição (Opcional)
-                        </FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            {...field} 
-                            placeholder="Adicione instruções ou informações importantes para os alunos..."
-                            className="min-h-24 text-base resize-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid md:grid-cols-2 gap-6">
+                <form className="grid lg:grid-cols-2 gap-12">
+                  
+                  {/* COLUNA ESQUERDA: Dados do Formulário */}
+                  <div className="space-y-6">
                     <FormField
                       control={form.control}
-                      name="dataInicio"
+                      name="titulo"
                       render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                           <FormLabel className="text-base font-semibold text-slate-900">
-                            Data e Hora de Início *
+                            Título do Simulado *
                           </FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "h-12 pl-3 text-left font-normal text-base",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP 'às' HH:mm", { locale: ptBR })
-                                  ) : (
-                                    <span>Selecione a data</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                locale={ptBR}
-                                disabled={(date) => date < new Date()}
-                                initialFocus
-                              />
-                              <div className="p-3 border-t">
-                                <Input
-                                  type="time"
-                                  value={field.value ? format(field.value, "HH:mm") : ""}
-                                  onChange={(e) => {
-                                    const [hours, minutes] = e.target.value.split(":");
-                                    const newDate = new Date(field.value || new Date());
-                                    newDate.setHours(parseInt(hours), parseInt(minutes));
-                                    field.onChange(newDate);
-                                  }}
-                                  className="h-10"
-                                />
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="dataFim"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-base font-semibold text-slate-900">
-                            Data e Hora de Término *
-                          </FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "h-12 pl-3 text-left font-normal text-base",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP 'às' HH:mm", { locale: ptBR })
-                                  ) : (
-                                    <span>Selecione a data</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                locale={ptBR}
-                                disabled={(date) => date < (form.watch("dataInicio") || new Date())}
-                                initialFocus
-                              />
-                              <div className="p-3 border-t">
-                                <Input
-                                  type="time"
-                                  value={field.value ? format(field.value, "HH:mm") : ""}
-                                  onChange={(e) => {
-                                    const [hours, minutes] = e.target.value.split(":");
-                                    const newDate = new Date(field.value || new Date());
-                                    newDate.setHours(parseInt(hours), parseInt(minutes));
-                                    field.onChange(newDate);
-                                  }}
-                                  className="h-10"
-                                />
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="duracaoMinutos"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold text-slate-900">
-                          Duração da Prova (minutos) *
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                          <FormControl>
                             <Input 
                               {...field} 
-                              type="number"
-                              min={10}
-                              onChange={e => field.onChange(parseInt(e.target.value))}
-                              className="h-12 pl-11 text-base"
-                              placeholder="60"
+                              placeholder="Ex: Avaliação Final - Matemática Básica"
+                              className="h-12 text-base"
                             />
-                          </div>
-                        </FormControl>
-                        <p className="text-sm text-slate-500">
-                          Tempo que cada aluno terá para completar o simulado
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="flex justify-end pt-6">
-                    <Button
-                      type="button"
-                      size="lg"
-                      onClick={() => {
-                        form.trigger().then(isValid => {
-                          if (isValid) setCurrentStep(2);
-                        });
-                      }}
-                      className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 transition-all hover:scale-105"
-                    >
-                      Próximo: Selecionar Questões
-                      <ArrowRight size={18} />
-                    </Button>
+                    <FormField
+                      control={form.control}
+                      name="descricao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold text-slate-900">
+                            Descrição (Opcional)
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              {...field} 
+                              placeholder="Adicione instruções ou informações importantes para os alunos..."
+                              className="min-h-[120px] text-base resize-none"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="dataInicio"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-base font-semibold text-slate-900">
+                              Data e Hora de Início *
+                            </FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "h-12 pl-3 text-left font-normal text-base",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP 'às' HH:mm", { locale: ptBR })
+                                    ) : (
+                                      <span>Selecione a data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  locale={ptBR}
+                                  disabled={(date) => date < new Date()}
+                                  initialFocus
+                                />
+                                <div className="p-3 border-t">
+                                  <Input
+                                    type="time"
+                                    value={field.value ? format(field.value, "HH:mm") : ""}
+                                    onChange={(e) => {
+                                      const [hours, minutes] = e.target.value.split(":");
+                                      const newDate = new Date(field.value || new Date());
+                                      newDate.setHours(parseInt(hours), parseInt(minutes));
+                                      field.onChange(newDate);
+                                    }}
+                                    className="h-10"
+                                  />
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="dataFim"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-base font-semibold text-slate-900">
+                              Data e Hora de Término *
+                            </FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "h-12 pl-3 text-left font-normal text-base",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP 'às' HH:mm", { locale: ptBR })
+                                    ) : (
+                                      <span>Selecione a data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  locale={ptBR}
+                                  disabled={(date) => date < (form.watch("dataInicio") || new Date())}
+                                  initialFocus
+                                />
+                                <div className="p-3 border-t">
+                                  <Input
+                                    type="time"
+                                    value={field.value ? format(field.value, "HH:mm") : ""}
+                                    onChange={(e) => {
+                                      const [hours, minutes] = e.target.value.split(":");
+                                      const newDate = new Date(field.value || new Date());
+                                      newDate.setHours(parseInt(hours), parseInt(minutes));
+                                      field.onChange(newDate);
+                                    }}
+                                    className="h-10"
+                                  />
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="duracaoMinutos"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold text-slate-900">
+                            Duração da Prova (minutos) *
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                              <Input 
+                                {...field} 
+                                type="number"
+                                min={10}
+                                onChange={e => field.onChange(parseInt(e.target.value))}
+                                className="h-12 pl-11 text-base"
+                                placeholder="120"
+                              />
+                            </div>
+                          </FormControl>
+                          <p className="text-sm text-slate-500">
+                            Tempo que cada aluno terá para completar o simulado
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
+
+                  {/* COLUNA DIREITA: Modo de Seleção e Ações */}
+                  <div className="space-y-8 lg:pl-12 lg:border-l border-slate-100 flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="mb-2">
+                        <h3 className="text-xl font-bold text-slate-900">Como deseja montar as questões?</h3>
+                        <p className="text-sm text-slate-500 mt-1">Escolha o método para popular sua prova.</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        {/* Card Manual */}
+                        <button
+                          type="button"
+                          onClick={() => setModo("MANUAL")}
+                          className={cn(
+                            "w-full p-5 rounded-2xl border-2 text-left transition-all duration-300 group",
+                            modo === "MANUAL"
+                              ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-100"
+                              : "border-slate-200 bg-white hover:border-blue-300 hover:shadow-md"
+                          )}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={cn(
+                              "p-3 rounded-xl transition-colors",
+                              modo === "MANUAL"
+                                ? "bg-gradient-to-br from-blue-500 to-indigo-500"
+                                : "bg-slate-100 group-hover:bg-blue-100"
+                            )}>
+                              <MousePointerClick className={cn("h-6 w-6", modo === "MANUAL" ? "text-white" : "text-slate-500 group-hover:text-blue-600")} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className={cn("font-bold text-lg", modo === "MANUAL" ? "text-blue-900" : "text-slate-900")}>
+                                  Seleção Manual
+                                </h4>
+                                {modo === "MANUAL" && (
+                                  <CheckCircle2 size={20} className="text-blue-600" />
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+                                Busque e escolha cada questão individualmente do banco de questões.
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Card Automático */}
+                        <button
+                          type="button"
+                          onClick={() => setModo("AUTO")}
+                          className={cn(
+                            "w-full p-5 rounded-2xl border-2 text-left transition-all duration-300 group",
+                            modo === "AUTO"
+                              ? "border-purple-500 bg-purple-50/50 shadow-lg shadow-purple-100"
+                              : "border-slate-200 bg-white hover:border-purple-300 hover:shadow-md"
+                          )}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={cn(
+                              "p-3 rounded-xl transition-colors",
+                              modo === "AUTO"
+                                ? "bg-gradient-to-br from-purple-500 to-pink-500"
+                                : "bg-slate-100 group-hover:bg-purple-100"
+                            )}>
+                              <Zap className={cn("h-6 w-6", modo === "AUTO" ? "text-white" : "text-slate-500 group-hover:text-purple-600")} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className={cn("font-bold text-lg", modo === "AUTO" ? "text-purple-900" : "text-slate-900")}>
+                                  Geração Automática
+                                </h4>
+                                {modo === "AUTO" && (
+                                  <CheckCircle2 size={20} className="text-purple-600" />
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+                                Defina filtros e deixe o sistema selecionar as questões e distribuir automaticamente.
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Campo Quantidade (só no modo AUTO) aparece logo abaixo da seleção */}
+                      {modo === "AUTO" && (
+                        <div className="pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <FormField
+                            control={form.control}
+                            name="qtdeQuestoes"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-base font-semibold text-purple-900">
+                                  Número de Questões a Gerar *
+                                </FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
+                                    <Input 
+                                      type="number"
+                                      min={1}
+                                      max={100}
+                                      value={field.value || ""}
+                                      onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                                      className="h-12 pl-11 text-base border-purple-200 focus-visible:ring-purple-500 bg-purple-50/30"
+                                      placeholder="Ex: 40"
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-6">
+                      <Button
+                        type="button"
+                        size="lg"
+                        onClick={() => {
+                          form.trigger().then(isValid => {
+                            if (isValid) {
+                              if (modo === "AUTO" && (!form.getValues("qtdeQuestoes") || form.getValues("qtdeQuestoes")! < 1)) {
+                                toast.error("Defina o número de questões");
+                                return;
+                              }
+                              setCurrentStep(2);
+                            }
+                          });
+                        }}
+                        className={cn(
+                          "w-full h-14 text-lg gap-2 px-8 transition-all hover:scale-[1.02]",
+                          modo === "AUTO"
+                            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-xl shadow-purple-200"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl shadow-blue-200"
+                        )}
+                      >
+                        {modo === "AUTO" ? "Próximo: Definir Filtros" : "Próximo: Selecionar Questões"}
+                        <ArrowRight size={20} />
+                      </Button>
+                    </div>
+                  </div>
+
                 </form>
               </Form>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 2: Seleção de Questões */}
-        {currentStep === 2 && (
+        {/* ══════════════════════════════════════════════════════════
+            STEP 2: Seleção de Questões
+           ══════════════════════════════════════════════════════════ */}
+        
+        {/* ── MODO AUTOMÁTICO: Step 2 ─────────────────────────────── */}
+        {currentStep === 2 && modo === "AUTO" && (
+          <StepFiltrosAutomaticos
+            qtdeQuestoes={qtdeQuestoesAuto}
+            onVoltar={() => setCurrentStep(1)}
+            onAvancar={(questoes, filtrosUsados) => {
+              setQuestoesAuto(questoes);
+              setFiltrosAuto(filtrosUsados);
+              setCurrentStep(3);
+            }}
+          />
+        )}
+
+        {/* ── MODO MANUAL: Step 2 (código original intacto) ───────── */}
+        {currentStep === 2 && modo === "MANUAL" && (
           <div className="h-[calc(100vh-280px)] flex gap-6 overflow-hidden animate-in fade-in slide-in-from-right-4">
             
             {/* Sidebar de Filtros */}
@@ -946,8 +1132,32 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
           </div>
         )}
 
-        {/* Step 3: Preview */}
-        {currentStep === 3 && (
+        {/* ══════════════════════════════════════════════════════════
+            STEP 3: Preview e Confirmação
+           ══════════════════════════════════════════════════════════ */}
+        
+        {/* ── MODO AUTOMÁTICO: Step 3 ─────────────────────────────── */}
+        {currentStep === 3 && modo === "AUTO" && filtrosAuto && (
+          <StepPreviewAutomatico
+            questoes={questoesAuto}
+            filtrosUsados={filtrosAuto}
+            formData={{
+              titulo: form.watch("titulo"),
+              descricao: form.watch("descricao"),
+              dataInicio: form.watch("dataInicio"),
+              dataFim: form.watch("dataFim"),
+              duracaoMinutos: form.watch("duracaoMinutos"),
+              qtdeQuestoes: qtdeQuestoesAuto,
+            }}
+            onVoltar={() => setCurrentStep(2)}
+            onConfirmar={() => setShowConfirmDialog(true)}
+            onQuestoesChange={setQuestoesAuto}
+            openPreview={openPreview}
+          />
+        )}
+
+        {/* ── MODO MANUAL: Step 3 (código original intacto) ───────── */}
+        {currentStep === 3 && modo === "MANUAL" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50/50 border-b">
@@ -994,29 +1204,9 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
                   </h3>
                   
                   <div className="grid md:grid-cols-3 gap-6">
-                    {/* Dificuldades */}
-                    <StatCard
-                      title="Por Dificuldade"
-                      icon={Layers}
-                      data={stats.dificuldades}
-                      color="blue"
-                    />
-                    
-                    {/* Níveis Cognitivos */}
-                    <StatCard
-                      title="Por Nível Cognitivo"
-                      icon={TrendingUp}
-                      data={stats.niveis}
-                      color="purple"
-                    />
-                    
-                    {/* Unidades */}
-                    <StatCard
-                      title="Por Unidade"
-                      icon={BookOpen}
-                      data={stats.unidades}
-                      color="emerald"
-                    />
+                    <StatCard title="Por Dificuldade" icon={Layers} data={stats.dificuldades} color="blue" />
+                    <StatCard title="Por Nível Cognitivo" icon={TrendingUp} data={stats.niveis} color="purple" />
+                    <StatCard title="Por Unidade" icon={BookOpen} data={stats.unidades} color="emerald" />
                   </div>
                 </div>
 
@@ -1067,7 +1257,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
 
       <QuestaoPreviewModal questao={previewData} isOpen={previewOpen} onClose={closePreview}/>
 
-      {/* Dialog de Confirmação */}
+      {/* Dialog de Confirmação (unificado para os dois modos) */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1080,10 +1270,18 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
               Confirmar Criação?
             </DialogTitle>
             <DialogDescription className="text-center text-base">
-              Você está prestes a criar um simulado com <strong>{questoesSelecionadas.length} questões</strong>.
+              Você está prestes a criar um simulado com{" "}
+              <strong>
+                {modo === "AUTO" ? questoesAuto.length : questoesSelecionadas.length} questões
+              </strong>.
+              {modo === "AUTO" && (
+                <span className="block mt-1 text-purple-600 text-sm">
+                  Modo: Geração Automática por Filtros
+                </span>
+              )}
               {moduloId && (
                  <span className="block mt-2 text-indigo-600 font-medium">
-                    Ele será vinculado automaticamente ao módulo atual.
+                   Ele será vinculado automaticamente ao módulo atual.
                  </span>
               )}
             </DialogDescription>
@@ -1142,7 +1340,7 @@ export default function MesaMontagemSimuladoPage({ params }: { params: Promise<{
   );
 }
 
-// Componentes Auxiliares
+// ── Componentes Auxiliares (mantidos) ─────────────────────────────
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-xl border border-slate-200">

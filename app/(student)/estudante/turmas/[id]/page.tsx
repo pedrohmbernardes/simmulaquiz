@@ -49,7 +49,7 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
 
   if (isNaN(turmaId)) redirect("/estudante/turmas");
 
-  const [turma, totalAulas, minhasPresencas] = await Promise.all([
+  const [turma, totalAulas, minhasPresencas, minhasEntregasDeAgendamentos] = await Promise.all([
     prisma.turma.findFirst({
       where: {
         id: turmaId,
@@ -62,11 +62,11 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
           include: { autor: { select: { nome: true, fotoUrl: true } } }
         },
         agendamentos: {
-          where: { status: "PUBLICADO" },
-          include: {
-            entregas: {
-              where: { alunoId: alunoId },
-              select: { status: true, notaPercentual: true, createdAt: true }
+          // CORREÇÃO: Agora buscamos tanto os em andamento (PUBLICADO) quanto o histórico (ENCERRADO) 
+          // para compor as estatísticas de média e conclusão reais.
+          where: { 
+            status: {
+              in: ["PUBLICADO", "ENCERRADO"]
             }
           }
         },
@@ -100,6 +100,21 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
         turmaId: turmaId,
         alunoId: alunoId
       }
+    }),
+
+    prisma.agendamentoEntrega.findMany({
+      where: {
+        alunoId: alunoId,
+        turmaId: turmaId
+      },
+      include: {
+        simulado: {
+          select: {
+            status: true,
+            notaPercentual: true
+          }
+        }
+      }
     })
   ]);
 
@@ -111,17 +126,23 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
     ? Math.round((minhasPresencas / totalAulas) * 100) 
     : 100;
 
-  const listaAgendamentos = turma.agendamentos.map(ag => ({
-    id: ag.id,
-    titulo: ag.titulo,
-    tipo: 'SIMULADO' as const,
-    dataFim: new Date(ag.dataFim),
-    dataInicio: new Date(ag.dataInicio),
-    entregue: ag.entregas.length > 0 && ["CONCLUIDO", "ENTREGUE", "EM_ANDAMENTO"].includes(ag.entregas[0].status),
-    nota: ag.entregas[0]?.notaPercentual,
-    link: `/estudante/turmas/${id}/agendamentos/${ag.id}/inicio`,
-    duracao: ag.duracaoMinutos,
-  }));
+  const listaAgendamentos = turma.agendamentos.map(ag => {
+    const entrega = minhasEntregasDeAgendamentos.find(e => e.agendamentoId === ag.id);
+    const simulado = entrega?.simulado;
+    
+    return {
+      id: ag.id,
+      titulo: ag.titulo,
+      tipo: 'SIMULADO' as const,
+      dataFim: new Date(ag.dataFim),
+      dataInicio: new Date(ag.dataInicio),
+      entregue: (simulado?.status === "CONCLUIDO") || (entrega?.status === "CONCLUIDO"),
+      // CORREÇÃO DE SEGURANÇA: Lê a nota tanto do Simulado real quanto da Entrega pivot.
+      nota: simulado?.notaPercentual ?? entrega?.notaPercentual ?? null,
+      link: `/estudante/turmas/${id}/agendamentos/${ag.id}/inicio`,
+      duracao: ag.duracaoMinutos,
+    };
+  });
 
   const listaTarefas = turma.tarefas.map(t => ({
     id: t.id,
@@ -177,10 +198,9 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
     <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
       <div className="max-w-[1920px] mx-auto px-4 md:px-6 lg:px-8 xl:px-12 py-5 md:py-8 space-y-5 md:space-y-8">
         
-        {/* KPI Grid — 2 cols on mobile, 4 on desktop */}
+        {/* KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           
-          {/* Card 1 - Progresso */}
           <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-violet-600 to-purple-700 text-white">
             <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
             <CardContent className="p-4 md:p-6 relative z-10">
@@ -198,7 +218,6 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
             </CardContent>
           </Card>
 
-          {/* Card 2 - Desempenho */}
           <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-pink-600 to-rose-700 text-white">
             <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
             <CardContent className="p-4 md:p-6 relative z-10">
@@ -216,7 +235,6 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
             </CardContent>
           </Card>
 
-          {/* Card 3 - Pendências */}
           <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
             <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
             <CardContent className="p-4 md:p-6 relative z-10">
@@ -238,7 +256,6 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
             </CardContent>
           </Card>
 
-          {/* Card 4 - Frequência */}
           <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-cyan-600 to-blue-700 text-white">
             <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
             <CardContent className="p-4 md:p-6 relative z-10">
@@ -262,10 +279,7 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
         {/* Dashboard Grid Principal */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-8">
           
-          {/* Esquerda - Conteúdo Principal (2/3) */}
           <div className="xl:col-span-2 space-y-5 md:space-y-6">
-            
-            {/* Destaque / Próxima Entrega */}
             {atividadeDestaque && (
               <Card className="border-0 shadow-2xl bg-gradient-to-br from-fuchsia-600 via-purple-600 to-violet-700 text-white overflow-hidden">
                 <div className="absolute inset-0 bg-grid-white/5"></div>
@@ -317,7 +331,6 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
               </Card>
             )}
 
-            {/* Lista Próximas Atividades */}
             <Card className="border-violet-200 shadow-lg">
               <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50 px-4 md:px-6 py-3 md:py-4">
                 <div className="flex items-center justify-between">
@@ -381,10 +394,7 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
             </Card>
           </div>
 
-          {/* Direita - Sidebar Info (1/3) */}
           <div className="space-y-5 md:space-y-6">
-            
-            {/* Mural / Avisos */}
             <Card className="border-violet-200 shadow-lg">
               <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50 px-4 md:px-6 py-3 md:py-4">
                 <CardTitle className="flex items-center gap-2 text-violet-900 text-sm md:text-base">
@@ -428,7 +438,6 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Professores */}
             <Card className="border-violet-200 shadow-lg">
               <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50 px-4 md:px-6 py-3 md:py-4">
                 <CardTitle className="flex items-center gap-2 text-violet-900 text-sm md:text-base">
@@ -454,7 +463,6 @@ export default async function TurmaDashboardPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Acesso Rápido — hidden on mobile (bottom tab bar covers this) */}
             <Card className="hidden md:block border-violet-200 shadow-lg">
               <CardHeader className="border-b bg-gradient-to-r from-violet-50 to-purple-50">
                 <CardTitle className="flex items-center gap-2 text-violet-900 text-base">
