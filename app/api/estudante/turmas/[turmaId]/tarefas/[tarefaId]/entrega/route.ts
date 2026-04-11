@@ -5,6 +5,7 @@ import { z } from "zod";
 import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { registrarLog, AuditAction } from "@/lib/audit";
+import { expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando limitador para operações de escrita
 
 // Schema de validação do envio
 const entregaSchema = z.object({
@@ -29,7 +30,17 @@ export async function POST(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    // 2. 🛡️ CSRF Check (Obrigatório para envio)
+    // 2. Rate Limit (Evita spam de entregas / sobrecarga)
+    const rlKey = `tarefa_entrega_post:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Muitas tentativas de envio. Por favor, aguarde alguns minutos." },
+        { status: 429 }
+      );
+    }
+
+    // 3. 🛡️ CSRF Check (Obrigatório para envio)
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
       return NextResponse.json({ error: "Sessão inválida (CSRF)" }, { status: 403 });
@@ -44,7 +55,7 @@ export async function POST(
       return NextResponse.json({ error: "IDs inválidos" }, { status: 400 });
     }
 
-    // 3. Validação do Body
+    // 4. Validação do Body
     const body = await req.json();
     const validation = entregaSchema.safeParse(body);
     if (!validation.success) {
@@ -53,7 +64,7 @@ export async function POST(
 
     const { textoResposta, arquivos } = validation.data;
 
-    // 4. Verifica Acesso e Existência da Tarefa
+    // 5. Verifica Acesso e Existência da Tarefa
     // Busca a tarefa e verifica se o aluno faz parte da turma num único round-trip se possível,
     // mas aqui separamos para clareza de erro (404 vs 403).
     
@@ -90,7 +101,7 @@ export async function POST(
     }
     */
 
-    // 5. Transação de Entrega (Upsert)
+    // 6. Transação de Entrega (Upsert)
     // Se já existe, atualiza. Se não, cria.
     const entrega = await prisma.$transaction(async (tx) => {
       
@@ -157,7 +168,7 @@ export async function POST(
       return entregaSalva;
     });
 
-    // 6. Auditoria
+    // 7. Auditoria
     await registrarLog({
       acao: AuditAction.TAREFA_ENTREGAR, // Certifique-se de ter essa action ou use genérica
       usuarioId: alunoId,

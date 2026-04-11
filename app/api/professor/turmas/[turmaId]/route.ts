@@ -6,6 +6,7 @@ import { safeApiError } from "@/lib/server-utils";
 import { z } from "zod";
 import { verifyCSRFToken } from "@/lib/csrf"; 
 import { sanitizeObject } from "@/lib/sanitize"; 
+import { apiRateLimit, adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema de validação para atualização
 const updateTurmaSchema = z.object({
@@ -27,6 +28,13 @@ export async function GET(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    // ✅ Rate Limit de Leitura
+    const rlKey = `prof_turma_detalhe:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
+    }
+
     const { turmaId } = await params;
     const turmaIdInt = Number(turmaId);
     const userId = Number(session.sub);
@@ -37,21 +45,39 @@ export async function GET(
     }
 
     // ✅ Query Dinâmica para ignorar pivot caso seja Admin
-    const whereClause = isSuperAdmin
-      ? { id: turmaIdInt }
-      : { id: turmaIdInt, professores: { some: { professorId: userId } } };
-
-    const turma = await prisma.turma.findUnique({
-      where: whereClause,
-      include: {
-        _count: {
-          select: { 
-            alunos: true,
-            agendamentos: true 
-          }
-        }
-      }
-    });
+    // Se for admin, busca pelo ID da turma.
+    // Se for professor, busca pelo ID da turma APENAS SE ele estiver vinculado a ela na tabela pivot.
+    let turma;
+    if (isSuperAdmin) {
+        turma = await prisma.turma.findUnique({
+            where: { id: turmaIdInt },
+            include: {
+              _count: {
+                select: { 
+                  alunos: true,
+                  agendamentos: true 
+                }
+              }
+            }
+        });
+    } else {
+         turma = await prisma.turma.findFirst({
+            where: {
+                id: turmaIdInt,
+                professores: {
+                    some: { professorId: userId }
+                }
+            },
+            include: {
+              _count: {
+                select: { 
+                  alunos: true,
+                  agendamentos: true 
+                }
+              }
+            }
+        });
+    }
 
     if (!turma) {
       return NextResponse.json({ error: "Turma não encontrada ou acesso negado." }, { status: 404 });
@@ -73,6 +99,13 @@ export async function PATCH(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Gestão de Conteúdo
+    const rlKey = `prof_turma_editar:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas alterações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     // 2. 🛡️ CSRF Check
@@ -149,6 +182,13 @@ export async function DELETE(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Gestão de Conteúdo
+    const rlKey = `prof_turma_excluir:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas ações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     // 1. 🛡️ CSRF Check

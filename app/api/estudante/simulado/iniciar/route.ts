@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { registrarLog, AuditAction } from "@/lib/audit";
 import { verifyCSRFToken } from "@/lib/csrf"; 
+import { expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador
 import { safeApiError } from "@/lib/server-utils";
 
 const iniciarSchema = z.object({
@@ -18,7 +19,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    // 2. CSRF Check
+    // 2. Rate Limit (Proteção contra cliques duplos/Spam na transação)
+    const rlKey = `simulado_iniciar:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Aguarde alguns instantes antes de tentar novamente." },
+        { status: 429 }
+      );
+    }
+
+    // 3. CSRF Check
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
       return NextResponse.json({ error: "Sessão inválida" }, { status: 403 });
@@ -33,7 +44,7 @@ export async function POST(req: NextRequest) {
     const { agendamentoId } = validation.data;
     const alunoId = Number(session.sub);
 
-    // 3. Busca o Agendamento e Validações de Negócio
+    // 4. Busca o Agendamento e Validações de Negócio
     const agendamento = await prisma.agendamentoSimulado.findUnique({
       where: { id: agendamentoId },
       include: {
@@ -68,7 +79,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "O prazo para este simulado já encerrou." }, { status: 403 });
     }
 
-    // 4. Verifica se já existe um Simulado (Retomar vs Criar)
+    // 5. Verifica se já existe um Simulado (Retomar vs Criar)
     const simuladoExistente = await prisma.simulado.findFirst({
       where: {
         agendamentoId: agendamentoId,
@@ -83,7 +94,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ simuladoId: simuladoExistente.id, retomada: true });
     }
 
-    // 5. CRIAÇÃO DO SIMULADO (Snapshot)
+    // 6. CRIAÇÃO DO SIMULADO (Snapshot)
     const novoSimulado = await prisma.$transaction(async (tx) => {
       
       // A. Cria o Cabeçalho
@@ -137,7 +148,7 @@ export async function POST(req: NextRequest) {
       return simulado;
     });
 
-    // 6. Auditoria
+    // 7. Auditoria
     await registrarLog({
       acao: AuditAction.SIMULADO_INICIAR,
       usuarioId: alunoId,

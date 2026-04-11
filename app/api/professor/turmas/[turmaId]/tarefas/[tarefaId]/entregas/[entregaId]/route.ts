@@ -6,6 +6,7 @@ import { registrarLog, AuditAction } from "@/lib/audit";
 import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { sanitizeObject } from "@/lib/sanitize";
+import { adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador
 
 // Schema para correção
 const corrigirEntregaSchema = z.object({
@@ -22,6 +23,13 @@ export async function PATCH(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Gestão (Permite correção rápida, barra scripts)
+    const rlKey = `prof_corrigir_entrega:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas correções seguidas. Aguarde alguns segundos." }, { status: 429 });
     }
 
     // 2. CSRF Check

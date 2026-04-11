@@ -6,6 +6,7 @@ import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { registrarLog, AuditAction } from "@/lib/audit";
 import { sanitizeString } from "@/lib/sanitize";
+import { apiRateLimit, adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema para responder
 const respostaSchema = z.object({
@@ -27,6 +28,13 @@ export async function GET(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura (Evita scraping do tópico e respostas)
+    const rlKey = `prof_forum_topico_ler:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId, topicoId } = await params;
@@ -131,6 +139,13 @@ export async function POST(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    // ✅ Rate Limit de Escrita (Barra spam sem atrapalhar respostas rápidas)
+    const rlKey = `prof_forum_responder:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas respostas em pouco tempo. Aguarde um minuto." }, { status: 429 });
+    }
+
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
       return NextResponse.json({ error: "Sessão inválida" }, { status: 403 });
@@ -190,6 +205,13 @@ export async function PATCH(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Escrita (Protege o endpoint de atualização de status)
+    const rlKey = `prof_forum_toggle_solucao:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas ações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     const csrfToken = req.headers.get("x-csrf-token");

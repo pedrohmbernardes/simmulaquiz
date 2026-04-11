@@ -5,6 +5,7 @@ import { z } from "zod";
 import { registrarLog, AuditAction } from "@/lib/audit";
 import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
+import { apiRateLimit, adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema local para validação da ação de gestão (PATCH)
 const gerenciarAlunoSchema = z.object({
@@ -22,6 +23,13 @@ export async function GET(
     // Permite SUPER_ADMIN para auditoria/suporte
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura
+    const rlKey = `prof_turma_alunos:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;
@@ -83,6 +91,13 @@ export async function PATCH(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Administração (Permite ações rápidas do professor, mas bloqueia robôs)
+    const rlKey = `prof_turma_aluno_patch:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas ações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     // 1. 🛡️ Verificação CSRF
@@ -198,6 +213,13 @@ export async function DELETE(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Administração
+    const rlKey = `prof_turma_aluno_delete:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas ações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     // 1. 🛡️ Verificação CSRF (Crítico para DELETE)

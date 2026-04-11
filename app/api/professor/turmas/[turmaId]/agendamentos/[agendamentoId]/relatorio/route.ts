@@ -2,15 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador para operações pesadas
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ turmaId: string; agendamentoId: string }> }
 ) {
   try {
+    // 1. Autenticação e RBAC
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit para Relatórios Pesados (Protege o banco contra sobrecarga de queries complexas)
+    const rlKey = `prof_relatorio_agendamento:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Gerando relatório... Por favor, aguarde alguns instantes antes de atualizar." }, { status: 429 });
     }
 
     const { turmaId, agendamentoId } = await params;
@@ -21,6 +30,7 @@ export async function GET(
       return NextResponse.json({ error: "IDs inválidos" }, { status: 400 });
     }
 
+    // 2. Validação de Propriedade
     const isOwner = await prisma.turmaProfessor.findUnique({
       where: {
         turmaId_professorId: {
@@ -34,6 +44,7 @@ export async function GET(
       return NextResponse.json({ error: "Você não administra esta turma." }, { status: 403 });
     }
 
+    // 3. Busca de Dados Complexos (Heavy Query)
     const agendamento = await prisma.agendamentoSimulado.findUnique({
       where: { id: agendamentoIdInt },
       include: {

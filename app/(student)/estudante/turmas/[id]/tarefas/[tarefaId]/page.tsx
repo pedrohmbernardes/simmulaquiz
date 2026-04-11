@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 import { useSecureFetch } from '@/lib/hooks/useSecureFetch';
+import { useCsrf } from '@/lib/hooks/use-csrf'; // ✅ NOVO: Importando a blindagem CSRF
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +68,9 @@ export default function TarefaDetalhesPage() {
   const params      = useParams();
   const router      = useRouter();
   const secureFetch = useSecureFetch();
+
+  // ✅ NOVO: Acionando a proteção CSRF no carregamento da página
+  useCsrf();
 
   const turmaId  = params.id as string;
   const tarefaId = params.tarefaId as string;

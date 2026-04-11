@@ -5,6 +5,7 @@ import { z } from "zod";
 import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { registrarLog, AuditAction } from "@/lib/audit";
+import { apiRateLimit, expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema para nova resposta
 const respostaSchema = z.object({
@@ -20,6 +21,13 @@ export async function GET(
     const session = await getSession();
     if (!session || session.role !== "ALUNO") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura (Evita scraping/sobrecarga de leitura do fórum)
+    const rlKey = `forum_ler_topico:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId, topicoId } = await params;
@@ -125,6 +133,13 @@ export async function POST(
     const session = await getSession();
     if (!session || session.role !== "ALUNO") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Escrita (Impede flood/spam de respostas no fórum)
+    const rlKey = `forum_responder_topico:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Você está respondendo rápido demais. Aguarde alguns minutos." }, { status: 429 });
     }
 
     const csrfToken = req.headers.get("x-csrf-token");

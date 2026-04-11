@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { apiRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador de API
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +15,16 @@ export async function GET(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    // 2. Rate Limit (Proteção contra Scraping / Sobrecarga de leitura)
+    const rlKey = `tarefas_lista:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Aguarde um momento antes de recarregar a página." },
+        { status: 429 }
+      );
+    }
+
     const { turmaId } = await params;
     const turmaIdInt = Number(turmaId);
     const alunoId = Number(session.sub);
@@ -22,7 +33,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    // 2. Validação de Membership (Anti-IDOR)
+    // 3. Validação de Membership (Anti-IDOR)
     // Verifica se o aluno está matriculado e ATIVO na turma
     const matricula = await prisma.turmaAluno.findUnique({
       where: {
@@ -34,7 +45,7 @@ export async function GET(
       return NextResponse.json({ error: "Você não tem acesso a esta turma." }, { status: 403 });
     }
 
-    // 3. Busca Tarefas + Entregas do Aluno
+    // 4. Busca Tarefas + Entregas do Aluno
     // No seu schema, Tarefa não tem campo 'publicado', então removemos esse filtro.
     // O professor controla a visibilidade talvez por data ou excluindo a tarefa.
     const tarefas = await prisma.tarefa.findMany({
@@ -68,7 +79,7 @@ export async function GET(
       }
     });
 
-    // 4. Processamento e Formatação
+    // 5. Processamento e Formatação
     const agora = new Date();
 
     const resultado = tarefas.map((t) => {

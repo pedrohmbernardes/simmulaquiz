@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador para operações pesadas
 
 export async function GET(
   req: NextRequest,
@@ -12,6 +13,13 @@ export async function GET(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit para Relatórios/Consultas Pesadas (Impede scraping do banco de questões)
+    const rlKey = `prof_resultado_aluno:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições de consulta. Aguarde alguns instantes." }, { status: 429 });
     }
 
     const { turmaId, agendamentoId, simuladoId } = await params;

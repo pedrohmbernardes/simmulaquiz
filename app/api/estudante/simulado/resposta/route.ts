@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { verifyCSRFToken } from "@/lib/csrf"; 
 import { registrarLog, AuditAction } from "@/lib/audit";
+import { csrfRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador leve
 
 const respostaSchema = z.object({
   simuladoId: z.number().int().positive(),
@@ -20,13 +21,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    // 2. CSRF Check
+    // 2. Rate Limit (Limitador Leve - Permite cliques rápidos legítimos, bloqueia scripts)
+    const rlKey = `simulado_resposta:${session.sub}`;
+    const rl = await csrfRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Salvamento pausado temporariamente por excesso de cliques. Aguarde alguns segundos." },
+        { status: 429 }
+      );
+    }
+
+    // 3. CSRF Check
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
       return NextResponse.json({ error: "Sessão inválida" }, { status: 403 });
     }
 
-    // 3. Validação do Body
+    // 4. Validação do Body
     const body = await req.json();
     const validation = respostaSchema.safeParse(body);
     
@@ -37,7 +48,7 @@ export async function POST(req: NextRequest) {
     const { simuladoId, questaoId, alternativa, tempoGasto } = validation.data;
     const alunoId = Number(session.sub);
 
-    // 4. SEGURANÇA: Verificação de Propriedade e Estado
+    // 5. SEGURANÇA: Verificação de Propriedade e Estado
     const simulado = await prisma.simulado.findUnique({
       where: { id: simuladoId },
       select: { 
@@ -67,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Este simulado já foi finalizado." }, { status: 403 });
     }
 
-    // 5. Atualiza a Resposta
+    // 6. Atualiza a Resposta
     // Usamos updateMany para garantir compatibilidade se a chave composta não estiver explícita no tipo
     await prisma.simuladosQuestao.updateMany({
       where: {

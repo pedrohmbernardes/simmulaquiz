@@ -3,8 +3,8 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { registrarLog, AuditAction } from "@/lib/audit";
-import { safeApiError, getClientIp } from "@/lib/server-utils";
-import { adminContentRateLimit } from "@/lib/ratelimit";
+import { safeApiError } from "@/lib/server-utils";
+import { apiRateLimit, adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores unificados
 import { sanitizeObject } from "@/lib/sanitize";
 import { verifyCSRFToken } from "@/lib/csrf";
 
@@ -35,6 +35,16 @@ export async function POST(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    // ✅ Rate Limit de Criação de Conteúdo (Padronizado)
+    const rlKey = `prof_tarefa_criar:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Muitas tarefas criadas em pouco tempo. Aguarde um instante." },
+        { status: 429 }
+      );
+    }
+
     // 2. CSRF Check
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
@@ -49,18 +59,7 @@ export async function POST(
       return NextResponse.json({ error: "ID de turma inválido" }, { status: 400 });
     }
 
-    // 3. Rate Limit
-    const ip = await getClientIp(req);
-    const { success, reset } = await adminContentRateLimit.limit(`create_tarefa:${userId}:${ip}`);
-    
-    if (!success) {
-      return NextResponse.json(
-        { error: "Muitas requisições. Aguarde um momento." },
-        { status: 429, headers: { "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString() } }
-      );
-    }
-
-    // 4. Validação de Propriedade
+    // 3. Validação de Propriedade
     const isOwner = await prisma.turmaProfessor.findUnique({
       where: {
         turmaId_professorId: {
@@ -74,7 +73,7 @@ export async function POST(
       return NextResponse.json({ error: "Você não administra esta turma." }, { status: 403 });
     }
 
-    // 5. Validação e Sanitização
+    // 4. Validação e Sanitização
     const body = await req.json();
     const validation = criarTarefaSchema.safeParse(body);
 
@@ -88,7 +87,7 @@ export async function POST(
     const dataSanitizado = sanitizeObject(validation.data);
     const { dataEntrega, notaMaxima, moduloId } = validation.data; // Dados tipados
 
-    // 6. Criação (Com ou Sem Módulo)
+    // 5. Criação (Com ou Sem Módulo)
     // Se tiver moduloId, usamos transação para garantir integridade. Se não, cria direto.
     let resultado;
 
@@ -152,7 +151,7 @@ export async function POST(
       });
     }
 
-    // 7. Auditoria (Usando fallback de string se o enum falhar)
+    // 6. Auditoria (Usando fallback de string se o enum falhar)
     await registrarLog({
       acao: (AuditAction as any).TAREFA_CRIAR || "TAREFA_CRIAR", 
       usuarioId: userId,
@@ -186,6 +185,13 @@ export async function GET(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura
+    const rlKey = `prof_tarefas_lista:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;

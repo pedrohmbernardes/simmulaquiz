@@ -6,6 +6,7 @@ import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { z } from "zod";
 import { sanitizeObject } from "@/lib/sanitize";
+import { apiRateLimit, adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema para validação da edição
 const editarTarefaSchema = z.object({
@@ -25,6 +26,13 @@ export async function DELETE(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Gestão de Conteúdo
+    const rlKey = `prof_tarefa_delete:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas ações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     const csrfToken = req.headers.get("x-csrf-token");
@@ -88,6 +96,13 @@ export async function GET(
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // ✅ Rate Limit de Leitura
+    const rlKey = `prof_tarefa_detalhe:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
+    }
+
     const { turmaId, tarefaId } = await params;
     const tarefa = await prisma.tarefa.findUnique({
       where: { id: Number(tarefaId), turmaId: Number(turmaId) }
@@ -111,6 +126,13 @@ export async function PATCH(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Gestão de Conteúdo
+    const rlKey = `prof_tarefa_editar:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas alterações em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     // 2. CSRF
@@ -185,21 +207,19 @@ export async function PATCH(
     });
 
     // 6. Auditoria
-        await registrarLog({
-        acao: (AuditAction as any).TAREFA_EDITAR || "TAREFA_EDITAR",
-        usuarioId: professorId,
-        usuarioNome: session.name,
-        recurso: `Tarefa Editada: ${tarefaAtualizada.titulo} (ID: ${tarefaIdInt})`,
-        detalhes: { 
-            turmaId: turmaIdInt,
-            // O "as any" aqui é necessário porque campos opcionais (undefined) 
-            // tecnicamente não são JSON válidos, mas o banco lida com isso.
-            mudancas: {
-            ...dadosSanitizados,
-            dataEntrega: dadosSanitizados.dataEntrega instanceof Date 
-                ? dadosSanitizados.dataEntrega.toISOString() 
-                : dadosSanitizados.dataEntrega
-            } as any
+    await registrarLog({
+      acao: (AuditAction as any).TAREFA_EDITAR || "TAREFA_EDITAR",
+      usuarioId: professorId,
+      usuarioNome: session.name,
+      recurso: `Tarefa Editada: ${tarefaAtualizada.titulo} (ID: ${tarefaIdInt})`,
+      detalhes: { 
+        turmaId: turmaIdInt,
+        mudancas: {
+          ...dadosSanitizados,
+          dataEntrega: dadosSanitizados.dataEntrega instanceof Date 
+            ? dadosSanitizados.dataEntrega.toISOString() 
+            : dadosSanitizados.dataEntrega
+        } as any
       }
     });
 

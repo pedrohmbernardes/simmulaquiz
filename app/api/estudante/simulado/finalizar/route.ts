@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { registrarLog } from "@/lib/audit"; 
 import { verifyCSRFToken } from "@/lib/csrf"; 
+import { expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador
 import { safeApiError } from "@/lib/server-utils";
 import { getShuffleMap } from "@/lib/utils"; // ── Importando nossa função mágica ──
 
@@ -19,13 +20,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    // 2. CSRF Check
+    // 2. Rate Limit (Proteção contra múltiplos envios/transações pesadas)
+    const rlKey = `simulado_finalizar:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Muitas requisições. O simulado está sendo processado, aguarde." },
+        { status: 429 }
+      );
+    }
+
+    // 3. CSRF Check
     const csrfToken = req.headers.get("x-csrf-token");
     if (!(await verifyCSRFToken(csrfToken))) {
       return NextResponse.json({ error: "Sessão inválida" }, { status: 403 });
     }
 
-    // 3. Validação do Body
+    // 4. Validação do Body
     const body = await req.json();
     const validation = finalizarSchema.safeParse(body);
     if (!validation.success) {
@@ -35,7 +46,7 @@ export async function POST(req: NextRequest) {
     const { simuladoId } = validation.data;
     const alunoId = Number(session.sub);
 
-    // 4. Busca Simulado (Leitura antes da Transação)
+    // 5. Busca Simulado (Leitura antes da Transação)
     const simulado = await prisma.simulado.findUnique({
       where: { 
         id: simuladoId, 
@@ -67,7 +78,7 @@ export async function POST(req: NextRequest) {
     const dataInicio = simulado.dataInicio ? new Date(simulado.dataInicio) : simulado.createdAt;
     const tempoGastoSegundos = Math.floor((agora.getTime() - dataInicio.getTime()) / 1000);
 
-    // 5. Transação Atômica de Correção
+    // 6. Transação Atômica de Correção
     const resultado = await prisma.$transaction(async (tx) => {
       let acertos = 0;
       let erros = 0;
@@ -156,7 +167,7 @@ export async function POST(req: NextRequest) {
       return simuladoAtualizado;
     });
 
-    // 6. Auditoria
+    // 7. Auditoria
     await registrarLog({
       acao: "SIMULADO_FINALIZAR", 
       usuarioId: alunoId,

@@ -6,6 +6,7 @@ import { registrarLog, AuditAction } from "@/lib/audit";
 import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { sanitizeObject } from "@/lib/sanitize";
+import { apiRateLimit, expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema de Validação do Envio
 const entregaSchema = z.object({
@@ -25,6 +26,13 @@ export async function GET(
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    // ✅ Rate Limit de Leitura (Evita scraping de tarefas)
+    const rlKey = `tarefa_detalhe:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
+    }
 
     const { turmaId, tarefaId } = await params;
     const turmaIdInt = Number(turmaId);
@@ -105,6 +113,13 @@ export async function POST(
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+    // ✅ Rate Limit de Escrita (Evita spam de submissões e sobrecarga no banco)
+    const rlKey = `tarefa_enviar:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas tentativas de envio. Aguarde alguns minutos." }, { status: 429 });
+    }
 
     // 1. CSRF Check
     const csrfToken = req.headers.get("x-csrf-token");

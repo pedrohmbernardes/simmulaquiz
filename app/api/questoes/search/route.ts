@@ -3,11 +3,21 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
 import { NivelDificuldade, NivelCognitivo, Prisma } from "@prisma/client";
+import { searchFilterRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador de busca/filtros
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !["PROFESSOR", "SUPER_ADMIN"].includes(session.role)) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    if (!session || !["PROFESSOR", "SUPER_ADMIN"].includes(session.role)) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Busca (Permite digitação fluida/debounce, mas bloqueia scraping do banco)
+    const rlKey = `questoes_search:${session.sub}`;
+    const rl = await searchFilterRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas buscas em sequência. Aguarde um instante." }, { status: 429 });
+    }
 
     const { searchParams } = new URL(req.url);
     

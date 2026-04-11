@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { searchFilterRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador específico
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || !["PROFESSOR", "SUPER_ADMIN"].includes(session.role)) return NextResponse.json({}, { status: 403 });
+  if (!session || !["PROFESSOR", "SUPER_ADMIN"].includes(session.role)) {
+    return NextResponse.json({}, { status: 403 });
+  }
+
+  // ✅ Rate Limit de Filtros (Permite navegação rápida, bloqueia scraping agressivo)
+  const rlKey = `filtros_inteligentes:${session.sub}`;
+  const rl = await searchFilterRateLimit.limit(rlKey);
+  if (!rl.success) {
+    return NextResponse.json({ error: "Muitas consultas seguidas. Aguarde um instante." }, { status: 429 });
+  }
 
   const { searchParams } = new URL(req.url);
   

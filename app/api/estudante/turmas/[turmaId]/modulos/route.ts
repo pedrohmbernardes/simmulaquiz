@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { apiRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador de API padrão
 
 // --- GET: Listar Módulos e Itens (Visão do Estudante) ---
 export async function GET(
@@ -13,6 +14,13 @@ export async function GET(
     const session = await getSession();
     if (!session || session.role !== "ALUNO") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura (Evita scraping/sobrecarga de leitura dos módulos)
+    const rlKey = `modulos_lista:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;

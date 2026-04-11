@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSecureFetch } from '@/lib/hooks/useSecureFetch';
+import { useCsrf } from '@/lib/hooks/use-csrf'; // ✅ NOVO: Importando a blindagem CSRF
 import { toast } from 'sonner';
 import {
   MessageSquare,
@@ -73,6 +74,10 @@ function StatsCard({
 export default function ForumPage() {
   const params      = useParams();
   const secureFetch = useSecureFetch();
+  
+  // ✅ NOVO: Acionando a proteção CSRF no carregamento da página
+  useCsrf(); 
+
   const turmaId     = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [topicos, setTopicos]       = useState<Topico[]>([]);

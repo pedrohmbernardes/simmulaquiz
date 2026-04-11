@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSecureFetch } from '@/lib/hooks/useSecureFetch';
+import { useCsrf } from '@/lib/hooks/use-csrf'; // ✅ NOVO: Importando a blindagem CSRF
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -55,6 +56,9 @@ export default function TopicoDetalhesPage() {
   const params      = useParams();
   const secureFetch = useSecureFetch();
   const router      = useRouter();
+
+  // ✅ NOVO: Acionando a proteção CSRF no carregamento da página
+  useCsrf();
 
   const turmaId  = Array.isArray(params.id)       ? params.id[0]       : params.id;
   const topicoId = Array.isArray(params.topicoId) ? params.topicoId[0] : params.topicoId;

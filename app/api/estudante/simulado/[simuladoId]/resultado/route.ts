@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { apiRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador padrão de API
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +15,16 @@ export async function GET(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    // 2. Rate Limit (Proteção contra Scraping / Carga no Banco)
+    const rlKey = `simulado_resultado:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Aguarde alguns instantes antes de atualizar a página." }, 
+        { status: 429 }
+      );
+    }
+
     const { simuladoId } = await params;
     const simuladoIdInt = Number(simuladoId);
     const alunoId = Number(session.sub);
@@ -22,7 +33,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    // 2. Busca o Simulado + Respostas + Gabarito
+    // 3. Busca o Simulado + Respostas + Gabarito
     const simulado = await prisma.simulado.findUnique({
       where: {
         id: simuladoIdInt,
@@ -66,12 +77,12 @@ export async function GET(
       return NextResponse.json({ error: "Simulado não encontrado." }, { status: 404 });
     }
 
-    // 3. SEGURANÇA: Anti-IDOR
+    // 4. SEGURANÇA: Anti-IDOR
     if (simulado.usuarioId !== alunoId) {
       return NextResponse.json({ error: "Você não tem permissão para ver este resultado." }, { status: 403 });
     }
 
-    // 4. SEGURANÇA CRÍTICA: Anti-Cola
+    // 5. SEGURANÇA CRÍTICA: Anti-Cola
     if (simulado.status !== "CONCLUIDO") {
       return NextResponse.json({ 
         error: "O resultado só fica disponível após finalizar a prova." 
@@ -82,7 +93,7 @@ export async function GET(
     const errosSeguros = simulado.erros ?? 0;
     const notaSegura = simulado.notaPercentual ?? 0;
 
-    // 5. Formatação do Retorno
+    // 6. Formatação do Retorno
     // ⚠️ CORREÇÃO 3: Uso de agendamentoOrigem e simuladosQuestoes agora funcionará
     // pois o erro de select acima foi resolvido.
     const resultadoFormatado = {

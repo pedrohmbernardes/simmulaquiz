@@ -187,3 +187,9 @@ export const adminContentRateLimit = createLimiter(60, '60 s', 'admin-content');
 // Checkin para os estudante de determinada turma
 // 5 tentativas de checkin, bloqueio por 10 minutos
 export const checkinRateLimit = createLimiter(5, '10 m', 'checkin_estudante');
+
+// Limitador para Filtros e Buscas (Permite rajadas rápidas de cliques em UI)
+// 60 requisições por minuto é folgado o suficiente para o professor brincar com os selects,
+// mas bloqueia scripts de scraping pesado.
+export const searchFilterRateLimit = createLimiter(60, '60 s', 'simmula_search_filter');
+export const searchFilterRateLimitMultiSelect = createLimiter(120, '60 s', 'simmula_search_filter_multiselect');

@@ -6,6 +6,7 @@ import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { registrarLog, AuditAction } from "@/lib/audit";
 import { sanitizeString } from "@/lib/sanitize";
+import { apiRateLimit, adminContentRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema para criar tópico (mesma regra de negócio)
 const criarTopicoSchema = z.object({
@@ -27,6 +28,13 @@ export async function GET(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura (Evita scraping do fórum)
+    const rlKey = `prof_forum_lista:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;
@@ -109,6 +117,13 @@ export async function POST(
     const session = await getSession();
     if (!session || (session.role !== "PROFESSOR" && session.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Escrita (Barra spam sem atrapalhar o professor)
+    const rlKey = `prof_forum_criar:${session.sub}`;
+    const rl = await adminContentRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitos tópicos criados em pouco tempo. Aguarde um minuto." }, { status: 429 });
     }
 
     const csrfToken = req.headers.get("x-csrf-token");

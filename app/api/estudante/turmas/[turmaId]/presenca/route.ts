@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { apiRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando o limitador de API padrão
 
 export async function GET(
   req: NextRequest,
@@ -11,6 +12,13 @@ export async function GET(
     const session = await getSession();
     if (!session || session.role !== "ALUNO") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura (Evita scraping/sobrecarga no carregamento do histórico)
+    const rlKey = `presenca_historico:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;

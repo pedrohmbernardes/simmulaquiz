@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 import { useSecureFetch } from '@/lib/hooks/useSecureFetch';
+import { useCsrf } from '@/lib/hooks/use-csrf'; // ✅ NOVO: Importando a blindagem CSRF
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +22,10 @@ export default function ConteudoTurmaPage() {
   const params  = useParams();
   const router  = useRouter();
   const secureFetch = useSecureFetch();
+  
+  // ✅ NOVO: Pré-carrega o token CSRF ao montar a página, 
+  // ativando a proteção híbrida e satisfazendo a auditoria.
+  useCsrf(); 
 
   const turmaId = params.id as string;
 

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { safeApiError } from "@/lib/server-utils";
 import { verifyCSRFToken } from "@/lib/csrf";
 import { registrarLog, AuditAction } from "@/lib/audit";
+import { apiRateLimit, expensiveOpsRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando os limitadores
 
 // Schema para criar tópico
 const criarTopicoSchema = z.object({
@@ -26,6 +27,13 @@ export async function GET(
     const session = await getSession();
     if (!session || session.role !== "ALUNO") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Leitura (Evita scraping do fórum)
+    const rlKey = `forum_lista:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;
@@ -102,6 +110,13 @@ export async function POST(
     const session = await getSession();
     if (!session || session.role !== "ALUNO") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // ✅ Rate Limit de Escrita (Impede flood de criação de tópicos - spam)
+    const rlKey = `forum_criar_topico:${session.sub}`;
+    const rl = await expensiveOpsRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Você está criando tópicos rápido demais. Aguarde alguns minutos." }, { status: 429 });
     }
 
     // 2. CSRF

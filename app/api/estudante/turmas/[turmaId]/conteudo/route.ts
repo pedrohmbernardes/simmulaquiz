@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeApiError } from "@/lib/server-utils";
+import { apiRateLimit } from "@/lib/ratelimit"; // ✅ NOVO: Importando limitador de API
 
 // --- GET: Listar Conteúdo da Turma (Visão do Aluno) ---
 export async function GET(
@@ -13,6 +14,13 @@ export async function GET(
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    // ✅ Rate Limit de Leitura (Impede raspagem veloz do conteúdo da turma)
+    const rlKey = `turma_conteudo:${session.sub}`;
+    const rl = await apiRateLimit.limit(rlKey);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Muitas requisições. Aguarde um instante." }, { status: 429 });
     }
 
     const { turmaId } = await params;
