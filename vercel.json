@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/ranking-snapshot",
       "schedule": "10 6 * * *"
+    },
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "0 0 */3 * *"
     }
   ]
 }
