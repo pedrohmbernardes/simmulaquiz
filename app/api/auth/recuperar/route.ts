@@ -1,32 +1,35 @@
 // app/api/auth/recuperar/route.ts
-import { NextResponse } from 'next/server';
-import crypto, { timingSafeEqual } from 'crypto';
-import { headers } from 'next/headers';
-import bcrypt from 'bcryptjs';
+import { NextResponse } from "next/server";
+import crypto, { timingSafeEqual } from "crypto";
+import { headers } from "next/headers";
+import bcrypt from "bcryptjs";
 
-import { prisma } from '@/lib/prisma';
-import { recuperarSchema } from '@/lib/validations/auth';
-import { authRateLimit, otpRateLimit } from '@/lib/ratelimit';
-import { registrarLog, AuditAction } from '@/lib/audit';
-import { safeApiError } from '@/lib/server-utils';
-import { enviarCodigoRecuperacao } from '@/lib/mail';
+import { prisma } from "@/lib/prisma";
+import { recuperarSchema } from "@/lib/validations/auth";
+import { authRateLimit, otpRateLimit } from "@/lib/ratelimit";
+import { registrarLog, AuditAction } from "@/lib/audit";
+import { safeApiError } from "@/lib/server-utils";
+import { enviarCodigoRecuperacao } from "@/lib/mail";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // Helper de IP
 async function getClientIpAsync() {
-    const h = await headers();
-    const xff = h.get('x-forwarded-for');
-    if (xff) return xff.split(',')[0]?.trim() || '127.0.0.1';
-    return h.get('x-real-ip') ?? h.get('cf-connecting-ip') ?? '127.0.0.1';
+  const h = await headers();
+  const xff = h.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]?.trim() || "127.0.0.1";
+  return h.get("x-real-ip") ?? h.get("cf-connecting-ip") ?? "127.0.0.1";
 }
 
 function noStoreJson(data: unknown, init?: ResponseInit) {
   const res = NextResponse.json(data, init);
-  res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.headers.set('Pragma', 'no-cache');
-  res.headers.set('Expires', '0');
+  res.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate",
+  );
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Expires", "0");
   return res;
 }
 
@@ -35,7 +38,7 @@ function normalizeEmail(email: string) {
 }
 
 function hashIdentifier(input: string) {
-  return crypto.createHash('sha256').update(input).digest('hex').slice(0, 16);
+  return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
 }
 
 // Atraso aleatório para mascarar falhas (Anti-Timing)
@@ -47,7 +50,7 @@ async function jitterDelay(minMs = 120, maxMs = 320) {
 
 // Gera OTP Numérico de 8 dígitos (compatível com otp6Schema do seu auth.ts)
 function generateOTP(length: number = 8) {
-  let otp = '';
+  let otp = "";
   for (let i = 0; i < length; i++) {
     otp += crypto.randomInt(0, 10).toString();
   }
@@ -57,7 +60,10 @@ function generateOTP(length: number = 8) {
 export async function POST(request: Request) {
   try {
     const ip = await getClientIpAsync();
-    const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 250);
+    const userAgent = (request.headers.get("user-agent") || "unknown").slice(
+      0,
+      250,
+    );
 
     // 1) Rate limit (coarse) por IP
     if (authRateLimit) {
@@ -65,11 +71,18 @@ export async function POST(request: Request) {
       if (!rl.success) {
         await registrarLog({
           acao: AuditAction.SEGURANCA_RATE_LIMIT,
-          detalhes: { erro: 'Rate limit recuperar (IP)', ip, rota: '/api/auth/recuperar' },
+          detalhes: {
+            erro: "Rate limit recuperar (IP)",
+            ip,
+            rota: "/api/auth/recuperar",
+          },
           ip,
           userAgent,
         });
-        return noStoreJson({ error: 'Muitas requisições. Aguarde alguns minutos.' }, { status: 429 });
+        return noStoreJson(
+          { error: "Muitas requisições. Aguarde alguns minutos." },
+          { status: 429 },
+        );
       }
     }
 
@@ -78,15 +91,18 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
-      return noStoreJson({ error: 'JSON inválido.' }, { status: 400 });
+      return noStoreJson({ error: "JSON inválido." }, { status: 400 });
     }
 
     // 3) Zod Validation
     const validacao = recuperarSchema.safeParse(body);
     if (!validacao.success) {
       return noStoreJson(
-        { error: 'Dados inválidos', details: validacao.error.flatten().fieldErrors },
-        { status: 400 }
+        {
+          error: "Dados inválidos",
+          details: validacao.error.flatten().fieldErrors,
+        },
+        { status: 400 },
       );
     }
 
@@ -97,34 +113,51 @@ export async function POST(request: Request) {
     // ==========================================
     // FLUXO 1: SOLICITAR RECUPERAÇÃO (REQUEST)
     // ==========================================
-    if (action === 'request') {
-      
+    if (action === "request") {
       // Rate Limit por Conta para evitar bombardeio
       if (authRateLimit) {
-        const rlConta = await authRateLimit.limit(`recuperar:conta:${emailHash}`);
+        const rlConta = await authRateLimit.limit(
+          `recuperar:conta:${emailHash}`,
+        );
         if (!rlConta.success) {
-           await registrarLog({
+          await registrarLog({
             acao: AuditAction.SEGURANCA_RATE_LIMIT,
-            detalhes: { erro: 'Rate limit recuperar (Conta)', ip, rota: '/api/auth/recuperar' },
+            detalhes: {
+              erro: "Rate limit recuperar (Conta)",
+              ip,
+              rota: "/api/auth/recuperar",
+            },
             ip,
             userAgent,
           });
           await jitterDelay();
           // Fail-closed
-          return noStoreJson({ success: true, message: 'Se o e-mail existir, um código foi enviado.' }, { status: 200 });
+          return noStoreJson(
+            {
+              success: true,
+              message: "Se o e-mail existir, um código foi enviado.",
+            },
+            { status: 200 },
+          );
         }
       }
 
       // Busca usuário
       const usuario = await prisma.usuario.findUnique({
         where: { email },
-        select: { id: true, nome: true, email: true, ativo: true }
+        select: { id: true, nome: true, email: true, ativo: true },
       });
 
       // Anti-enumeração
       if (!usuario || !usuario.ativo) {
         await jitterDelay();
-        return noStoreJson({ success: true, message: 'Se o e-mail existir, um código foi enviado.' }, { status: 200 });
+        return noStoreJson(
+          {
+            success: true,
+            message: "Se o e-mail existir, um código foi enviado.",
+          },
+          { status: 200 },
+        );
       }
 
       // Gera Código de Recuperação
@@ -135,37 +168,45 @@ export async function POST(request: Request) {
       await prisma.usuario.update({
         where: { id: usuario.id },
         data: {
-          resetToken: otpCode, 
+          resetToken: otpCode,
           resetTokenExpiraEm: tokenExpiraEm,
-        }
+        },
       });
 
       // Dispara E-mail (AWAIT - para ambiente serverless garantir que a função tente enviar o email até o fim, mesmo que demore um pouco)
       try {
         await enviarCodigoRecuperacao(usuario.email, otpCode);
       } catch (err: unknown) {
-        console.error('Falha ao enviar código de recuperação:', err instanceof Error ? err.message : String(err));
-        // Mesmo falhando o email (ex: falha no google), não travamos o usuário, 
+        console.error(
+          "Falha ao enviar código de recuperação:",
+          err instanceof Error ? err.message : String(err),
+        );
+        // Mesmo falhando o email (ex: falha no google), não travamos o usuário,
         // mas o await garante que a Vercel tentou até o fim.
       }
 
       await registrarLog({
         acao: AuditAction.USUARIO_RECUPERAR_SENHA,
         usuarioId: usuario.id,
-        recurso: 'Solicitação de OTP de Recuperação',
-        detalhes: { status: 'Solicitada', ip, rota: '/api/auth/recuperar' },
+        recurso: "Solicitação de OTP de Recuperação",
+        detalhes: { status: "Solicitada", ip, rota: "/api/auth/recuperar" },
         ip,
         userAgent,
       });
 
-      return noStoreJson({ success: true, message: 'Se o e-mail existir, um código foi enviado.' }, { status: 200 });
+      return noStoreJson(
+        {
+          success: true,
+          message: "Se o e-mail existir, um código foi enviado.",
+        },
+        { status: 200 },
+      );
     }
 
     // ==========================================
     // FLUXO 2: REDEFINIR A SENHA (RESET)
     // ==========================================
-    if (action === 'reset') {
-      
+    if (action === "reset") {
       // O Zod já garantiu que code e newPassword existem para a action 'reset',
       // mas fazemos o cast para o TS parar de reclamar.
       const codigo = String(code).trim();
@@ -178,11 +219,18 @@ export async function POST(request: Request) {
           await registrarLog({
             acao: AuditAction.SEGURANCA_RATE_LIMIT,
             recurso: `emailHash:${emailHash}`,
-            detalhes: { erro: 'Brute force OTP Reset bloqueado', ip, rota: '/api/auth/recuperar' },
+            detalhes: {
+              erro: "Brute force OTP Reset bloqueado",
+              ip,
+              rota: "/api/auth/recuperar",
+            },
             ip,
             userAgent,
           });
-          return noStoreJson({ error: 'Muitas tentativas. Aguarde 10 minutos.' }, { status: 429 });
+          return noStoreJson(
+            { error: "Muitas tentativas. Aguarde 10 minutos." },
+            { status: 429 },
+          );
         }
       }
 
@@ -201,7 +249,10 @@ export async function POST(request: Request) {
       // Fail-closed
       if (!usuario || !usuario.ativo) {
         await jitterDelay();
-        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+        return noStoreJson(
+          { error: "Código inválido ou expirado." },
+          { status: 400 },
+        );
       }
 
       // Verifica expiração
@@ -211,35 +262,50 @@ export async function POST(request: Request) {
           acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
           usuarioId: usuario.id,
           usuarioNome: usuario.nome,
-          detalhes: { motivo: 'Reset OTP expirado', ip, rota: '/api/auth/recuperar' },
+          detalhes: {
+            motivo: "Reset OTP expirado",
+            ip,
+            rota: "/api/auth/recuperar",
+          },
           ip,
           userAgent,
         });
-        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+        return noStoreJson(
+          { error: "Código inválido ou expirado." },
+          { status: 400 },
+        );
       }
 
       // Comparação Timing Safe do Código
-      const inputBuffer = Buffer.from(codigo, 'utf8');
-      const dbBuffer = Buffer.from(usuario.resetToken || '', 'utf8');
-      
+      const inputBuffer = Buffer.from(codigo, "utf8");
+      const dbBuffer = Buffer.from(usuario.resetToken || "", "utf8");
+
       const tamanhosIguais = inputBuffer.length === dbBuffer.length;
-      const codigoCorreto = tamanhosIguais && timingSafeEqual(inputBuffer, dbBuffer);
+      const codigoCorreto =
+        tamanhosIguais && timingSafeEqual(inputBuffer, dbBuffer);
 
       if (!codigoCorreto) {
         await registrarLog({
           acao: AuditAction.SEGURANCA_TOKEN_INVALIDO,
           usuarioId: usuario.id,
           usuarioNome: usuario.nome,
-          detalhes: { motivo: 'Reset OTP incorreto', ip, rota: '/api/auth/recuperar' },
+          detalhes: {
+            motivo: "Reset OTP incorreto",
+            ip,
+            rota: "/api/auth/recuperar",
+          },
           ip,
           userAgent,
         });
         await jitterDelay();
-        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+        return noStoreJson(
+          { error: "Código inválido ou expirado." },
+          { status: 400 },
+        );
       }
 
       // Sucesso no OTP! Gerar Hash da Nova Senha
-      const saltRounds = process.env.NODE_ENV === 'production' ? 12 : 10;
+      const saltRounds = process.env.NODE_ENV === "production" ? 12 : 10;
       const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
 
       // Atualização atômica
@@ -253,9 +319,11 @@ export async function POST(request: Request) {
           },
           data: {
             senhaHash: hashedPassword,
-            resetToken: null, 
+            resetToken: null,
             resetTokenExpiraEm: null,
             tokenVersion: { increment: 1 }, // Invalida TODAS as sessões ativas (logout global)
+            ultimoLogin: new Date(), // <-- AQUI: Reinicia o relógio de inatividade de 90 dias
+            mudancaSenhaObrigatoria: false, // <-- AQUI: Garante que ele não caia no loop de trocar senha
           },
         });
 
@@ -267,26 +335,38 @@ export async function POST(request: Request) {
 
       if (!result.ok) {
         await jitterDelay();
-        return noStoreJson({ error: 'Código inválido ou expirado.' }, { status: 400 });
+        return noStoreJson(
+          { error: "Código inválido ou expirado." },
+          { status: 400 },
+        );
       }
 
       await registrarLog({
         acao: AuditAction.USUARIO_NOVA_SENHA,
         usuarioId: usuario.id,
         usuarioNome: usuario.nome,
-        recurso: 'Redefinição de Senha Concluída',
-        detalhes: { status: 'Sucesso via OTP', ip, rota: '/api/auth/recuperar' },
+        recurso: "Redefinição de Senha Concluída",
+        detalhes: {
+          status: "Sucesso via OTP",
+          ip,
+          rota: "/api/auth/recuperar",
+        },
         ip,
         userAgent,
       });
 
-      return noStoreJson({ success: true, message: 'Senha redefinida com sucesso!' }, { status: 200 });
+      return noStoreJson(
+        { success: true, message: "Senha redefinida com sucesso!" },
+        { status: 200 },
+      );
     }
 
     // Se chegar aqui, a action não foi nem request nem reset
-    return noStoreJson({ error: 'Ação inválida.' }, { status: 400 });
-
+    return noStoreJson({ error: "Ação inválida." }, { status: 400 });
   } catch (error) {
-    return safeApiError(error, 'Erro interno ao processar a recuperação de senha.');
+    return safeApiError(
+      error,
+      "Erro interno ao processar a recuperação de senha.",
+    );
   }
 }

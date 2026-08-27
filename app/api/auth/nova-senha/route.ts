@@ -1,23 +1,23 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import * as bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import * as bcrypt from "bcryptjs";
+import crypto from "crypto";
 
-import { novaSenhaSchema } from '@/lib/validations/auth';
-import { authRateLimit } from '@/lib/ratelimit';
-import { logout, getSession } from '@/lib/auth';
-import { registrarLog, AuditAction } from '@/lib/audit';
-import { getClientIp, safeApiError } from '@/lib/server-utils';
-import { verifyCSRFToken } from '@/lib/csrf';
+import { novaSenhaSchema } from "@/lib/validations/auth";
+import { authRateLimit } from "@/lib/ratelimit";
+import { logout, getSession } from "@/lib/auth";
+import { registrarLog, AuditAction } from "@/lib/audit";
+import { getClientIp, safeApiError } from "@/lib/server-utils";
+import { verifyCSRFToken } from "@/lib/csrf";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function noStoreJson(data: unknown, init?: ResponseInit) {
   const res = NextResponse.json(data, init);
-  res.headers.set('Cache-Control', 'no-store');
-  res.headers.set('Pragma', 'no-cache');
-  res.headers.set('Expires', '0');
+  res.headers.set("Cache-Control", "no-store");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Expires", "0");
   return res;
 }
 
@@ -30,41 +30,54 @@ async function jitterDelay(minMs = 120, maxMs = 320) {
 export async function POST(request: Request) {
   try {
     const ip = await getClientIp(request);
-    const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 250);
+    const userAgent = (request.headers.get("user-agent") || "unknown").slice(
+      0,
+      250,
+    );
 
     // (defesa em profundidade) payload pequeno
-    const contentLength = request.headers.get('content-length');
+    const contentLength = request.headers.get("content-length");
     if (contentLength && Number(contentLength) > 30_000) {
-      return noStoreJson({ error: 'Payload muito grande.' }, { status: 413 });
+      return noStoreJson({ error: "Payload muito grande." }, { status: 413 });
     }
 
     // 1) Sessão (anti-IDOR)
     const session = await getSession();
     if (!session?.sub) {
-      return noStoreJson({ error: 'Sessão expirada. Faça login novamente.' }, { status: 401 });
+      return noStoreJson(
+        { error: "Sessão expirada. Faça login novamente." },
+        { status: 401 },
+      );
     }
 
     const usuarioId = Number(session.sub);
     if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
-      return noStoreJson({ error: 'Sessão inválida.' }, { status: 401 });
+      return noStoreJson({ error: "Sessão inválida." }, { status: 401 });
     }
 
     // 2) CSRF (CRÍTICO) — seu middleware pode não estar cobrindo /api/auth/*
-    const csrfHeader = request.headers.get('x-csrf-token');
+    const csrfHeader = request.headers.get("x-csrf-token");
     const csrfOk = await verifyCSRFToken(csrfHeader);
     if (!csrfOk) {
       await registrarLog({
         acao: AuditAction.SEGURANCA_CSRF_INVALIDO,
         usuarioId,
         usuarioNome: session.name,
-        detalhes: { erro: 'CSRF inválido em nova-senha', ip, rota: '/api/auth/nova-senha' },
+        detalhes: {
+          erro: "CSRF inválido em nova-senha",
+          ip,
+          rota: "/api/auth/nova-senha",
+        },
         ip,
         userAgent,
       });
 
       return noStoreJson(
-        { error: 'Token de segurança inválido ou expirado. Recarregue a página.' },
-        { status: 403 }
+        {
+          error:
+            "Token de segurança inválido ou expirado. Recarregue a página.",
+        },
+        { status: 403 },
       );
     }
 
@@ -76,12 +89,19 @@ export async function POST(request: Request) {
           acao: AuditAction.SEGURANCA_RATE_LIMIT,
           usuarioId,
           usuarioNome: session.name,
-          detalhes: { erro: 'Rate limit nova-senha', ip, rota: '/api/auth/nova-senha' },
+          detalhes: {
+            erro: "Rate limit nova-senha",
+            ip,
+            rota: "/api/auth/nova-senha",
+          },
           ip,
           userAgent,
         });
 
-        return noStoreJson({ error: 'Muitas tentativas. Aguarde 30 minutos.' }, { status: 429 });
+        return noStoreJson(
+          { error: "Muitas tentativas. Aguarde 30 minutos." },
+          { status: 429 },
+        );
       }
     }
 
@@ -90,15 +110,18 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
-      return noStoreJson({ error: 'JSON inválido.' }, { status: 400 });
+      return noStoreJson({ error: "JSON inválido." }, { status: 400 });
     }
 
     // 5) Validação Zod
     const validacao = novaSenhaSchema.safeParse(body);
     if (!validacao.success) {
       return noStoreJson(
-        { error: 'Dados inválidos', details: validacao.error.flatten().fieldErrors },
-        { status: 400 }
+        {
+          error: "Dados inválidos",
+          details: validacao.error.flatten().fieldErrors,
+        },
+        { status: 400 },
       );
     }
 
@@ -116,7 +139,7 @@ export async function POST(request: Request) {
     });
 
     if (!usuario || !usuario.ativo) {
-      return noStoreJson({ error: 'Usuário não encontrado.' }, { status: 404 });
+      return noStoreJson({ error: "Usuário não encontrado." }, { status: 404 });
     }
 
     // 7) Verifica senha atual
@@ -128,18 +151,28 @@ export async function POST(request: Request) {
         acao: AuditAction.LOGIN_FALHA,
         usuarioId: usuario.id,
         usuarioNome: usuario.nome,
-        detalhes: { erro: 'Senha atual incorreta na troca', ip, rota: '/api/auth/nova-senha' },
+        detalhes: {
+          erro: "Senha atual incorreta na troca",
+          ip,
+          rota: "/api/auth/nova-senha",
+        },
         ip,
         userAgent,
       });
 
-      return noStoreJson({ error: 'A senha atual está incorreta.' }, { status: 401 });
+      return noStoreJson(
+        { error: "A senha atual está incorreta." },
+        { status: 401 },
+      );
     }
 
     // 8) Nova senha diferente
     const repetida = await bcrypt.compare(novaSenha, usuario.senhaHash);
     if (repetida) {
-      return noStoreJson({ error: 'A nova senha não pode ser igual à senha atual.' }, { status: 400 });
+      return noStoreJson(
+        { error: "A nova senha não pode ser igual à senha atual." },
+        { status: 400 },
+      );
     }
 
     // 9) Atualiza senha + invalida sessões
@@ -151,6 +184,7 @@ export async function POST(request: Request) {
         senhaHash: novaSenhaHash,
         mudancaSenhaObrigatoria: false,
         tokenVersion: { increment: 1 },
+        ultimoLogin: new Date(),
         // opcional (boa higiene): queima reset tokens também
         resetToken: null,
         resetTokenExpiraEm: null,
@@ -161,8 +195,12 @@ export async function POST(request: Request) {
       acao: AuditAction.USUARIO_NOVA_SENHA,
       usuarioId: usuario.id,
       usuarioNome: usuario.nome,
-      recurso: 'Senha',
-      detalhes: { acao: 'Troca de senha (autenticado)', ip, rota: '/api/auth/nova-senha' },
+      recurso: "Senha",
+      detalhes: {
+        acao: "Troca de senha (autenticado)",
+        ip,
+        rota: "/api/auth/nova-senha",
+      },
       ip,
       userAgent,
     });
@@ -172,9 +210,9 @@ export async function POST(request: Request) {
 
     return noStoreJson({
       success: true,
-      message: 'Senha alterada com sucesso. Faça login novamente.',
+      message: "Senha alterada com sucesso. Faça login novamente.",
     });
   } catch (error) {
-    return safeApiError(error, 'Erro interno ao atualizar a senha.');
+    return safeApiError(error, "Erro interno ao atualizar a senha.");
   }
 }
