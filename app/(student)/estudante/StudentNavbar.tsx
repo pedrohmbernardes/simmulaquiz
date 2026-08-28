@@ -4,8 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { 
-  LogOut, GraduationCap, Trophy, Star, 
+import {
+  LogOut, GraduationCap, Trophy, Star,
   LayoutDashboard, User, ChevronDown,
   Flame, Crown, X
 } from 'lucide-react';
@@ -57,13 +57,13 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
   const csrfToken = useCsrf();
 
   const userName = session?.name || 'Estudante';
-  const userRole = session?.role || 'ALUNO'; 
+  const userRole = session?.role || 'ALUNO';
   const canAccessAdmin = userRole === 'SUPER_ADMIN' || userRole === 'PROFESSOR';
-  
+
   const nivel = session?.nivel ?? 1;
   const pontos = session?.pontos ?? 0;
   const streak = session?.streak ?? 0;
-  
+
   const avatarUrl = session?.avatarUrl && session.avatarUrl.trim() !== '' ? session.avatarUrl : null;
   const initials = userName.charAt(0).toUpperCase();
 
@@ -94,7 +94,7 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { 
+      await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'x-csrf-token': csrfToken || '' }
       });
@@ -110,7 +110,7 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
       <nav className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-14 md:h-16">
-            
+
             {/* LEFT: Logo */}
             <Link href="/estudante" className="flex items-center gap-2.5 group">
               <div className="relative w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-violet-500/20 group-hover:shadow-xl group-hover:shadow-violet-500/30 transition-all group-hover:scale-105">
@@ -138,10 +138,10 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
 
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-2">
-              
+
               {canAccessAdmin && (
-                <Link 
-                  href="/admin/" 
+                <Link
+                  href="/admin/"
                   className="hidden md:flex items-center gap-1.5 bg-slate-900 hover:bg-black text-white px-3 py-2 rounded-lg text-[11px] font-bold transition-all shadow-sm hover:shadow-md border border-slate-700"
                 >
                   <LayoutDashboard size={14} />
@@ -151,7 +151,7 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
 
               {/* Desktop Profile Dropdown */}
               <div className="relative hidden md:block" ref={dropdownRef}>
-                <button 
+                <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl hover:bg-slate-100 transition-all group"
                 >
@@ -193,15 +193,15 @@ export default function StudentNavbar({ session }: StudentNavbarProps) {
                       </div>
                     </div>
                     <div className="p-1.5">
-                      <Link 
-                        href="/estudante/perfil" 
+                      <Link
+                        href="/estudante/perfil"
                         onClick={() => setIsProfileOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:text-violet-700 hover:bg-violet-50 text-sm font-medium transition-colors"
                       >
                         <User size={16} />
                         Meu Perfil
                       </Link>
-                      <button 
+                      <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 text-sm font-medium transition-colors"
                       >
