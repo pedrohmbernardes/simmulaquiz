@@ -5,16 +5,12 @@
   "installCommand": "npm install",
   "crons": [
     {
-      "path": "/api/cron/cleanup-blacklist",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/ranking-snapshot",
+      "path": "/api/cron/manutencao-diaria",
       "schedule": "10 6 * * *"
     },
     {
       "path": "/api/cron/keep-alive",
-      "schedule": "0 0 */3 * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
